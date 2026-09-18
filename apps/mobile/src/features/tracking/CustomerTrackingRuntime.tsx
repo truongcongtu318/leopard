@@ -6,7 +6,12 @@ import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from '../customer/orders/adapter';
 import type { CustomerOrderDetailDataView, CustomerTrackingView, LatLng } from '../customer/orders/model';
 import { createCustomerTrackingSocket } from '../customer/orders/tracking-socket';
-import { RealtimeTrackingScreen, type TrackingPoint, type TripBookingDetails } from './RealtimeTrackingScreen';
+import {
+  RealtimeTrackingScreen,
+  type DriverInfo,
+  type TrackingPoint,
+  type TripBookingDetails,
+} from './RealtimeTrackingScreen';
 
 const ACTIVE_TRACKING_STATUSES = [
   'ACCEPTED',
@@ -232,13 +237,39 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
     );
   }
 
+  return (
+    <ActiveTrackingView
+      onBack={() => router.back()}
+      onShowVietQR={() => router.push(`/customer/orders/${order.id}`)}
+      order={order}
+      truckPoint={truckPoint}
+    />
+  );
+}
+
+type ActiveTrackingViewProps = Readonly<{
+  order: CustomerOrderDetailDataView;
+  truckPoint: TrackingPoint | null;
+  onBack: () => void;
+  onShowVietQR: () => void;
+}>;
+
+function ActiveTrackingView({
+  onBack,
+  onShowVietQR,
+  order,
+  truckPoint,
+}: ActiveTrackingViewProps) {
   const rawDistanceTotalKm = order.distanceMeters ? order.distanceMeters / 1000 : null;
   const rawDistanceRemainingKm =
     truckPoint && order.route.destination.coords
       ? haversineKm(truckPoint, order.route.destination.coords)
       : null;
   const distanceTotalKm = rawDistanceTotalKm ?? rawDistanceRemainingKm ?? 1;
-  const distanceRemainingKm = Math.min(rawDistanceRemainingKm ?? distanceTotalKm, distanceTotalKm);
+  const exactRemainingKm = Math.min(rawDistanceRemainingKm ?? distanceTotalKm, distanceTotalKm);
+  // Round to 1 decimal place (100m step) so continuous GPS micro-jitter does not
+  // thrash object references and trigger full Bottom Sheet re-renders.
+  const roundedDistanceRemainingKm = Math.round(exactRemainingKm * 10) / 10;
   const etaMinutes = Math.max(1, Math.round(order.etaDurationSeconds / 60));
 
   const assignedDriver = order.assignedDriver ?? null;
@@ -247,36 +278,63 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
 
   const isSimulated = order.etaSource === 'DEMO';
 
+  const memoizedDriver = useMemo<DriverInfo>(
+    () => ({
+      name: driverName,
+      ...(assignedDriver?.phone ? { phone: assignedDriver.phone } : {}),
+      ...(assignedDriver?.licensePlate ? { vehiclePlate: assignedDriver.licensePlate } : {}),
+      ...(assignedDriver?.vehicleType ? { vehicleType: assignedDriver.vehicleType } : {}),
+    }),
+    [driverName, assignedDriver?.phone, assignedDriver?.licensePlate, assignedDriver?.vehicleType],
+  );
+
+  const memoizedTrip = useMemo<TripBookingDetails>(
+    () => ({
+      bookingCode: order.reference,
+      origin: order.route.origin.label,
+      originCoords: order.route.origin.coords,
+      destination: order.route.destination.label,
+      destinationCoords: order.route.destination.coords,
+      stops: order.route.stops,
+      cargoLabel: order.cargo.note ?? 'Hàng hóa',
+      weightKg: order.cargo.weightKg ?? 0,
+      priceVnd: order.priceLabel,
+      distanceTotalKm,
+      distanceRemainingKm: roundedDistanceRemainingKm,
+      etaMinutes,
+      etaLabel: `${etaMinutes} phút`,
+      status: mapStatusToTripStatus(order.status),
+      hasDeliveryProof: order.media.kind === 'available',
+      isSimulated,
+      routeCoords: order.route.routeCoords,
+    }),
+    [
+      order.reference,
+      order.route.origin.label,
+      order.route.origin.coords,
+      order.route.destination.label,
+      order.route.destination.coords,
+      order.route.stops,
+      order.cargo.note,
+      order.cargo.weightKg,
+      order.priceLabel,
+      distanceTotalKm,
+      roundedDistanceRemainingKm,
+      etaMinutes,
+      order.status,
+      order.media.kind,
+      isSimulated,
+      order.route.routeCoords,
+    ],
+  );
+
   return (
     <RealtimeTrackingScreen
-      driver={{
-        name: driverName,
-        ...(assignedDriver?.phone ? { phone: assignedDriver.phone } : {}),
-        ...(assignedDriver?.licensePlate ? { vehiclePlate: assignedDriver.licensePlate } : {}),
-        ...(assignedDriver?.vehicleType ? { vehicleType: assignedDriver.vehicleType } : {}),
-      }}
+      driver={memoizedDriver}
       isSimulatedData={isSimulated}
-      onBack={() => router.back()}
-      onShowVietQR={() => router.push(`/customer/orders/${order.id}`)}
-      trip={{
-        bookingCode: order.reference,
-        origin: order.route.origin.label,
-        originCoords: order.route.origin.coords,
-        destination: order.route.destination.label,
-        destinationCoords: order.route.destination.coords,
-        stops: order.route.stops,
-        cargoLabel: order.cargo.note ?? 'Hàng hóa',
-        weightKg: order.cargo.weightKg ?? 0,
-        priceVnd: order.priceLabel,
-        distanceTotalKm,
-        distanceRemainingKm,
-        etaMinutes,
-        etaLabel: `${etaMinutes} phút`,
-        status: mapStatusToTripStatus(order.status),
-        hasDeliveryProof: order.media.kind === 'available',
-        isSimulated,
-        routeCoords: order.route.routeCoords,
-      }}
+      onBack={onBack}
+      onShowVietQR={onShowVietQR}
+      trip={memoizedTrip}
       truckLocation={truckPoint ?? undefined}
     />
   );

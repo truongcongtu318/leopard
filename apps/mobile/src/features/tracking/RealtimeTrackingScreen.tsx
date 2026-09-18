@@ -1,13 +1,18 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
+  LayoutAnimation,
   Linking,
+  PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  UIManager,
   View,
 } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import {
   IconCameraProof,
@@ -17,6 +22,7 @@ import {
   IconFileText,
   IconMessage,
   IconPhone,
+  IconPin,
   IconQrPayment,
   IconRoleDriver,
   IconSpeedTruck,
@@ -25,6 +31,7 @@ import {
   colors,
   control,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   leopardPalette,
   pastelTheme,
@@ -33,6 +40,12 @@ import {
   typeScale,
 } from '@leopard/mobile-core';
 import { VietQRPaymentModal } from '../customer/orders/components/VietQRPaymentModal';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+export type SnapPoint = 'MINI' | 'HALF' | 'FULL';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -227,6 +240,11 @@ const TrackingTopBar = React.memo(function TrackingTopBar({
 }: TrackingTopBarProps) {
   const statusPres = TRACKING_STATUS[status];
 
+  const handleBackPress = () => {
+    haptic.light();
+    onBack?.();
+  };
+
   return (
     <View pointerEvents="box-none" style={styles.topBarContainer}>
       {/* Top bar controls */}
@@ -235,8 +253,8 @@ const TrackingTopBar = React.memo(function TrackingTopBar({
           <Pressable
             accessibilityLabel="Quay lại"
             accessibilityRole="button"
-            onPress={onBack}
-            style={({ pressed }) => [styles.backBtn, pressed ? styles.pressedScale : null]}
+            onPress={handleBackPress}
+            style={({ pressed }) => [styles.backBtn, pressed && styles.controlBtnPressed]}
           >
             <IconChevronLeft color={colors.neutral.text} size={20} strokeWidth={2} />
           </Pressable>
@@ -278,7 +296,71 @@ const TrackingTopBar = React.memo(function TrackingTopBar({
   );
 });
 
-// ── Memoized VIP Driver Card ────────────────────────────────────────
+// ── Locate SVG Glyph (Apple Maps Crosshair) ──────────────────────────
+
+function IconLocateGlyph({ color = customerPalette.primary, size = 20 }: { color?: string; size?: number }) {
+  return (
+    <Svg fill="none" height={size} viewBox="0 0 24 24" width={size}>
+      <Circle cx="12" cy="12" r="7" stroke={color} strokeWidth={2} />
+      <Path d="M12 2V5M12 19V22M2 12H5M19 12H22" stroke={color} strokeLinecap="round" strokeWidth={2} />
+      <Circle cx="12" cy="12" fill={color} r="2.5" />
+    </Svg>
+  );
+}
+
+// ── Floating Action Controls (Apple Maps Glass Aesthetic) ─────────────
+
+type FloatingActionControlsProps = Readonly<{
+  onLocate: () => void;
+  onSos: () => void;
+  snapPoint: SnapPoint;
+}>;
+
+const FloatingActionControls = React.memo(function FloatingActionControls({
+  onLocate,
+  onSos,
+  snapPoint,
+}: FloatingActionControlsProps) {
+  const bottomOffset =
+    snapPoint === 'FULL' ? 120 : snapPoint === 'MINI' ? 172 : 440;
+
+  return (
+    <View
+      pointerEvents="box-none"
+      style={[styles.floatingControlsStack, { bottom: bottomOffset }]}
+    >
+      {/* SOS Button */}
+      <Pressable
+        accessibilityLabel="Hỗ trợ khẩn cấp SOS"
+        accessibilityRole="button"
+        onPress={onSos}
+        style={({ pressed }) => [
+          styles.floatingControlBtn,
+          styles.sosBtn,
+          pressed && styles.floatingBtnPressed,
+        ]}
+      >
+        <Text style={styles.sosBtnText}>SOS</Text>
+      </Pressable>
+
+      {/* Re-center / Locate Button */}
+      <Pressable
+        accessibilityLabel="Định vị lại lộ trình"
+        accessibilityRole="button"
+        onPress={onLocate}
+        style={({ pressed }) => [
+          styles.floatingControlBtn,
+          styles.locateBtn,
+          pressed && styles.floatingBtnPressed,
+        ]}
+      >
+        <IconLocateGlyph color={customerPalette.primary} size={20} />
+      </Pressable>
+    </View>
+  );
+});
+
+// ── Memoized VIP Driver Card (Apple HIG Inset Grouped) ───────────────
 
 type VipDriverCardProps = Readonly<{
   driver: DriverInfo;
@@ -317,8 +399,8 @@ const VipDriverCard = React.memo(function VipDriverCard({
               {formattedRating ? (
                 <View style={styles.ratingBadge}>
                   <IconStar
-                    color={pastelTheme.yellowCard.accent}
-                    fill={pastelTheme.yellowCard.accent}
+                    color={customerPalette.accent}
+                    fill={customerPalette.accent}
                     size={13}
                     strokeWidth={1.8}
                   />
@@ -333,7 +415,7 @@ const VipDriverCard = React.memo(function VipDriverCard({
           </View>
         </View>
 
-        {/* VIP Driver Action Buttons (CTA Midnight Navy #0B2545, touch targets >= 44pt) */}
+        {/* Action Buttons: Micro-interactions with active scale 0.98 */}
         <View style={styles.driverActions}>
           <Pressable
             accessibilityLabel="Gọi điện tài xế"
@@ -342,7 +424,7 @@ const VipDriverCard = React.memo(function VipDriverCard({
             style={({ pressed }) => [
               styles.actionBtn,
               styles.callBtn,
-              pressed ? styles.ctaPressed : null,
+              pressed && styles.actionBtnPressed,
             ]}
           >
             <IconPhone color={colors.neutral.surface} size={16} strokeWidth={2} />
@@ -356,10 +438,10 @@ const VipDriverCard = React.memo(function VipDriverCard({
             style={({ pressed }) => [
               styles.actionBtn,
               styles.chatBtn,
-              pressed ? styles.ctaPressed : null,
+              pressed && styles.actionBtnPressed,
             ]}
           >
-            <IconMessage color={colors.neutral.text} size={16} strokeWidth={2} />
+            <IconMessage color={customerPalette.primary} size={16} strokeWidth={2} />
             <Text style={styles.chatBtnText}>Nhắn tin</Text>
           </Pressable>
         </View>
@@ -368,7 +450,7 @@ const VipDriverCard = React.memo(function VipDriverCard({
   );
 });
 
-// ── Memoized Cargo & Booking Card ───────────────────────────────────
+// ── Memoized Cargo & Booking Card with 3-Stage Timeline ──────────────
 
 type CargoBookingCardProps = Readonly<{
   trip: TripBookingDetails;
@@ -396,7 +478,7 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
   return (
     <View style={styles.cargoCardOuter}>
       <View style={styles.cargoCardInner}>
-        {/* Trip Progress */}
+        {/* Progress & Route Timeline Section */}
         <View style={styles.progressSection}>
           <View style={styles.progressHeaderRow}>
             <Text style={styles.sectionTitle}>Tiến trình giao hàng</Text>
@@ -428,16 +510,78 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
             </View>
           </View>
 
-          {/* Route compact box */}
-          <View style={styles.routeCompactCard}>
-            <View style={styles.routeCompactRow}>
-              <View style={[styles.routeCompactDot, styles.routeDotOrigin]} />
-              <Text numberOfLines={1} style={styles.routeCompactText}>{trip.origin}</Text>
+          {/* 3-Step Timeline: Lấy hàng -> Đang giao -> Đã giao */}
+          <View style={styles.timelineBox}>
+            {/* Step 1: Lấy hàng */}
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineNodeCol}>
+                <View style={[styles.timelineDot, styles.dotDone]}>
+                  <IconCheck color="#FFFFFF" size={9} strokeWidth={3} />
+                </View>
+                <View style={styles.timelineHairline} />
+              </View>
+              <View style={styles.timelineTextCol}>
+                <View style={styles.timelineTitleRow}>
+                  <Text style={styles.timelineStepLabel}>Lấy hàng</Text>
+                  <Text style={styles.timelineSubBadge}>Đã hoàn tất</Text>
+                </View>
+                <Text numberOfLines={1} style={styles.timelineAddressText}>
+                  {trip.origin}
+                </Text>
+              </View>
             </View>
-            <View style={styles.routeConnectorLine} />
-            <View style={styles.routeCompactRow}>
-              <View style={[styles.routeCompactDot, styles.routeDotDest]} />
-              <Text numberOfLines={1} style={styles.routeCompactText}>{trip.destination}</Text>
+
+            {/* Step 2: Đang giao */}
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineNodeCol}>
+                <View style={[styles.timelineDot, styles.dotActive]}>
+                  <IconSpeedTruck color="#FFFFFF" size={11} strokeWidth={2} />
+                </View>
+                <View style={styles.timelineHairline} />
+              </View>
+              <View style={styles.timelineTextCol}>
+                <View style={styles.timelineTitleRow}>
+                  <Text style={styles.timelineStepLabelActive}>Đang giao</Text>
+                  <Text style={styles.timelineSubBadgeActive}>LIVE GPS</Text>
+                </View>
+                <Text numberOfLines={1} style={styles.timelineAddressText}>
+                  Xe đang di chuyển đến điểm giao
+                </Text>
+              </View>
+            </View>
+
+            {/* Step 3: Đã giao */}
+            <View style={styles.timelineItemLast}>
+              <View style={styles.timelineNodeCol}>
+                <View
+                  style={[
+                    styles.timelineDot,
+                    trip.status === 'DELIVERED' ? styles.dotDone : styles.dotPending,
+                  ]}
+                >
+                  {trip.status === 'DELIVERED' ? (
+                    <IconCheck color="#FFFFFF" size={9} strokeWidth={3} />
+                  ) : (
+                    <View style={styles.pendingInnerDot} />
+                  )}
+                </View>
+              </View>
+              <View style={styles.timelineTextCol}>
+                <View style={styles.timelineTitleRow}>
+                  <Text
+                    style={
+                      trip.status === 'DELIVERED'
+                        ? styles.timelineStepLabelActive
+                        : styles.timelineStepLabel
+                    }
+                  >
+                    Giao hàng
+                  </Text>
+                </View>
+                <Text numberOfLines={1} style={styles.timelineAddressText}>
+                  {trip.destination}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -486,7 +630,7 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
                 accessibilityLabel="Hiện VietQR thanh toán"
                 accessibilityRole="button"
                 onPress={onShowVietQR}
-                style={({ pressed }) => [styles.vietQrBtn, pressed ? styles.ctaPressed : null]}
+                style={({ pressed }) => [styles.vietQrBtn, pressed && styles.actionBtnPressed]}
               >
                 <IconQrPayment color={colors.neutral.surface} size={16} strokeWidth={2} />
                 <Text style={styles.vietQrBtnText}>VietQR</Text>
@@ -503,7 +647,7 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
               <IconFileText color={colors.warning.text} size={18} strokeWidth={2} />
               <View>
                 <Text style={styles.sectionTitle}>Hóa đơn điện tử VAT 8%</Text>
-                <Text style={styles.invoiceSubTitle}>Tuân thủ Nghị định 123 & Thông tư 78</Text>
+                <Text style={styles.invoiceSubTitle}>Tuân thủ Nghị định 123 &amp; Thông tư 78</Text>
               </View>
             </View>
             <View style={styles.vatRatePill}>
@@ -517,7 +661,7 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
             onPress={onViewInvoice}
             style={({ pressed }) => [
               styles.invoiceDownloadBtn,
-              pressed ? styles.pressedScale : null,
+              pressed && styles.pressedScale,
             ]}
           >
             <View style={styles.invoiceDownloadLeft}>
@@ -551,7 +695,7 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
                 onPress={onViewDeliveryProof}
                 style={({ pressed }) => [
                   styles.proofThumbnailWrap,
-                  pressed ? styles.pressedScale : null,
+                  pressed && styles.pressedScale,
                 ]}
               >
                 <View style={styles.proofThumbnail}>
@@ -573,6 +717,110 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
   );
 });
 
+// ── Memoized Bottom Sheet (Strictly Isolated from Socket GPS Jitter) ──
+
+type TrackingBottomSheetProps = Readonly<{
+  driver: DriverInfo;
+  trip: TripBookingDetails;
+  snapPoint: SnapPoint;
+  onToggleSnap: () => void;
+  onCall: () => void;
+  onChat: () => void;
+  onShowVietQR?: () => void;
+  onViewDeliveryProof?: () => void;
+  onViewInvoice?: () => void;
+  maskedPhone: string;
+  formattedRating: string | null;
+  progressPct: number;
+}>;
+
+const TrackingBottomSheet = React.memo(function TrackingBottomSheet({
+  driver,
+  formattedRating,
+  maskedPhone,
+  onCall,
+  onChat,
+  onShowVietQR,
+  onToggleSnap,
+  onViewDeliveryProof,
+  onViewInvoice,
+  progressPct,
+  snapPoint,
+  trip,
+}: TrackingBottomSheetProps) {
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 6,
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy < -25) {
+            // Dragged up
+            onToggleSnap();
+          } else if (gestureState.dy > 25) {
+            // Dragged down
+            onToggleSnap();
+          } else {
+            // Tap handle
+            onToggleSnap();
+          }
+        },
+      }),
+    [onToggleSnap],
+  );
+
+  return (
+    <View
+      style={[
+        styles.bottomSheet,
+        snapPoint === 'MINI' && styles.bottomSheetMini,
+        snapPoint === 'HALF' && styles.bottomSheetHalf,
+        snapPoint === 'FULL' && styles.bottomSheetFull,
+      ]}
+    >
+      {/* Drag handle */}
+      <View {...panResponder.panHandlers} style={styles.handleContainer}>
+        <Pressable
+          accessibilityLabel={snapPoint === 'FULL' ? 'Thu gọn' : 'Mở rộng'}
+          accessibilityRole="button"
+          hitSlop={12}
+          onPress={onToggleSnap}
+          style={styles.handleWrap}
+        >
+          <View style={styles.dragHandle} />
+        </Pressable>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.sheetContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* VIP Driver Card */}
+        <VipDriverCard
+          driver={driver}
+          formattedRating={formattedRating}
+          maskedPhone={maskedPhone}
+          onCall={onCall}
+          onChat={onChat}
+        />
+
+        {/* Cargo & Booking Details Card */}
+        <CargoBookingCard
+          driverCapacity={driver.vehicleCapacity}
+          driverPlate={driver.vehiclePlate}
+          driverType={driver.vehicleType}
+          onShowVietQR={onShowVietQR}
+          onViewDeliveryProof={onViewDeliveryProof}
+          onViewInvoice={onViewInvoice}
+          progressPct={progressPct}
+          trip={trip}
+        />
+      </ScrollView>
+    </View>
+  );
+});
+
 // ── Main Screen Component ───────────────────────────────────────────
 
 export function RealtimeTrackingScreen({
@@ -587,7 +835,7 @@ export function RealtimeTrackingScreen({
   trip,
   truckLocation,
 }: RealtimeTrackingScreenProps) {
-  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [snapPoint, setSnapPoint] = useState<SnapPoint>('HALF');
   const [internalQrModalVisible, setInternalQrModalVisible] = useState(false);
 
   const isSimulated = Boolean(
@@ -618,6 +866,7 @@ export function RealtimeTrackingScreen({
   }, [driver.rating]);
 
   const handleCall = useCallback(() => {
+    haptic.medium();
     if (onCallDriver) {
       onCallDriver();
       return;
@@ -628,6 +877,7 @@ export function RealtimeTrackingScreen({
   }, [onCallDriver, rawPhone, maskedPhone]);
 
   const handleChat = useCallback(() => {
+    haptic.medium();
     if (onChatDriver) {
       onChatDriver();
       return;
@@ -636,6 +886,7 @@ export function RealtimeTrackingScreen({
   }, [onChatDriver, driver.name]);
 
   const handleOpenVietQR = useCallback(() => {
+    haptic.medium();
     if (onShowVietQR) {
       onShowVietQR();
     } else {
@@ -644,6 +895,7 @@ export function RealtimeTrackingScreen({
   }, [onShowVietQR]);
 
   const handleCloseQrModal = useCallback(() => {
+    haptic.light();
     setInternalQrModalVisible(false);
   }, []);
 
@@ -652,13 +904,41 @@ export function RealtimeTrackingScreen({
     Alert.alert('Thanh toán thành công', 'Hệ thống đã tự động gạch nợ thành công qua payOS.');
   }, []);
 
-  const toggleSheet = useCallback(() => {
-    setSheetExpanded((prev) => !prev);
+  const toggleSnap = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    haptic.selection();
+    setSnapPoint((prev) => {
+      if (prev === 'HALF') return 'FULL';
+      if (prev === 'FULL') return 'MINI';
+      return 'HALF';
+    });
+  }, []);
+
+  const handleLocate = useCallback(() => {
+    haptic.light();
+  }, []);
+
+  const handleSos = useCallback(() => {
+    haptic.medium();
+    Alert.alert(
+      'Hỗ trợ khẩn cấp 24/7',
+      'Bạn có muốn kết nối ngay với Tổng đài Điều phối cứu hộ khẩn cấp LEOPARD 1900 6868?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Gọi ngay',
+          style: 'destructive',
+          onPress: () => {
+            void Linking.openURL('tel:19006868');
+          },
+        },
+      ],
+    );
   }, []);
 
   return (
     <View style={styles.container}>
-      {/* ── LAYER 0: 100% Viewport Dark GIS Map (Optimized for real-time socket tracking) ── */}
+      {/* ── LAYER 0: Full-Bleed Map (Optimized for real-time socket tracking) ── */}
       <TrackingMapLayer
         destination={trip.destination}
         destinationCoords={trip.destinationCoords}
@@ -671,7 +951,7 @@ export function RealtimeTrackingScreen({
         truckLocation={truckLocation}
       />
 
-      {/* ── LAYER 1: Floating Header & Fixed Status Bar (Strict ETA dự kiến & Demo badge) ── */}
+      {/* ── LAYER 1: Floating Header & Fixed Status Bar (Apple HIG) ── */}
       <TrackingTopBar
         distanceRemainingKm={trip.distanceRemainingKm}
         etaLabel={trip.etaLabel}
@@ -680,50 +960,32 @@ export function RealtimeTrackingScreen({
         status={trip.status}
       />
 
-      {/* ── LAYER 2: Gesture Bottom Sheet ──────────────────── */}
-      <View style={[styles.bottomSheet, sheetExpanded && styles.bottomSheetExpanded]}>
-        {/* Drag handle (>= 44px touch target) */}
-        <Pressable
-          accessibilityLabel={sheetExpanded ? 'Thu gọn' : 'Mở rộng'}
-          accessibilityRole="button"
-          onPress={toggleSheet}
-          style={styles.handleWrap}
-        >
-          <View style={styles.dragHandle} />
-        </Pressable>
+      {/* ── LAYER 2: Floating Action Controls (Apple Maps Glass Controls) ── */}
+      <FloatingActionControls
+        onLocate={handleLocate}
+        onSos={handleSos}
+        snapPoint={snapPoint}
+      />
 
-        <ScrollView
-          contentContainerStyle={styles.sheetContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* ─ Floating VIP Driver Card (radius.card 14pt continuous) ── */}
-          <VipDriverCard
-            driver={driver}
-            formattedRating={formattedRating}
-            maskedPhone={maskedPhone}
-            onCall={handleCall}
-            onChat={handleChat}
-          />
-
-          {/* ─ Cargo & Booking Details Card (radius.card 14pt continuous) ── */}
-          <CargoBookingCard
-            driverCapacity={driver.vehicleCapacity}
-            driverPlate={driver.vehiclePlate}
-            driverType={driver.vehicleType}
-            onShowVietQR={handleOpenVietQR}
-            onViewDeliveryProof={onViewDeliveryProof}
-            onViewInvoice={onViewInvoice}
-            progressPct={progressPct}
-            trip={trip}
-          />
-        </ScrollView>
-      </View>
+      {/* ── LAYER 3: Interactive Bottom Sheet (3 Snap Points: Mini/Half/Full) ── */}
+      <TrackingBottomSheet
+        driver={driver}
+        formattedRating={formattedRating}
+        maskedPhone={maskedPhone}
+        onCall={handleCall}
+        onChat={handleChat}
+        onShowVietQR={handleOpenVietQR}
+        onToggleSnap={toggleSnap}
+        onViewDeliveryProof={onViewDeliveryProof}
+        onViewInvoice={onViewInvoice}
+        progressPct={progressPct}
+        snapPoint={snapPoint}
+        trip={trip}
+      />
 
       {/* Dynamic VietQR Payment Modal */}
       <VietQRPaymentModal
-        amount={
-          parseInt(trip.priceVnd.replace(/[^0-9]/g, ''), 10) || 850000
-        }
+        amount={parseInt(trip.priceVnd.replace(/[^0-9]/g, ''), 10) || 850000}
         amountLabel={trip.priceVnd}
         onClose={handleCloseQrModal}
         onPaymentSuccess={handlePaymentSuccess}
@@ -797,6 +1059,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 3,
+  },
+  controlBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   backBtnPlaceholder: {
     width: 44,
@@ -907,47 +1173,50 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  // ── LAYER 2: Bottom Sheet ─────────────────────────
-  bottomSheet: {
+  // ── LAYER 2: Floating Action Controls (Apple Maps Style) ──
+  floatingControlsStack: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(248, 250, 252, 0.98)',
-    borderTopLeftRadius: radius.modal,
-    borderTopRightRadius: radius.modal,
-    borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    zIndex: 40,
-    maxHeight: '56%',
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 10,
+    right: spacing.md,
+    zIndex: 30,
+    gap: spacing.xs,
+    alignItems: 'center',
   },
-  bottomSheetExpanded: {
-    maxHeight: '86%',
-  },
-  handleWrap: {
+  floatingControlBtn: {
+    width: 46,
+    height: 46,
+    minWidth: 46,
+    minHeight: 46,
+    borderRadius: radius.pill,
+    ...iosContinuousCurve,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    minHeight: 44,
+    borderWidth: 1,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  dragHandle: {
-    width: 44,
-    height: 4,
-    borderRadius: spacing.hairline,
-    backgroundColor: leopardPalette.inputBorder,
+  sosBtn: {
+    backgroundColor: colors.danger.text,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  sheetContent: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: spacing.sm,
+  sosBtnText: {
+    color: customerPalette.surfaceWhite,
+    ...typeScale.caption1,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  locateBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: 'rgba(11, 30, 66, 0.12)',
+  },
+  floatingBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.94 }],
   },
 
-  // ── VIP Driver Card (Bo góc radius.card 14pt continuous) ──
+  // ── LAYER 3: VIP Driver Card ──────────────────────
   vipDriverCardOuter: {
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
@@ -1052,7 +1321,7 @@ const styles = StyleSheet.create({
   },
   driverPhoneMasked: {
     color: colors.brand.blue,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     fontWeight: '600',
     backgroundColor: colors.info.background,
     paddingHorizontal: spacing.xs,
@@ -1096,8 +1365,12 @@ const styles = StyleSheet.create({
     ...typeScale.footnote,
     fontWeight: '600',
   },
+  actionBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
 
-  // ── Cargo Details Card (Bo góc radius.card 14pt continuous) ──
+  // ── LAYER 4: Cargo Details Card ───────────────────
   cargoCardOuter: {
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
@@ -1152,7 +1425,7 @@ const styles = StyleSheet.create({
   },
   etaBadgeText: {
     color: customerPalette.primary,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -1183,57 +1456,111 @@ const styles = StyleSheet.create({
   },
   progressStatSub: {
     color: leopardPalette.inputPlaceholder,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
     letterSpacing: 0.4,
   },
   progressLabelLeft: {
     color: customerPalette.textSlateDark,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   progressLabelRight: {
     color: customerPalette.primary,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  routeCompactCard: {
+
+  // 3-Step Minimal Route Timeline
+  timelineBox: {
     backgroundColor: customerPalette.surfaceWhite,
     borderColor: customerPalette.cardBorder,
     borderWidth: 1,
-    borderRadius: radius.control,
+    borderRadius: radius.card,
     ...iosContinuousCurve,
-    padding: spacing.xs,
-    gap: spacing.xxs,
+    padding: spacing.sm,
+    gap: 0,
   },
-  routeCompactRow: {
+  timelineItem: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    minHeight: 48,
+  },
+  timelineItemLast: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  timelineNodeCol: {
     alignItems: 'center',
-    gap: spacing.xs,
+    width: 22,
+    marginRight: spacing.xs,
   },
-  routeCompactDot: {
-    width: spacing.xs,
-    height: spacing.xs,
-    borderRadius: spacing.xxs,
+  timelineDot: {
+    width: 20,
+    height: 20,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  routeDotOrigin: {
+  dotDone: {
     backgroundColor: colors.success.text,
   },
-  routeDotDest: {
-    backgroundColor: colors.danger.text,
+  dotActive: {
+    backgroundColor: customerPalette.primary,
   },
-  routeConnectorLine: {
-    width: 2,
-    height: spacing.xs,
+  dotPending: {
+    backgroundColor: customerPalette.canvas,
+    borderWidth: 1.5,
+    borderColor: customerPalette.cardBorder,
+  },
+  pendingInnerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.pill,
     backgroundColor: leopardPalette.inputBorder,
-    marginLeft: 3,
   },
-  routeCompactText: {
-    color: colors.neutral.mutedText,
-    fontSize: typeScale.footnote.fontSize,
+  timelineHairline: {
+    width: 1.5,
     flex: 1,
+    backgroundColor: customerPalette.cardBorder,
+    marginVertical: spacing.hairline,
+  },
+  timelineTextCol: {
+    flex: 1,
+    paddingBottom: spacing.xs,
+    gap: spacing.hairline,
+  },
+  timelineTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timelineStepLabel: {
+    color: customerPalette.textSlateDark,
+    ...typeScale.footnote,
+    fontWeight: '600',
+  },
+  timelineStepLabelActive: {
+    color: customerPalette.primary,
+    ...typeScale.footnote,
+    fontWeight: '700',
+  },
+  timelineSubBadge: {
+    color: colors.success.text,
+    ...typeScale.caption2,
+    fontWeight: '600',
+  },
+  timelineSubBadgeActive: {
+    color: customerPalette.primary,
+    ...typeScale.caption2,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  timelineAddressText: {
+    color: customerPalette.textSubtle,
+    ...typeScale.caption1,
   },
 
   // Booking details
@@ -1261,7 +1588,7 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     color: customerPalette.textSlateDark,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
     flexShrink: 1,
     textAlign: 'right',
@@ -1282,7 +1609,7 @@ const styles = StyleSheet.create({
   },
   pricingValue: {
     color: customerPalette.primary,
-    fontSize: typeScale.body.fontSize,
+    ...typeScale.body,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -1330,7 +1657,7 @@ const styles = StyleSheet.create({
   },
   vatRatePill: {
     backgroundColor: colors.warning.background,
-    borderColor: pastelTheme.yellowCard.accent,
+    borderColor: pastelTheme.yellowCard.border,
     borderWidth: 1,
     borderRadius: radius.cardSm,
     paddingHorizontal: spacing.xs,
@@ -1369,7 +1696,7 @@ const styles = StyleSheet.create({
   },
   invoicePdfIconText: {
     color: customerPalette.surfaceWhite,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '700',
   },
   invoiceDownloadTextWrap: {
@@ -1444,6 +1771,59 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  // ── LAYER 5: Interactive Bottom Sheet (Apple Maps Sheet) ──
+  bottomSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(248, 250, 252, 0.98)',
+    borderTopLeftRadius: radius.modal,
+    borderTopRightRadius: radius.modal,
+    borderWidth: 1,
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    zIndex: 40,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  bottomSheetMini: {
+    maxHeight: '26%',
+    minHeight: 180,
+  },
+  bottomSheetHalf: {
+    maxHeight: '58%',
+    minHeight: 380,
+  },
+  bottomSheetFull: {
+    maxHeight: '92%',
+    minHeight: '88%',
+  },
+  handleContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  handleWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    minHeight: 44,
+    width: '100%',
+  },
+  dragHandle: {
+    width: 44,
+    height: 4,
+    borderRadius: spacing.hairline,
+    backgroundColor: leopardPalette.inputBorder,
+  },
+  sheetContent: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xxl,
+    gap: spacing.sm,
+  },
+
   // Utilities
   divider: {
     height: 1,
@@ -1451,6 +1831,7 @@ const styles = StyleSheet.create({
   },
   pressedScale: {
     opacity: 0.85,
+    transform: [{ scale: 0.985 }],
   },
   ctaPressed: {
     opacity: 0.88,

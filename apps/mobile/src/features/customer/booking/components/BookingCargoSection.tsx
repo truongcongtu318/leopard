@@ -181,10 +181,12 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.neutral.mutedText,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xs,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
   },
   chipsScroll: {
     paddingHorizontal: spacing.md,
@@ -197,11 +199,11 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: customerPalette.cardBorder,
+    borderColor: '#E2E8F0',
     minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
     ...iosContinuousCurve,
   },
   chipSelected: {
@@ -209,8 +211,8 @@ const styles = StyleSheet.create({
     borderColor: customerPalette.primary,
   },
   chipPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.97 }],
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   chipText: {
     ...typeScale.footnote,
@@ -224,12 +226,12 @@ const styles = StyleSheet.create({
   insetGroupedCard: {
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: radius.card,
+    borderRadius: radius.cardLg,
     borderWidth: 1,
-    borderColor: customerPalette.cardBorder,
+    borderColor: '#E2E8F0',
     padding: spacing.md,
     overflow: 'hidden',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
     ...iosContinuousCurve,
   },
   noteWrap: {

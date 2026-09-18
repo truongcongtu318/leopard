@@ -75,7 +75,7 @@ export function PriceDetailModal({
               accessibilityRole="button"
               hitSlop={12}
               onPress={handleClose}
-              style={styles.closeBtn}
+              style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
             >
               <Text style={styles.closeText}>Đóng</Text>
             </Pressable>
@@ -161,11 +161,9 @@ export function PriceDetailModal({
               </View>
             )}
 
-            <View style={styles.separatorBold} />
-
-            {/* Tổng cộng */}
-            <View style={styles.totalRow}>
-              <View>
+            {/* Thẻ Tổng cộng */}
+            <View style={styles.totalCard}>
+              <View style={{ flex: 1, paddingRight: spacing.sm }}>
                 <Text style={styles.totalLabel}>Tổng cộng</Text>
                 <Text style={styles.noteText}>
                   Đã gồm nhiên liệu, phí cầu đường &amp; thuế (nếu có)
@@ -241,6 +239,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxs,
     paddingHorizontal: spacing.xs,
   },
+  closeBtnPressed: {
+    opacity: 0.65,
+    transform: [{ scale: 0.96 }],
+  },
   closeText: {
     ...typeScale.body,
     fontWeight: '600',
@@ -313,11 +315,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#CBD5E1',
     marginVertical: spacing.xs,
   },
-  totalRow: {
+  totalCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.cardLg,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    marginVertical: spacing.xs,
+    ...iosContinuousCurve,
   },
   totalLabel: {
     ...typeScale.headline,
@@ -336,23 +345,23 @@ const styles = StyleSheet.create({
     marginTop: spacing.hairline,
   },
   confirmBtn: {
-    height: 50,
+    height: 52,
     backgroundColor: customerPalette.primary,
-    borderRadius: radius.card,
+    borderRadius: radius.cardLg,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: spacing.sm,
-    boxShadow: '0 2px 8px rgba(11, 37, 69, 0.25)',
+    boxShadow: '0 4px 14px rgba(11, 37, 69, 0.25)',
     ...iosContinuousCurve,
   },
   confirmBtnPressed: {
-    opacity: 0.88,
+    opacity: 0.9,
     transform: [{ scale: 0.985 }],
   },
   confirmBtnText: {
-    ...typeScale.callout,
-    fontWeight: '600',
+    ...typeScale.headline,
+    fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 });

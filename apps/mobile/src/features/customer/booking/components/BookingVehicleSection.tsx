@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   Badge,
-  Card,
   IconCheck,
   IconVehicle3Wheel,
   IconVehicleHeavyTruck,
@@ -76,72 +75,64 @@ export function BookingVehicleSection({
               : null;
 
           return (
-            <Card
+            <Pressable
+              accessibilityLabel={`${rate.name}, ${rate.tag}, thùng ${rate.dimensions}, tải trọng ${rate.capacityKg.toLocaleString('vi-VN')} kg${fare !== null ? `, cước ${fare.toLocaleString('vi-VN')} đồng` : ', đang tính cước'}${isSelected ? ', đã chọn' : ''}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
               key={id}
-              size="sm"
-              style={[
+              onPress={() => handleSelect(id)}
+              style={({ pressed }) => [
                 styles.vehicleCard,
                 isSelected ? styles.vehicleCardSelected : styles.vehicleCardUnselected,
+                pressed && styles.vehicleCardPressed,
               ]}
-              variant={isSelected ? 'elevated' : 'outline'}
             >
-              <Pressable
-                accessibilityLabel={`${rate.name}, ${rate.tag}, thùng ${rate.dimensions}, tải trọng ${rate.capacityKg.toLocaleString('vi-VN')} kg${fare !== null ? `, cước ${fare.toLocaleString('vi-VN')} đồng` : ', đang tính cước'}${isSelected ? ', đã chọn' : ''}`}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-                onPress={() => handleSelect(id)}
-                style={({ pressed }) => [
-                  styles.vehicleRow,
-                  pressed && styles.rowPressed,
-                ]}
+              {/* Vehicle Silhouette Box */}
+              <View
+                accessibilityElementsHidden={true}
+                importantForAccessibility="no"
+                style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}
               >
-                {/* Vehicle Silhouette Box */}
+                {renderVehicleIcon(id, isSelected)}
+              </View>
+
+              {/* Thông tin xe */}
+              <View style={styles.vehicleInfo}>
+                <View style={styles.nameTagRow}>
+                  <Text style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
+                    {rate.name}
+                  </Text>
+                  <Badge action={getBadgeAction(id)} size="sm" style={styles.tagBadge}>
+                    <Badge.Text style={styles.tagBadgeText}>
+                      {rate.tag}
+                    </Badge.Text>
+                  </Badge>
+                </View>
+                <Text numberOfLines={1} style={styles.specsText}>
+                  Thùng {rate.dimensions} · {rate.capacityKg.toLocaleString('vi-VN')} kg
+                </Text>
+              </View>
+
+              {/* Giá cước & Checkmark */}
+              <View style={styles.rightCol}>
+                <Text selectable style={[styles.priceText, isSelected && styles.priceTextSelected]}>
+                  {fare !== null ? `${fare.toLocaleString('vi-VN')} đ` : 'Đang tính…'}
+                </Text>
                 <View
                   accessibilityElementsHidden={true}
                   importantForAccessibility="no"
-                  style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}
+                  style={styles.checkSlot}
                 >
-                  {renderVehicleIcon(id, isSelected)}
+                  {isSelected ? (
+                    <View style={styles.checkCircle}>
+                      <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
+                    </View>
+                  ) : (
+                    <View style={styles.checkCircleEmpty} />
+                  )}
                 </View>
-
-                {/* Thông tin xe */}
-                <View style={styles.vehicleInfo}>
-                  <View style={styles.nameTagRow}>
-                    <Text style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
-                      {rate.name}
-                    </Text>
-                    <Badge action={getBadgeAction(id)} size="sm" style={styles.tagBadge}>
-                      <Badge.Text style={styles.tagBadgeText}>
-                        {rate.tag}
-                      </Badge.Text>
-                    </Badge>
-                  </View>
-                  <Text numberOfLines={1} style={styles.specsText}>
-                    Thùng {rate.dimensions} · {rate.capacityKg.toLocaleString('vi-VN')} kg
-                  </Text>
-                </View>
-
-                {/* Giá cước & Checkmark */}
-                <View style={styles.rightCol}>
-                  <Text selectable style={[styles.priceText, isSelected && styles.priceTextSelected]}>
-                    {fare !== null ? `${fare.toLocaleString('vi-VN')} đ` : 'Đang tính…'}
-                  </Text>
-                  <View
-                    accessibilityElementsHidden={true}
-                    importantForAccessibility="no"
-                    style={styles.checkSlot}
-                  >
-                    {isSelected ? (
-                      <View style={styles.checkCircle}>
-                        <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
-                      </View>
-                    ) : (
-                      <View style={styles.checkCircleEmpty} />
-                    )}
-                  </View>
-                </View>
-              </Pressable>
-            </Card>
+              </View>
+            </Pressable>
           );
         })}
       </View>
@@ -152,7 +143,7 @@ export function BookingVehicleSection({
         accessibilityRole="button"
         hitSlop={8}
         onPress={onViewDimensions}
-        style={styles.footerLinkWrap}
+        style={({ pressed }) => [styles.footerLinkWrap, pressed && styles.linkPressed]}
       >
         <Text style={styles.footerLinkText}>Xem kích thước thùng xe &gt;</Text>
       </Pressable>
@@ -180,46 +171,43 @@ const styles = StyleSheet.create({
   vehicleCard: {
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    overflow: 'hidden',
-    padding: 0,
-  },
-  vehicleCardSelected: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: customerPalette.primary,
-    boxShadow: '0 4px 14px rgba(11, 37, 69, 0.1)',
-  },
-  vehicleCardUnselected: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
-  },
-  vehicleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
     minHeight: 76,
   },
-  rowPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.99 }],
+  vehicleCardSelected: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: customerPalette.primary,
+    boxShadow: '0 4px 16px rgba(11, 37, 69, 0.08)',
+  },
+  vehicleCardUnselected: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
+  },
+  vehicleCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.982 }],
   },
   vehicleIconBox: {
-    width: 50,
-    height: 50,
+    width: 52,
+    height: 52,
     borderRadius: radius.card,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#EDF2F7',
     ...iosContinuousCurve,
   },
   vehicleIconBoxSelected: {
     backgroundColor: '#EEF4FF',
-    borderWidth: 1,
-    borderColor: 'rgba(11, 37, 69, 0.15)',
+    borderColor: 'rgba(11, 37, 69, 0.12)',
   },
   vehicleInfo: {
     flex: 1,
@@ -231,7 +219,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: spacing.xs,
-    marginBottom: 2,
+    marginBottom: spacing.hairline,
   },
   vehicleName: {
     ...typeScale.headline,
@@ -283,6 +271,7 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.2)',
   },
   checkCircleEmpty: {
     width: 20,
@@ -295,6 +284,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
+  },
+  linkPressed: {
+    opacity: 0.65,
+    transform: [{ scale: 0.985 }],
   },
   footerLinkText: {
     ...typeScale.footnote,

@@ -45,79 +45,105 @@ export function BookingFixedBottomBar({
 
   return (
     <View
+      pointerEvents="box-none"
       style={[
-        styles.fixedContainer,
-        { paddingBottom: Math.max(insets.bottom, spacing.md) },
+        styles.dockOuterWrapper,
+        { paddingBottom: Math.max(insets.bottom, spacing.xs) + spacing.xs },
       ]}
     >
-      <View style={styles.topRow}>
-        <View
-          accessibilityLabel={
-            hasFare ? `Tổng cước: ${totalFare.toLocaleString('vi-VN')} đồng` : 'Đang tính cước'
-          }
-          accessible={true}
-          style={styles.fareGroup}
-        >
-          <Text style={styles.fareLabel}>Tổng cước:</Text>
-          {/* No fare yet means the route estimate has not resolved; showing the
-              base fare here would quote a price the trip may not cost. */}
-          <Text style={styles.fareValue}>
-            {hasFare ? `${totalFare.toLocaleString('vi-VN')} đ` : 'Đang tính…'}
-          </Text>
+      <View style={styles.floatingDock}>
+        {/* Cụm thông tin giá cước & xem chi tiết */}
+        <View style={styles.dockLeftSection}>
+          <View style={styles.fareLabelRow}>
+            <Text style={styles.fareLabel}>Tổng cước:</Text>
+            <Pressable
+              accessibilityLabel="Xem chi tiết cước vận chuyển"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={handleDetails}
+              style={({ pressed }) => [styles.detailsBtn, pressed && styles.btnPressed]}
+            >
+              <Text style={styles.detailsBtnText}>Chi tiết ⌵</Text>
+            </Pressable>
+          </View>
+
+          <View
+            accessibilityLabel={
+              hasFare ? `Tổng cước: ${totalFare.toLocaleString('vi-VN')} đồng` : 'Đang tính cước'
+            }
+            accessible={true}
+          >
+            {/* No fare yet means the route estimate has not resolved; showing the
+                base fare here would quote a price the trip may not cost. */}
+            <Text selectable style={styles.fareValue}>
+              {hasFare ? `${totalFare.toLocaleString('vi-VN')} đ` : 'Đang tính…'}
+            </Text>
+          </View>
         </View>
 
+        {/* Nút Đặt xe CTA */}
         <Pressable
-          accessibilityLabel="Xem chi tiết cước vận chuyển"
           accessibilityRole="button"
-          hitSlop={8}
-          onPress={handleDetails}
-          style={({ pressed }) => [styles.detailsBtn, pressed && styles.btnPressed]}
+          accessibilityState={{ disabled: !isValid || isLoading }}
+          disabled={!isValid || isLoading}
+          onPress={handleBook}
+          style={({ pressed }) => [
+            styles.ctaButton,
+            !isValid && styles.ctaButtonDisabled,
+            pressed && isValid && styles.ctaButtonPressed,
+          ]}
         >
-          <Text style={styles.detailsBtnText}>Chi tiết ⌵</Text>
+          <Text style={[styles.ctaText, !isValid && styles.ctaTextDisabled]}>
+            {isLoading ? 'Đang tạo đơn...' : 'Đặt xe'}
+          </Text>
         </Pressable>
       </View>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !isValid || isLoading }}
-        disabled={!isValid || isLoading}
-        onPress={handleBook}
-        style={({ pressed }) => [
-          styles.ctaButton,
-          !isValid && styles.ctaButtonDisabled,
-          pressed && isValid && styles.ctaButtonPressed,
-        ]}
-      >
-        <Text style={[styles.ctaText, !isValid && styles.ctaTextDisabled]}>
-          {isLoading ? 'Đang tạo đơn...' : 'Đặt xe'}
-        </Text>
-      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fixedContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(60, 60, 67, 0.14)',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.06)',
+  dockOuterWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.md,
+    zIndex: 100,
   },
-  topRow: {
+  floatingDock: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    borderRadius: radius.cardXl,
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.95)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: 74,
+    boxShadow: '0 12px 32px rgba(11, 37, 69, 0.14), 0 2px 8px rgba(0, 0, 0, 0.04)',
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    elevation: 12,
+    ...iosContinuousCurve,
   },
-  fareGroup: {
+  dockLeftSection: {
+    flex: 1,
+    marginRight: spacing.sm,
+    justifyContent: 'center',
+  },
+  fareLabelRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: spacing.xs,
+    marginBottom: spacing.hairline,
   },
   fareLabel: {
-    ...typeScale.subheadline,
+    ...typeScale.footnote,
+    fontWeight: '500',
     color: customerPalette.textSubtle,
   },
   fareValue: {
@@ -125,45 +151,51 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.3,
   },
   detailsBtn: {
-    paddingVertical: spacing.xxs,
-    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.xs,
     backgroundColor: customerPalette.primaryBg,
-    borderRadius: radius.cardSm,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.97 }],
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
   },
   detailsBtnText: {
-    ...typeScale.footnote,
+    ...typeScale.caption2,
     fontWeight: '600',
     color: customerPalette.primary,
   },
   ctaButton: {
-    height: 52,
+    height: 50,
+    paddingHorizontal: spacing.lg,
     backgroundColor: customerPalette.primary,
     borderRadius: radius.cardLg,
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 4px 14px rgba(11, 37, 69, 0.25)',
+    minWidth: 128,
+    boxShadow: '0 4px 14px rgba(11, 37, 69, 0.28)',
     ...iosContinuousCurve,
   },
   ctaButtonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: '#E2E8F0',
     boxShadow: 'none',
   },
   ctaButtonPressed: {
-    opacity: 0.88,
+    opacity: 0.9,
     transform: [{ scale: 0.985 }],
   },
   ctaText: {
     ...typeScale.headline,
+    fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   ctaTextDisabled: {
     color: '#94A3B8',
+    fontWeight: '600',
   },
 });
