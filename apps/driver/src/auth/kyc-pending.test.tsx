@@ -110,10 +110,11 @@ describe('KycPendingRoute (Driver)', () => {
     await screen.unmount();
   });
 
-  it('gives the back button a 12pt touch slop', async () => {
+  it('navigates back when the back button is pressed', async () => {
     const screen = await render(<KycPendingRoute />);
-    const backBtn = screen.getByTestId('btn-back');
-    expect(backBtn.props.hitSlop).toMatchObject({ top: 12, bottom: 12, left: 12, right: 12 });
+    // ScreenScaffold renders the back button with accessibilityLabel="Quay lại"
+    await fireEvent.press(screen.getByLabelText('Quay lại'));
+    expect(mockBack).toHaveBeenCalled();
     await screen.unmount();
   });
 });
