@@ -24,22 +24,22 @@ export const LeopardNavigationController = {
   recenter: () => {
     try {
       VietMapNavigationController?.recenter?.();
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
   overview: () => {
     try {
       VietMapNavigationController?.overView?.();
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
   finishNavigation: () => {
     try {
       VietMapNavigationController?.finishNavigation?.();
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
   startNavigation: () => {
     try {
       VietMapNavigationController?.startNavigation?.();
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
   buildRoute: (
     coordinates: { lat: number; lng: number }[],
@@ -50,22 +50,22 @@ export const LeopardNavigationController = {
         coordinates.map((c) => ({ lat: c.lat, long: c.lng })),
         profile,
       );
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
   startSpeedAlert: () => {
     try {
       VietMapNavigationController?.startSpeedAlert?.();
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
   stopSpeedAlert: () => {
     try {
       VietMapNavigationController?.stopSpeedAlert?.();
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
   configureAlertAPI: (apiKey: string, apiID: string) => {
     try {
       VietMapNavigationController?.configureAlertAPI?.(apiKey, apiID);
-    } catch {}
+    } catch (_e) { /* noop */ }
   },
 };
 
