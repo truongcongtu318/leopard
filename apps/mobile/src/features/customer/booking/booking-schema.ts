@@ -54,6 +54,10 @@ export function validateBookingForm(draft: BookingDraftState): {
     errors.receiverPhone = 'Số điện thoại không hợp lệ (cần đủ 9 chữ số)';
   }
 
+  if (!draft.cargoImages || draft.cargoImages.length === 0) {
+    errors.cargoImages = 'Vui lòng thêm ít nhất 1 ảnh hàng hóa';
+  }
+
   if (draft.hasVatInvoice) {
     if (!draft.vatCompany?.trim()) {
       errors.vatCompany = 'Vui lòng nhập tên công ty';

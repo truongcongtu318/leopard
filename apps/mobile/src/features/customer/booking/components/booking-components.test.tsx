@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { BookingCargoSection } from './BookingCargoSection';
 import { BookingFixedBottomBar } from './BookingFixedBottomBar';
 import { BookingReceiverSection } from './BookingReceiverSection';
 import { BookingRouteSection } from './BookingRouteSection';
@@ -16,10 +17,10 @@ describe('Booking Modular Components', () => {
     );
 
     expect(screen.getByText('Xe Tải 1.25 Tấn')).toBeTruthy();
-    // Without a real routed distance there is no fare to show. Previously this
-    // fell back to the 200.000 base fare, quoting a price for an unmeasured trip.
+    // Without a real routed distance there is no fare to show.
+    // We don't display "Đang tính..." on each vehicle card; total is shown at bottom.
     expect(screen.queryByText('200.000 đ')).toBeNull();
-    expect(screen.getAllByText('Đang tính…').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Đang tính…')).toBeNull();
     expect(screen.queryByRole('radio')).toBeNull();
 
     fireEvent.press(screen.getByText('Xe Tải 2.5 Tấn'));
@@ -132,5 +133,25 @@ describe('Booking Modular Components', () => {
 
     fireEvent.press(screen.getByText('Đã hiểu'));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('BookingCargoSection displays mandatory star and "Thêm ảnh" button without leading +', async () => {
+    const onAddImage = jest.fn();
+    const screen = await render(
+      <BookingCargoSection
+        cargoImages={[]}
+        onChangeNote={jest.fn()}
+        onAddImage={onAddImage}
+        onRemoveImage={jest.fn()}
+        onSelectCategory={jest.fn()}
+        selectedCategory="Kiện hàng"
+        imageError="Vui lòng thêm ít nhất 1 ảnh hàng hóa"
+      />
+    );
+
+    expect(screen.getByText('*')).toBeTruthy();
+    expect(screen.getByText('Thêm ảnh')).toBeTruthy();
+    expect(screen.queryByText('+ Thêm ảnh')).toBeNull();
+    expect(screen.getByText('Vui lòng thêm ít nhất 1 ảnh hàng hóa')).toBeTruthy();
   });
 });

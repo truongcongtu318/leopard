@@ -501,7 +501,7 @@ export function BookingScreen({
         <Animated.ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: 110 + Math.max(insets.bottom, spacing.md) },
+            { paddingBottom: 120 + Math.max(insets.bottom, spacing.md) },
           ]}
           contentInsetAdjustmentBehavior="never"
           keyboardDismissMode="on-drag"
@@ -597,6 +597,7 @@ export function BookingScreen({
           <BookingCargoSection
             cargoImages={draft.cargoImages}
             cargoNote={draft.cargoNote}
+            imageError={validation.errors.cargoImages}
             onAddImage={(uri) =>
               bookingDraftStore.updateDraft({ cargoImages: [...draft.cargoImages, uri] })
             }

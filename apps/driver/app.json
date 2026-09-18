@@ -35,6 +35,7 @@
       [
         "expo-image-picker",
         {
+          "cameraPermission": "LEOPARD Driver cần quyền truy cập máy ảnh để chụp ảnh xác nhận nhận hàng và giao hàng (e-POD).",
           "photosPermission": "LEOPARD Driver cần quyền truy cập thư viện ảnh để tải ảnh xác nhận giao hàng và giấy tờ."
         }
       ],

@@ -20,6 +20,7 @@ import {
   IconChevron,
   IconSecurityShield,
   IconShield,
+  ScreenScaffold,
   Switch,
   VStack,
   colors,
@@ -60,82 +61,72 @@ export function CustomerSecurityScreen() {
   }
 
   return (
-    <Box style={styles.container}>
-      {/* Top Header with Back button */}
-      <HStack style={styles.header}>
-        <Pressable
-          accessibilityLabel="Quay lại"
-          accessibilityRole="button"
-          hitSlop={12}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <IconChevron color={colors.neutral.titleText} direction="left" size="lg" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Bảo mật tài khoản</Text>
-        <Box style={styles.headerRightSpacer} />
-      </HStack>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <>
+      <ScreenScaffold
+        onBack={() => router.back()}
+        title="Bảo mật tài khoản"
       >
-        {/* SECTION 1: SINH TRẮC HỌC */}
-        <Text style={styles.sectionLabel}>Sinh trắc học</Text>
-        <Card style={styles.doubleBezelOuter}>
-          <Box style={styles.doubleBezelInner}>
-            <HStack style={styles.switchRow}>
-              <VStack style={styles.switchInfo}>
-                <Text style={styles.switchTitle}>Đăng nhập bằng FaceID / Vân tay</Text>
-                <Text style={styles.switchSubtext}>
-                  Sử dụng cảm biến sinh trắc học thiết bị để mở khóa ứng dụng và duyệt lệnh nhanh.
-                </Text>
-              </VStack>
-              <Switch
-                accessibilityLabel="Bật hoặc tắt FaceID hoặc Vân tay"
-                onValueChange={setBiometricEnabled}
-                testID="switch-biometric"
-                thumbColor={Platform.OS === 'android' ? (biometricEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
-                trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
-                value={biometricEnabled}
-              />
-            </HStack>
-          </Box>
-        </Card>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* SECTION 1: SINH TRẮC HỌC */}
+          <Text style={styles.sectionLabel}>Sinh trắc học</Text>
+          <Card style={styles.doubleBezelOuter}>
+            <Box style={styles.doubleBezelInner}>
+              <HStack style={styles.switchRow}>
+                <VStack style={styles.switchInfo}>
+                  <Text style={styles.switchTitle}>Đăng nhập bằng FaceID / Vân tay</Text>
+                  <Text style={styles.switchSubtext}>
+                    Sử dụng cảm biến sinh trắc học thiết bị để mở khóa ứng dụng và duyệt lệnh nhanh.
+                  </Text>
+                </VStack>
+                <Switch
+                  accessibilityLabel="Bật hoặc tắt FaceID hoặc Vân tay"
+                  onValueChange={setBiometricEnabled}
+                  testID="switch-biometric"
+                  thumbColor={Platform.OS === 'android' ? (biometricEnabled ? customerPalette.primary : '#F4F3F4') : undefined}
+                  trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
+                  value={biometricEnabled}
+                />
+              </HStack>
+            </Box>
+          </Card>
 
-        {/* SECTION 3: APPLE GUIDELINE 5.1.1 ACCOUNT DELETION */}
-        <Text style={styles.sectionLabelDanger}>Quản lý dữ liệu & tài khoản</Text>
-        <Card style={[styles.doubleBezelOuter, styles.dangerOuter]}>
-          <Box style={styles.doubleBezelInner}>
-            <HStack style={styles.dangerHeaderRow}>
-              <Box style={styles.dangerIconBadge}>
-                <IconAlertTriangle color={colors.danger.text} size="md" />
-              </Box>
-              <VStack style={styles.dangerHeaderWrap}>
-                <Text style={styles.dangerHeading}>Quyền riêng tư & Xóa tài khoản</Text>
-                <Text style={styles.dangerLegalNotice}>
-                  Tuân thủ điều khoản Apple App Store Review Guideline 5.1.1 (Data Collection and
-                  Storage). Người dùng có toàn quyền yêu cầu xóa vĩnh viễn tài khoản và mọi dữ liệu
-                  liên quan khỏi máy chủ LEOPARD.
-                </Text>
-              </VStack>
-            </HStack>
+          {/* SECTION 3: APPLE GUIDELINE 5.1.1 ACCOUNT DELETION */}
+          <Text style={styles.sectionLabelDanger}>Quản lý dữ liệu & tài khoản</Text>
+          <Card style={[styles.doubleBezelOuter, styles.dangerOuter]}>
+            <Box style={styles.doubleBezelInner}>
+              <HStack style={styles.dangerHeaderRow}>
+                <Box style={styles.dangerIconBadge}>
+                  <IconAlertTriangle color={colors.danger.text} size="md" />
+                </Box>
+                <VStack style={styles.dangerHeaderWrap}>
+                  <Text style={styles.dangerHeading}>Quyền riêng tư & Xóa tài khoản</Text>
+                  <Text style={styles.dangerLegalNotice}>
+                    Tuân thủ điều khoản Apple App Store Review Guideline 5.1.1 (Data Collection and
+                    Storage). Người dùng có toàn quyền yêu cầu xóa vĩnh viễn tài khoản và mọi dữ liệu
+                    liên quan khỏi máy chủ LEOPARD.
+                  </Text>
+                </VStack>
+              </HStack>
 
-            <Divider style={styles.dangerDivider} />
+              <Divider style={styles.dangerDivider} />
 
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setDeleteModalVisible(true)}
-              style={({ pressed }) => [
-                styles.deleteAccountButton,
-                pressed ? styles.deleteAccountButtonPressed : null,
-              ]}
-            >
-              <Text style={styles.deleteAccountButtonText}>Xóa tài khoản vĩnh viễn</Text>
-            </Pressable>
-          </Box>
-        </Card>
-      </ScrollView>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setDeleteModalVisible(true)}
+                style={({ pressed }) => [
+                  styles.deleteAccountButton,
+                  pressed ? styles.deleteAccountButtonPressed : null,
+                ]}
+              >
+                <Text style={styles.deleteAccountButtonText}>Xóa tài khoản vĩnh viễn</Text>
+              </Pressable>
+            </Box>
+          </Card>
+        </ScrollView>
+      </ScreenScaffold>
 
       {/* CONFIRMATION MODAL (APPLE GUIDELINE 5.1.1) */}
       <Modal
@@ -190,45 +181,14 @@ export function CustomerSecurityScreen() {
           </Card>
         </Box>
       </Modal>
-    </Box>
+    </>
   );
 }
 
 // ponytail: simplified in-memory PIN state, add backend API verification when auth microservice is wired.
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: customerPalette.canvas,
-    flex: 1,
-  },
-  header: {
-    alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
-    borderBottomColor: 'rgba(11, 30, 66, 0.08)',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    height: 56,
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-  },
-  backButton: {
-    alignItems: 'center',
-    height: 44,
-    justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
-    width: 44,
-  },
-  headerTitle: {
-    color: colors.neutral.titleText,
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  headerRightSpacer: {
-    width: 44,
-  },
   scrollContent: {
     gap: spacing.md,
-    padding: spacing.md,
     paddingBottom: layout.bottomNavClearance + 20,
   },
   sectionLabel: {

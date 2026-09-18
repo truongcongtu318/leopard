@@ -62,4 +62,27 @@ describe('Customer layout', () => {
     expect(view.queryByRole('tab', { name: 'Đơn hàng' })).toBeNull();
     await view.unmount();
   });
+
+  it('displays badge with active orders count on Orders tab', async () => {
+    const { default: CustomerLayout } = require('../../app/customer/_layout');
+    const { customerQueryKeys } = require('@leopard/mobile-core');
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(customerQueryKeys.orderList('ALL'), {
+      kind: 'content',
+      orders: [
+        { id: '1', status: 'IN_TRANSIT' },
+        { id: '2', status: 'PICKING_UP' },
+        { id: '3', status: 'DELIVERED' },
+      ],
+    });
+    const view = await render(
+      <QueryClientProvider client={queryClient}>
+        <CustomerLayout />
+      </QueryClientProvider>,
+    );
+
+    expect(view.getByTestId('nav-tab-badge-orders')).toBeTruthy();
+    expect(view.getByText('2')).toBeTruthy();
+    await view.unmount();
+  });
 });

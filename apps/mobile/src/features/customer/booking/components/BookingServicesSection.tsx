@@ -53,7 +53,7 @@ export function BookingServicesSection({
       <Text style={styles.sectionHeader}>Dịch vụ thêm</Text>
 
       <View style={styles.insetGroupedCard}>
-        {/* Toggle Bốc xếp */}
+        {/* Toggle Bốc xếp - iOS Settings row (44pt) */}
         <View style={styles.toggleRow}>
           <View style={styles.toggleTextCol}>
             <Text style={styles.toggleTitle}>Tài xế hỗ trợ bốc xếp</Text>
@@ -70,7 +70,7 @@ export function BookingServicesSection({
 
         <View style={styles.separator} />
 
-        {/* Toggle VAT */}
+        {/* Toggle VAT - iOS Settings row (44pt) */}
         <View style={styles.toggleRow}>
           <View style={styles.toggleTextCol}>
             <Text style={styles.toggleTitle}>Xuất hóa đơn VAT</Text>
@@ -153,25 +153,25 @@ export function BookingServicesSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm + 2,
   },
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '700',
     color: colors.neutral.mutedText,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xxs + 2,
     letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
   insetGroupedCard: {
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: radius.cardLg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     overflow: 'hidden',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
     ...iosContinuousCurve,
   },
   toggleRow: {
@@ -179,22 +179,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    minHeight: 56,
+    paddingVertical: spacing.xxs + 2,
+    minHeight: 44,
+    height: 48,
   },
   toggleTextCol: {
     flex: 1,
-    paddingRight: spacing.md,
+    paddingRight: spacing.sm,
+    justifyContent: 'center',
   },
   toggleTitle: {
-    ...typeScale.body,
+    ...typeScale.subheadline,
     fontWeight: '500',
     color: colors.neutral.text,
   },
   toggleSubtitle: {
-    ...typeScale.footnote,
+    ...typeScale.caption2,
     color: customerPalette.textSubtle,
-    marginTop: spacing.hairline,
+    marginTop: 1,
   },
   separator: {
     height: 0.5,
@@ -206,24 +208,24 @@ const styles = StyleSheet.create({
   },
   vatField: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xxs + 2,
   },
   fieldLabel: {
-    ...typeScale.caption1,
-    fontWeight: '500',
+    ...typeScale.caption2,
+    fontWeight: '600',
     color: customerPalette.textSubtle,
-    marginBottom: spacing.xxs,
+    marginBottom: 2,
   },
   textInput: {
-    height: 36,
-    ...typeScale.body,
+    height: 38,
+    ...typeScale.subheadline,
     fontWeight: '500',
     color: colors.neutral.text,
     padding: 0,
   },
   errorText: {
-    ...typeScale.caption1,
+    ...typeScale.caption2,
     color: colors.danger.text,
-    marginTop: spacing.hairline,
+    marginTop: 2,
   },
 });

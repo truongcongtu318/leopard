@@ -1,5 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  Linking,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import {
   Avatar,
@@ -7,8 +17,11 @@ import {
   Box,
   Button,
   Card,
+  colors,
+  customerPalette,
   Divider,
   EtaIndicator,
+  haptic,
   HStack,
   IconCheck,
   IconClock,
@@ -18,25 +31,22 @@ import {
   IconMessage,
   IconPhone,
   IconShieldAlert,
+  iosContinuousCurve,
+  layout,
+  leopardPalette,
   MapPanel,
+  MediaImage,
+  radius,
   RouteMapSchematic,
   RouteSpine,
   ScreenScaffold,
   ScreenState,
+  spacing,
   StatusBadge,
   StatusTimeline,
-  VStack,
-  colors,
-  customerPalette,
-  iosContinuousCurve,
-  layout,
-  leopardPalette,
-  radius,
-  spacing,
   typeScale,
-  typography,
+  VStack,
 } from '@leopard/mobile-core';
-import { MediaImage } from '@leopard/mobile-core';
 import type { OrderStatus } from '@leopard/shared';
 import type {
   CustomerDetailContentView,
@@ -101,11 +111,6 @@ function haversineKm(
 
 /**
  * Names the route point the driver is nearest to right now.
- *
- * The customer payload carries no per-stop progress events, so this reads the
- * live coordinate against the route the customer already has. It says "gần"
- * (near) rather than claiming a stop was reached — arrival is the driver's
- * statement to make, not ours to infer.
  */
 export function describeDriverPosition(
   coords: { lat: number; lng: number } | undefined,
@@ -146,6 +151,8 @@ export type CustomerOrderDetailScreenProps = Readonly<{
   onOpenTracking?: (orderId: string) => void;
   onOpenInvoice?: (invoiceId: string) => void;
   onSendInvoiceEmail?: (invoiceId: string, email: string) => void;
+  onRefresh?: () => Promise<void> | void;
+  isRefreshing?: boolean;
 }>;
 
 const CANCEL_REASONS: readonly string[] = [
@@ -174,6 +181,7 @@ function CancelOrderSheet({
       return;
     }
     setError(null);
+    haptic.warning();
     onConfirm(reason);
   };
 
@@ -183,7 +191,10 @@ function CancelOrderSheet({
         accessibilityLabel="Đóng"
         accessibilityRole="button"
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        onPress={onDismiss}
+        onPress={() => {
+          haptic.light();
+          onDismiss();
+        }}
         style={styles.cancelBackdrop}
       />
       <Card style={styles.cancelSheet}>
@@ -201,13 +212,14 @@ function CancelOrderSheet({
                 accessibilityRole="button"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 onPress={() => {
+                  haptic.selection();
                   setSelected(reasonOption);
                   setError(null);
                 }}
                 style={({ pressed }) => [
                   styles.cancelOption,
                   isSelected ? styles.cancelOptionSelected : null,
-                  pressed ? styles.pressed : null,
+                  pressed ? styles.cardPressed : null,
                 ]}
               >
                 <Box style={[styles.cancelRadio, isSelected ? styles.cancelRadioSelected : null]}>
@@ -229,13 +241,14 @@ function CancelOrderSheet({
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
+              haptic.selection();
               setSelected('__OTHER__');
               setError(null);
             }}
             style={({ pressed }) => [
               styles.cancelOption,
               selected === '__OTHER__' ? styles.cancelOptionSelected : null,
-              pressed ? styles.pressed : null,
+              pressed ? styles.cardPressed : null,
             ]}
           >
             <Box
@@ -273,7 +286,14 @@ function CancelOrderSheet({
         {error ? <Text style={styles.cancelErrorText}>{error}</Text> : null}
         <HStack space="sm" style={styles.cancelSheetActions}>
           <Box style={styles.cancelSheetActionFlex}>
-            <Button label="Quay lại" onPress={onDismiss} variant="secondary" />
+            <Button
+              label="Quay lại"
+              onPress={() => {
+                haptic.light();
+                onDismiss();
+              }}
+              variant="secondary"
+            />
           </Box>
           <Box style={styles.cancelSheetActionFlex}>
             <Button label="Xác nhận hủy" onPress={handleConfirm} variant="destructive" />
@@ -307,6 +327,7 @@ function InvoiceSection({
     }
     setEmailError(null);
     setSent(true);
+    haptic.success();
     onSendInvoiceEmail?.(invoice.id, trimmed);
   };
 
@@ -336,7 +357,10 @@ function InvoiceSection({
 
       <Button
         label="Xem hóa đơn"
-        onPress={() => onOpenInvoice?.(invoice.id)}
+        onPress={() => {
+          haptic.light();
+          onOpenInvoice?.(invoice.id);
+        }}
         variant="secondary"
       />
 
@@ -354,6 +378,7 @@ function InvoiceSection({
               setSent(false);
             }}
             placeholder="ban@vidu.com"
+            placeholderTextColor={leopardPalette.inputPlaceholder}
             style={styles.invoiceEmailInput}
             value={email}
           />
@@ -392,6 +417,7 @@ function DriverCard({
   const initial = driverLabel.replace(/^Tài xế\s*/i, '').trim().charAt(0) || 'T';
 
   const handleCall = () => {
+    haptic.light();
     const phoneToCall = driverPhone || '0901234567';
     void Linking.openURL(`tel:${phoneToCall}`).catch(() => {
       Alert.alert('Gọi tài xế', `Số điện thoại liên hệ: ${phoneToCall}`);
@@ -399,6 +425,7 @@ function DriverCard({
   };
 
   const handleMessage = () => {
+    haptic.light();
     Alert.alert('Nhắn tin', `Gửi tin nhắn trực tiếp đến tài xế ${driverLabel}`);
   };
 
@@ -421,20 +448,20 @@ function DriverCard({
           <Pressable
             accessibilityLabel="Gọi điện cho tài xế"
             accessibilityRole="button"
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={handleCall}
-            style={({ pressed }) => [styles.driverCallBtn, pressed ? styles.pressed : null]}
+            style={({ pressed }) => [styles.driverCallBtn, pressed ? styles.cardPressed : null]}
           >
-            <IconPhone color={leopardPalette.ecoGreen} size={17} />
+            <IconPhone color={leopardPalette.ecoGreen} size={16} />
           </Pressable>
           <Pressable
             accessibilityLabel="Nhắn tin cho tài xế"
             accessibilityRole="button"
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={handleMessage}
-            style={({ pressed }) => [styles.driverMessageBtn, pressed ? styles.pressed : null]}
+            style={({ pressed }) => [styles.driverMessageBtn, pressed ? styles.cardPressed : null]}
           >
-            <IconMessage color={customerPalette.primary} size={17} />
+            <IconMessage color={customerPalette.primary} size={16} />
           </Pressable>
         </HStack>
       </HStack>
@@ -443,7 +470,7 @@ function DriverCard({
       {typeof etaDurationSeconds === 'number' && !Number.isNaN(etaDurationSeconds) ? (
         <HStack style={styles.driverEtaBar}>
           <HStack style={styles.driverEtaLeft}>
-            <IconClock color={customerPalette.primary} size={17} />
+            <IconClock color={customerPalette.primary} size={16} />
             <VStack>
               <Text style={styles.driverEtaSub}>Dự kiến giao hàng (ETA dự kiến)</Text>
               <Text style={styles.driverEtaMain}>
@@ -456,11 +483,14 @@ function DriverCard({
             <Pressable
               accessibilityLabel="Xem GPS"
               accessibilityRole="button"
-              onPress={() => onOpenTracking(orderId)}
-              style={({ pressed }) => [styles.driverGpsLink, pressed ? styles.pressed : null]}
+              onPress={() => {
+                haptic.light();
+                onOpenTracking(orderId);
+              }}
+              style={({ pressed }) => [styles.driverGpsLink, pressed ? styles.cardPressed : null]}
             >
               <Text style={styles.driverGpsLinkText}>Xem GPS</Text>
-              <IconExternalLink color={customerPalette.primary} size={13} />
+              <IconExternalLink color={customerPalette.primary} size={12} />
             </Pressable>
           ) : null}
         </HStack>
@@ -470,8 +500,8 @@ function DriverCard({
 }
 
 function TrackingPanel({
-  destinationLabel,
   destinationCoords,
+  destinationLabel,
   distanceMeters,
   driverPhone,
   etaDurationSeconds,
@@ -479,8 +509,8 @@ function TrackingPanel({
   onRetry,
   orderId,
   orderStatus,
-  originLabel,
   originCoords,
+  originLabel,
   stops,
   tracking,
   vehicleLabel,
@@ -655,6 +685,7 @@ function TrackingPanel({
 }
 
 function CustomerDetailContent({
+  isRefreshing,
   onBack,
   onCancel,
   onOpenInvoice,
@@ -662,6 +693,7 @@ function CustomerDetailContent({
   onPaymentAction,
   onPickCargoImage,
   onPrimaryAction,
+  onRefresh,
   onRetry,
   onSendInvoiceEmail,
   view,
@@ -676,11 +708,14 @@ function CustomerDetailContent({
   onOpenTracking?: (orderId: string) => void;
   onOpenInvoice?: (invoiceId: string) => void;
   onSendInvoiceEmail?: (invoiceId: string, email: string) => void;
+  onRefresh?: () => Promise<void> | void;
+  isRefreshing?: boolean;
 }>) {
   const order = view.order;
   const cancelAction = 'action' in view.cancel ? view.cancel.action : null;
   const [copied, setCopied] = useState(false);
   const [showCancelSheet, setShowCancelSheet] = useState(false);
+  const [localRefreshing, setLocalRefreshing] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -692,6 +727,7 @@ function CustomerDetailContent({
   }, []);
 
   const handleCopyOrderCode = () => {
+    haptic.selection();
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(order.reference);
     }
@@ -701,6 +737,26 @@ function CustomerDetailContent({
     }
     copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleRefresh = useCallback(async () => {
+    if (onRefresh) {
+      setLocalRefreshing(true);
+      haptic.light();
+      try {
+        await onRefresh();
+      } finally {
+        setLocalRefreshing(false);
+      }
+    } else if (onRetry) {
+      setLocalRefreshing(true);
+      haptic.light();
+      try {
+        onRetry();
+      } finally {
+        setLocalRefreshing(false);
+      }
+    }
+  }, [onRefresh, onRetry]);
 
   const isUnpaid = (order.payment.status === 'UNPAID' || order.payment.status === 'QR_CREATED')
     && order.status !== 'CANCELLED' && order.status !== 'DELIVERED';
@@ -714,8 +770,19 @@ function CustomerDetailContent({
       onBack={onBack}
       title={`Đơn ${order.reference}`}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* 1. Sticky-style Top Meta Bar (Mã đơn + nút copy 1-chạm + Badge trạng thái) */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            colors={[customerPalette.primary]}
+            onRefresh={handleRefresh}
+            refreshing={isRefreshing ?? localRefreshing}
+            tintColor={customerPalette.primary}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 1. Inset Grouped Top Meta Bar (Mã đơn + nút copy 1-chạm + Badge trạng thái) */}
         <HStack style={styles.topMetaBar}>
           <VStack style={styles.topMetaLeft}>
             <HStack style={styles.orderCodeRow}>
@@ -723,18 +790,18 @@ function CustomerDetailContent({
               <Pressable
                 accessibilityLabel="Sao chép mã đơn hàng"
                 accessibilityRole="button"
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 onPress={handleCopyOrderCode}
-                style={({ pressed }) => [styles.copyBtn, pressed ? styles.pressed : null]}
+                style={({ pressed }) => [styles.copyBtn, pressed ? styles.cardPressed : null]}
               >
                 {copied ? (
                   <HStack style={styles.copiedRow}>
-                    <IconCheck color={colors.success.text} size={13} />
+                    <IconCheck color={colors.success.text} size={12} />
                     <Text style={styles.copiedText}>Đã chép</Text>
                   </HStack>
                 ) : (
                   <HStack style={styles.copyBtnRow}>
-                    <IconCopy color={customerPalette.primary} size={13} />
+                    <IconCopy color={customerPalette.primary} size={12} />
                     <Text style={styles.copyBtnText}>Sao chép</Text>
                   </HStack>
                 )}
@@ -789,7 +856,12 @@ function CustomerDetailContent({
                   label={order.payment.action.label}
                   loadingLabel={order.payment.action.pendingLabel}
                   onPress={
-                    onPaymentAction ? () => onPaymentAction(order.payment.action!.id) : undefined
+                    onPaymentAction
+                      ? () => {
+                          haptic.light();
+                          onPaymentAction(order.payment.action!.id);
+                        }
+                      : undefined
                   }
                   variant="primary"
                 />
@@ -884,17 +956,19 @@ function CustomerDetailContent({
             vehicleLabel={order.requestedVehicleLabel}
           />
 
-          {/* 🚀 Nút liên kết chuyển tiếp sang trang Tracking toàn màn hình */}
-          {/* Chỉ hiện khi đã có tài xế nhận chuyến — ẩn với REQUESTED / no-driver */}
+          {/* Nút liên kết chuyển tiếp sang trang Tracking toàn màn hình */}
           {order.status !== 'REQUESTED' && order.tracking.kind !== 'no-driver' ? (
             <Pressable
               accessibilityHint="Mở bản đồ theo dõi GPS toàn màn hình"
               accessibilityLabel="Xem bản đồ theo dõi trực tiếp"
               accessibilityRole="button"
-              onPress={() => onOpenTracking?.(order.id)}
+              onPress={() => {
+                haptic.light();
+                onOpenTracking?.(order.id);
+              }}
               style={({ pressed }) => [
                 styles.trackingLinkBtn,
-                pressed ? styles.pressed : null,
+                pressed ? styles.cardPressed : null,
               ]}
             >
               <Box style={styles.trackingLinkIconBox}>
@@ -953,7 +1027,7 @@ function CustomerDetailContent({
             </VStack>
             <VStack style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>Người nhận</Text>
-              <Text style={styles.cargoGridValue} numberOfLines={1}>
+              <Text numberOfLines={1} style={styles.cargoGridValue}>
                 {order.route.destination.label.split(',')[0]}
               </Text>
             </VStack>
@@ -966,7 +1040,14 @@ function CustomerDetailContent({
               {order.media.mediaId ? (
                 <MediaImage mediaId={order.media.mediaId} />
               ) : onPickCargoImage ? (
-                <Button label="Tải ảnh lên" onPress={onPickCargoImage} variant="secondary" />
+                <Button
+                  label="Tải ảnh lên"
+                  onPress={() => {
+                    haptic.light();
+                    onPickCargoImage();
+                  }}
+                  variant="secondary"
+                />
               ) : (
                 <Text style={styles.helper}>Chưa có ảnh</Text>
               )}
@@ -1037,8 +1118,8 @@ function CustomerDetailContent({
 
             <Divider style={styles.heroDivider} />
 
-            <HStack style={[styles.paymentTopRow, { marginTop: 10 }]}>
-              <Text style={{ fontSize: typeScale.subheadline.fontSize, fontWeight: '600', color: customerPalette.primary }}>
+            <HStack style={[styles.paymentTopRow, { marginTop: spacing.xs }]}>
+              <Text style={styles.totalFareLabel}>
                 Tổng cước vận chuyển
               </Text>
               <Text style={styles.paymentAmount}>{order.priceLabel}</Text>
@@ -1096,7 +1177,12 @@ function CustomerDetailContent({
                   label={order.payment.action.label}
                   loadingLabel={order.payment.action.pendingLabel}
                   onPress={
-                    onPaymentAction ? () => onPaymentAction(order.payment.action!.id) : undefined
+                    onPaymentAction
+                      ? () => {
+                          haptic.light();
+                          onPaymentAction(order.payment.action!.id);
+                        }
+                      : undefined
                   }
                   variant="secondary"
                 />
@@ -1134,7 +1220,14 @@ function CustomerDetailContent({
             isLoading={act.isPending}
             label={act.label}
             loadingLabel={act.pendingLabel}
-            onPress={onPrimaryAction ? () => onPrimaryAction(act.id) : undefined}
+            onPress={
+              onPrimaryAction
+                ? () => {
+                    haptic.light();
+                    onPrimaryAction(act.id);
+                  }
+                : undefined
+            }
           />
         ))}
 
@@ -1144,7 +1237,10 @@ function CustomerDetailContent({
               disabled={cancelAction.disabled}
               isLoading={cancelAction.isPending}
               label={cancelAction.label}
-              onPress={() => setShowCancelSheet(true)}
+              onPress={() => {
+                haptic.light();
+                setShowCancelSheet(true);
+              }}
               variant="destructive"
             />
           </View>
@@ -1186,27 +1282,27 @@ export function CustomerOrderDetailScreen(props: CustomerOrderDetailScreenProps)
 
 const styles = StyleSheet.create({
   scrollContent: {
-    gap: spacing.md,
-    paddingBottom: layout.bottomNavClearance + 28,
+    gap: spacing.sm,
+    paddingBottom: layout.bottomNavClearance + spacing.lg,
   },
   section: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
+
+  // ─── Hero Progress Card (Inset Grouped) ───────────────────────
   heroCard: {
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
-    gap: 12,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    gap: spacing.sm,
+    boxShadow: '0 2px 8px rgba(11, 37, 69, 0.05)',
     elevation: 2,
   },
   heroSectionTitle: {
-    fontSize: typeScale.callout.fontSize,
+    ...typeScale.callout,
     fontWeight: '600',
     color: colors.neutral.text,
   },
@@ -1219,22 +1315,22 @@ const styles = StyleSheet.create({
   heroStatusWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   liveTagBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.success.background,
     borderColor: leopardPalette.ecoGreenSoft,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    gap: 5,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+    gap: spacing.xxs,
   },
   liveTagText: {
     color: colors.success.text,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   heroPrice: {
@@ -1244,7 +1340,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   heroDivider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     backgroundColor: colors.neutral.surfaceMuted,
   },
   heroStatsRow: {
@@ -1259,7 +1355,7 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: {
     color: colors.neutral.subtleText,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
@@ -1271,19 +1367,18 @@ const styles = StyleSheet.create({
   etaIndicatorBox: {
     marginTop: spacing.hairline,
   },
+
+  // ─── Modern Inset Grouped Card ────────────────────────────────
   modernCard: {
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     gap: spacing.sm,
     padding: spacing.md,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)',
+    elevation: 1,
   },
   cardHeader: {
     gap: spacing.hairline,
@@ -1291,7 +1386,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: colors.neutral.text,
-    fontSize: typeScale.callout.fontSize,
+    ...typeScale.callout,
     fontWeight: '600',
   },
   cardSubtitle: {
@@ -1303,7 +1398,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radius.control,
     ...iosContinuousCurve,
     paddingHorizontal: spacing.sm,
@@ -1314,202 +1409,220 @@ const styles = StyleSheet.create({
   trackingLinkIconBox: {
     width: 34,
     height: 34,
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
     backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   trackingLinkTextWrap: {
     flex: 1,
-    gap: 1,
+    gap: spacing.hairline,
   },
   trackingLinkTitle: {
     color: customerPalette.primary,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
   },
   trackingLinkSubtitle: {
     color: colors.neutral.subtleText,
-    fontSize: 11,
+    ...typeScale.caption2,
   },
+
+  // ─── Top Meta Bar (Inset Grouped) ─────────────────────────────
   topMetaBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.03)',
     elevation: 1,
   },
   topMetaLeft: {
-    gap: 3,
+    gap: spacing.hairline,
   },
   orderCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   orderCodeText: {
     color: colors.neutral.text,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '700',
-    fontFamily: 'monospace',
+    fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
   copyBtn: {
     backgroundColor: colors.neutral.surfaceMuted,
     borderColor: colors.neutral.border,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   copyBtnRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xxs,
   },
   copyBtnText: {
     color: customerPalette.primary,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   copiedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xxs,
   },
   copiedText: {
     color: colors.success.text,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   orderCreatedTime: {
     color: colors.neutral.subtleText,
-    fontSize: 11,
+    ...typeScale.caption2,
   },
   topMetaRight: {
     alignItems: 'flex-end',
   },
+
+  // ─── Urgent Payment Card ──────────────────────────────────────
   urgentPaymentCard: {
     backgroundColor: colors.warning.background,
     borderColor: colors.warning.border,
-    borderRadius: 16,
-    borderWidth: 1.5,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
     padding: spacing.md,
-    gap: 12,
-    shadowColor: colors.warning.text,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    gap: spacing.sm,
+    boxShadow: '0 3px 8px rgba(245, 158, 11, 0.08)',
     elevation: 2,
   },
   urgentPaymentTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.xs,
   },
   urgentPaymentTitleWrap: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.xs,
   },
   urgentPaymentTextWrap: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   urgentPaymentTitle: {
     color: colors.warning.text,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   urgentPaymentSub: {
     color: colors.warning.text,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
   },
   urgentPaymentAmount: {
     color: customerPalette.primary,
-    fontSize: typeScale.body.fontSize,
+    ...typeScale.body,
     fontWeight: '700',
-    fontFamily: 'monospace',
+    fontVariant: ['tabular-nums'],
   },
   urgentNoticeBox: {
-    backgroundColor: colors.warning.background,
+    backgroundColor: colors.neutral.surface,
     borderColor: colors.warning.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 8,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.xs,
   },
   urgentNoticeText: {
     color: colors.warning.text,
-    fontSize: 12,
+    ...typeScale.caption1,
   },
   urgentPaymentBtnWrap: {
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
+
+  // ─── Cargo Specs ──────────────────────────────────────────────
   cargoSpecsGrid: {
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 10,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.xs,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.xs,
   },
   cargoGridItem: {
     width: '48%',
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 8,
-    gap: 2,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.xs,
+    gap: spacing.hairline,
   },
   cargoGridLabel: {
     color: colors.neutral.subtleText,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
   cargoGridValue: {
     color: colors.neutral.text,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '600',
+  },
+
+  // ─── Driver Card ──────────────────────────────────────────────
+  driverCard: {
+    backgroundColor: colors.neutral.canvas,
+    borderColor: colors.neutral.border,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.md,
+    gap: spacing.xs,
   },
   driverMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: spacing.sm,
   },
   driverNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   driverRatingPill: {
     backgroundColor: colors.warning.background,
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xxs + 1,
+    paddingVertical: spacing.hairline,
   },
   driverRatingText: {
     color: colors.warning.text,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   driverVehicleText: {
     color: colors.neutral.subtleText,
-    fontSize: 12,
+    ...typeScale.caption1,
   },
   driverCallBtn: {
     width: 38,
@@ -1517,7 +1630,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     backgroundColor: colors.success.background,
     borderColor: colors.success.border,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1527,7 +1640,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     backgroundColor: colors.neutral.surfaceMuted,
     borderColor: colors.neutral.border,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1537,109 +1650,89 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginTop: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginTop: spacing.xs,
   },
   driverEtaLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   driverEtaSub: {
     color: colors.neutral.subtleText,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
   },
   driverEtaMain: {
     color: colors.neutral.text,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   driverGpsLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 6,
+    borderRadius: radius.pill,
   },
   driverGpsLinkText: {
     color: customerPalette.primary,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     fontWeight: '600',
-  },
-  driverCard: {
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: spacing.md,
-    gap: 6,
   },
   driverAvatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.neutral.text,
+    backgroundColor: customerPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   driverAvatarText: {
     color: colors.neutral.surface,
-    fontSize: typeScale.body.fontSize,
+    ...typeScale.headline,
     fontWeight: '700',
   },
   driverInfo: {
     flex: 1,
-    gap: 2,
+    gap: spacing.hairline,
   },
   driverName: {
     color: colors.neutral.text,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
-  },
-  driverStatusText: {
-    color: colors.neutral.subtleText,
-    fontSize: 12,
   },
   driverActions: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  driverActionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.neutral.surface,
-    borderWidth: 1,
-    borderColor: colors.neutral.subtleBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.xs,
   },
   driverText: {
     color: colors.neutral.text,
-    fontSize: 13,
+    ...typeScale.footnote,
     fontWeight: '600',
     flexShrink: 1,
   },
   body: {
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     color: colors.neutral.mutedText,
     lineHeight: 19,
     flexShrink: 1,
   },
   helper: {
-    fontSize: 12,
+    ...typeScale.caption1,
     color: colors.neutral.subtleText,
     flexShrink: 1,
   },
   freshnessRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   driverPositionStrip: {
     alignItems: 'center',
@@ -1647,7 +1740,7 @@ const styles = StyleSheet.create({
     borderColor: customerPalette.primaryBorder,
     borderRadius: radius.control,
     ...iosContinuousCurve,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xxs,
   },
@@ -1670,46 +1763,23 @@ const styles = StyleSheet.create({
   infoBanner: {
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.sm,
   },
   warningBanner: {
     backgroundColor: colors.warning.background,
     borderColor: colors.warning.border,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.sm,
   },
   warningText: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.warning.text,
     flexShrink: 1,
-  },
-  cargoSpecsBox: {
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
-    gap: 6,
-  },
-  cargoSpecRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  cargoSpecLabel: {
-    color: colors.neutral.subtleText,
-    fontSize: 12,
-    fontWeight: '600',
-    minWidth: 80,
-  },
-  cargoSpecValue: {
-    color: colors.neutral.text,
-    fontSize: typeScale.footnote.fontSize,
-    fontWeight: '600',
-    flex: 1,
   },
   mediaGrid: {
     flexDirection: 'row',
@@ -1718,8 +1788,9 @@ const styles = StyleSheet.create({
   mediaTile: {
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     flex: 1,
     gap: spacing.sm,
     minHeight: 100,
@@ -1727,16 +1798,16 @@ const styles = StyleSheet.create({
   },
   mediaIndex: {
     color: customerPalette.primary,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
   mediaLabel: {
     color: colors.neutral.subtleText,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
   paymentCardContent: {
-    gap: 12,
+    gap: spacing.sm,
   },
   paymentTopRow: {
     flexDirection: 'row',
@@ -1744,83 +1815,94 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
+  totalFareLabel: {
+    ...typeScale.subheadline,
+    fontWeight: '600',
+    color: customerPalette.primary,
+  },
   paymentAmount: {
     color: customerPalette.primary,
-    fontSize: 20,
+    ...typeScale.title3,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   paymentDetailsBox: {
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
-    gap: 6,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.xs,
+    gap: spacing.xxs,
   },
   paymentDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.xs,
   },
   paymentDetailLabel: {
     color: colors.neutral.subtleText,
-    fontSize: 12,
+    ...typeScale.caption1,
   },
   paymentDetailValue: {
     color: colors.neutral.text,
-    fontSize: typeScale.footnote.fontSize,
+    ...typeScale.footnote,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   paymentNoticeBox: {
     backgroundColor: colors.success.background,
     borderColor: leopardPalette.ecoGreenSoft,
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 10,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.xs,
   },
   paymentNoticeText: {
     color: colors.success.text,
-    fontSize: 12,
+    ...typeScale.caption1,
     lineHeight: 17,
   },
   paymentActionWrap: {
-    marginTop: 4,
+    marginTop: spacing.xxs,
   },
   invoiceEmailPrompt: {
     gap: spacing.xs,
-    marginTop: 4,
+    marginTop: spacing.xxs,
   },
   invoiceEmailInput: {
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     color: colors.neutral.text,
-    fontSize: 13,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    ...typeScale.footnote,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   notice: {
     backgroundColor: colors.warning.background,
     borderLeftColor: leopardPalette.accentYellow,
     borderLeftWidth: 4,
     padding: spacing.sm,
-    borderRadius: 10,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
   },
   cancelledReasonCard: {
     backgroundColor: colors.danger.background,
     borderColor: colors.danger.border,
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 14,
-    gap: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    padding: spacing.md,
+    gap: spacing.xxs,
   },
   cancelledReasonHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   cancelledDot: {
     width: 8,
@@ -1834,12 +1916,12 @@ const styles = StyleSheet.create({
     color: colors.danger.text,
   },
   cancelledReasonContent: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
     color: colors.danger.text,
   },
   cancelledReasonTime: {
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
     color: colors.danger.text,
     opacity: 0.8,
   },
@@ -1862,38 +1944,36 @@ const styles = StyleSheet.create({
   },
   cancelSheet: {
     backgroundColor: colors.neutral.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 34,
-    gap: 12,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    borderTopLeftRadius: radius.modal,
+    borderTopRightRadius: radius.modal,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: layout.bottomNavClearance,
+    gap: spacing.sm,
+    boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.1)',
     elevation: 8,
   },
   cancelSheetTitle: {
-    fontSize: typeScale.body.fontSize,
+    ...typeScale.headline,
     fontWeight: '700',
     color: colors.neutral.text,
   },
   cancelSheetSubtitle: {
-    fontSize: 13,
+    ...typeScale.footnote,
     color: colors.neutral.subtleText,
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   cancelOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.neutral.border,
     backgroundColor: colors.neutral.canvas,
-    gap: 12,
+    gap: spacing.sm,
   },
   cancelOptionSelected: {
     borderColor: customerPalette.primary,
@@ -1918,7 +1998,7 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primary,
   },
   cancelOptionText: {
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     color: colors.neutral.mutedText,
     flex: 1,
   },
@@ -1929,34 +2009,38 @@ const styles = StyleSheet.create({
   cancelInput: {
     backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.subtleBorder,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
-    fontSize: typeScale.footnote.fontSize,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    padding: spacing.sm,
+    ...typeScale.footnote,
     color: colors.neutral.text,
     minHeight: 70,
     textAlignVertical: 'top',
   },
   cancelErrorText: {
-    fontSize: 12,
+    ...typeScale.caption1,
     color: colors.danger.text,
     fontWeight: '600',
   },
   cancelSheetActions: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   cancelSheetActionFlex: {
     flex: 1,
   },
   cancelSection: {
     borderTopColor: colors.danger.border,
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     gap: spacing.sm,
     paddingTop: spacing.md,
   },
-  pressed: {
-    opacity: 0.85,
+
+  // ─── Emil Kowalski Active State ───────────────────────────────
+  cardPressed: {
+    transform: [{ scale: 0.985 }],
+    opacity: 0.9,
   },
 });

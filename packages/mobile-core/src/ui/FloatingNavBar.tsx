@@ -85,7 +85,7 @@ function FloatingNavBarComponent({
                 ? item.icon(isActive)
                 : renderDefaultNavIcon(item.key, isActive, resolvedAccentColor)}
               {item.badge ? (
-                <View style={styles.badge}>
+                <View style={styles.badge} testID={`nav-tab-badge-${item.key}`}>
                   <Text style={styles.badgeText}>{item.badge}</Text>
                 </View>
               ) : null}

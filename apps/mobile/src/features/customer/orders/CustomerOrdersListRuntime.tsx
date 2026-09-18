@@ -50,10 +50,14 @@ export function CustomerOrdersListRuntime({
 
   return (
     <CustomerOrdersScreen
+      isRefreshing={query.isRefetching}
       onClearFilters={() => setFilter('ALL')}
       onCreate={onCreate}
       onLoadMore={undefined}
       onOpenOrder={onOpenOrder}
+      onRefresh={async () => {
+        await query.refetch();
+      }}
       onRetry={() => query.refetch()}
       onSelectStatus={setFilter}
       view={query.data}

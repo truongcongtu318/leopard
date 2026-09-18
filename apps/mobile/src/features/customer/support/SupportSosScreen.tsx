@@ -484,6 +484,7 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
     borderWidth: 1,
     overflow: 'hidden',
+    padding: 0,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,

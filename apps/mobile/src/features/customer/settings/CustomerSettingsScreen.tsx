@@ -174,7 +174,8 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    paddingHorizontal: spacing.md,
+    overflow: 'hidden',
+    padding: 0,
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -188,6 +189,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     minHeight: 52,
+    paddingHorizontal: spacing.md,
     paddingVertical: 12,
   },
   settingRowLast: {

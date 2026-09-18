@@ -1,11 +1,12 @@
 import { Slot, usePathname, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useNotificationsBootstrap } from '../../src/features/customer/notifications/useNotificationsBootstrap';
+import { useActiveOrdersCount } from '../../src/features/customer/orders/hooks/useActiveOrdersCount';
 import { useProtectedLayout } from '../../src/navigation/role-router';
 import { useTabBarHidden } from '../../src/navigation/tabBarVisibilityStore';
-import { colors, spacing, typography, customerPalette, FloatingNavBar, type TabKey, TruckLoader } from '@leopard/mobile-core';
+import { colors, spacing, typography, customerPalette, FloatingNavBar, type NavItem, type TabKey, TruckLoader } from '@leopard/mobile-core';
 
 export default function CustomerLayout() {
   const decision = useProtectedLayout('customer');
@@ -21,6 +22,22 @@ export default function CustomerLayout() {
       router.replace(redirectTo);
     }
   }, [redirectTo, router]);
+
+  const activeOrdersCount = useActiveOrdersCount(decision.kind === 'authorized');
+
+  const navItems: readonly NavItem[] = useMemo(
+    () => [
+      { key: 'home', label: 'Trang chủ' },
+      {
+        key: 'orders',
+        label: 'Đơn hàng',
+        badge: activeOrdersCount > 0 ? activeOrdersCount : undefined,
+      },
+      { key: 'wallet', label: 'Ví' },
+      { key: 'account', label: 'Tài khoản' },
+    ],
+    [activeOrdersCount],
+  );
 
   if (decision.kind === 'loading') {
     return (
@@ -104,6 +121,7 @@ export default function CustomerLayout() {
           accentBg={customerPalette.tabActiveBg}
           accentColor={customerPalette.tabActive}
           activeTab={getActiveTab()}
+          items={navItems}
           onTabChange={handleTabChange}
         />
       ) : null}

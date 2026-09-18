@@ -4,15 +4,22 @@ import QRCode from 'react-native-qrcode-svg';
 import { WebView } from 'react-native-webview';
 
 import {
+  Badge,
   Button,
   colors,
   customerPalette,
+  haptic,
+  HStack,
   IconFileText,
   IconSecurityShield,
+  iosContinuousCurve,
   leopardPalette,
+  radius,
   ScreenScaffold,
   sessionStore,
+  spacing,
   typeScale,
+  VStack,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 
@@ -39,6 +46,7 @@ export function InvoicePreviewScreen({
   const token = sessionStore.getAccessToken();
 
   const handleOpenExternally = async () => {
+    haptic.light();
     setOpenError(null);
     try {
       const resolver =
@@ -47,6 +55,7 @@ export function InvoicePreviewScreen({
       const url = await resolver(invoiceId);
       await Linking.openURL(url);
     } catch {
+      haptic.warning();
       setOpenError('Không thể mở hóa đơn trong trình duyệt. Vui lòng thử lại.');
     }
   };
@@ -55,42 +64,55 @@ export function InvoicePreviewScreen({
 
   return (
     <ScreenScaffold title="Xem hóa đơn">
-      {/* ── Tax Compliance Double-Bezel Card (24px outer, 18px inner) ── */}
-      <View style={styles.complianceCardOuter}>
-        <View style={styles.complianceCardInner}>
-          <View style={styles.complianceTopRow}>
-            <View style={styles.complianceTitleWrap}>
-              <IconSecurityShield color={leopardPalette.ecoGreen} size={20} strokeWidth={2} />
-              <View style={styles.complianceTitleCol}>
-                <Text style={styles.complianceTitle}>Hóa đơn điện tử VAT (Thuế suất 8%)</Text>
-                <Text style={styles.complianceSubtitle}>
+      {/* ── Apple HIG E-Ticket Invoice Card ────────────────────────── */}
+      <View style={styles.ticketCard}>
+        {/* Ticket Header */}
+        <View style={styles.ticketHeader}>
+          <HStack style={styles.ticketTopRow}>
+            <HStack style={styles.ticketTitleWrap}>
+              <View style={styles.shieldBox}>
+                <IconSecurityShield color={leopardPalette.ecoGreen} size={18} strokeWidth={2} />
+              </View>
+              <VStack style={styles.ticketTitleCol}>
+                <Text style={styles.ticketTitle}>Hóa đơn điện tử VAT (Thuế suất 8%)</Text>
+                <Text style={styles.ticketSubtitle}>
                   Cục Thuế TP. Hồ Chí Minh · Tra cứu mã QR
                 </Text>
-              </View>
-            </View>
-            <View style={styles.complianceBadge}>
-              <Text style={styles.complianceBadgeText}>VAT 8%</Text>
-            </View>
-          </View>
+              </VStack>
+            </HStack>
+            <Badge action="success" size="sm" style={styles.vatBadge}>
+              <Badge.Text style={styles.vatBadgeText}>VAT 8%</Badge.Text>
+            </Badge>
+          </HStack>
+        </View>
 
-          <View style={styles.complianceDetailsRow}>
+        {/* Perforated Dashed Hairline Divider with Notch Punch Cutouts */}
+        <View style={styles.perforatedRow}>
+          <View style={styles.leftNotch} />
+          <View style={styles.dashedDivider} />
+          <View style={styles.rightNotch} />
+        </View>
+
+        {/* Ticket Body: Metadata & QR Verification */}
+        <View style={styles.ticketBody}>
+          <View style={styles.ticketDetailsRow}>
             <View
               accessibilityLabel="Tra cứu mã QR hóa đơn"
               style={styles.qrBox}
             >
               <QRCode size={56} value={qrLookupPayload} />
             </View>
-            <View style={styles.complianceMetaCol}>
-              <Text style={styles.complianceMetaText}>
+            <View style={styles.ticketMetaCol}>
+              <Text style={styles.ticketMetaText}>
                 Bên phát hành: <Text style={styles.boldText}>CÔNG TY CP LEOPARD LOGISTICS</Text>
               </Text>
-              <Text style={styles.complianceMetaText}>
+              <Text style={styles.ticketMetaText}>
                 MST: <Text style={styles.tabularBold}>0383188888</Text> · Số HĐ: <Text style={styles.tabularBold}>{invoiceId}</Text>
               </Text>
-              <Text style={styles.complianceMetaText}>
-                MST KH: <Text style={styles.tabularBold}>{customerTaxId}</Text> · Tổng: <Text style={styles.tabularBold}>{totalAmountVnd}</Text>
+              <Text style={styles.ticketMetaText}>
+                MST KH: <Text style={styles.tabularBold}>{customerTaxId}</Text> · Tổng: <Text style={styles.tabularBoldPrimary}>{totalAmountVnd}</Text>
               </Text>
-              <Text style={styles.complianceMetaSub}>
+              <Text style={styles.ticketMetaSub}>
                 Hóa đơn hợp pháp theo NĐ 123/2020/NĐ-CP và TT 78/2021/TT-BTC
               </Text>
             </View>
@@ -98,19 +120,30 @@ export function InvoicePreviewScreen({
         </View>
       </View>
 
-      {/* ── Action Toolbar (Touch targets >= 44x44px) ───────────────── */}
+      {/* ── Action Toolbar (Touch targets >= 44x44pt) ───────────────── */}
       <View style={styles.toolbar}>
-        <Button label="Quay lại" onPress={onBack} variant="secondary" />
+        <Button
+          label="Quay lại"
+          onPress={() => {
+            haptic.light();
+            onBack();
+          }}
+          variant="secondary"
+        />
         <Pressable
           accessibilityLabel="Tải hóa đơn VAT PDF"
           accessibilityRole="button"
           onPress={() => void handleOpenExternally()}
-          style={({ pressed }) => [styles.downloadPdfBtn, pressed ? styles.pressed : null]}
+          style={({ pressed }) => [styles.downloadPdfBtn, pressed ? styles.btnPressed : null]}
         >
-          <IconFileText color={colors.brand.text} size={18} strokeWidth={2} />
+          <IconFileText color={colors.neutral.surface} size={18} strokeWidth={2} />
           <Text style={styles.downloadPdfBtnText}>Tải hóa đơn VAT PDF</Text>
         </Pressable>
-        <Button label="Mở trong trình duyệt" onPress={() => void handleOpenExternally()} variant="secondary" />
+        <Button
+          label="Mở trong trình duyệt"
+          onPress={() => void handleOpenExternally()}
+          variant="secondary"
+        />
       </View>
       {openError ? <Text style={styles.errorText}>{openError}</Text> : null}
 
@@ -127,99 +160,152 @@ export function InvoicePreviewScreen({
 }
 
 const styles = StyleSheet.create({
-  // ── Double-Bezel Card ─────────────────────────────
-  complianceCardOuter: {
+  // ─── E-Ticket Card ────────────────────────────────
+  ticketCard: {
     backgroundColor: colors.neutral.surface,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.operational.inkPillBg,
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
-    padding: 12,
-    shadowColor: colors.neutral.text,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  complianceCardInner: {
-    backgroundColor: colors.neutral.canvas,
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.neutral.border,
-    padding: 14,
-    gap: 12,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+    boxShadow: '0 4px 16px rgba(11, 37, 69, 0.06)',
+    elevation: 2,
+    overflow: 'hidden',
   },
-  complianceTopRow: {
+  ticketHeader: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  ticketTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.xs,
   },
-  complianceTitleWrap: {
+  ticketTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
     flex: 1,
   },
-  complianceTitleCol: {
-    flex: 1,
+  shieldBox: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    backgroundColor: colors.success.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  complianceTitle: {
+  ticketTitleCol: {
+    flex: 1,
+    gap: spacing.hairline,
+  },
+  ticketTitle: {
     color: colors.neutral.text,
-    fontSize: typeScale.subheadline.fontSize,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
-  complianceSubtitle: {
+  ticketSubtitle: {
     color: colors.neutral.subtleText,
-    fontSize: typeScale.caption1.fontSize,
-    marginTop: 1,
+    ...typeScale.caption1,
   },
-  complianceBadge: {
+  vatBadge: {
     backgroundColor: colors.success.background,
     borderColor: colors.success.border,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
-  complianceBadgeText: {
+  vatBadgeText: {
     color: colors.success.text,
-    fontSize: 11,
+    ...typeScale.caption2,
     fontWeight: '600',
   },
-  complianceDetailsRow: {
+
+  // ─── Perforated Dashed Divider with Notches ───────
+  perforatedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.neutral.surface,
-    borderRadius: 14,
-    borderWidth: 1,
+    height: 18,
+    marginVertical: spacing.xxs,
+  },
+  leftNotch: {
+    width: 10,
+    height: 18,
+    borderTopRightRadius: 9,
+    borderBottomRightRadius: 9,
+    backgroundColor: colors.neutral.canvas,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.neutral.border,
-    padding: 10,
+    borderLeftWidth: 0,
+    marginLeft: -StyleSheet.hairlineWidth,
+  },
+  dashedDivider: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    borderStyle: 'dashed',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.subtleBorder,
+    marginHorizontal: spacing.xs,
+  },
+  rightNotch: {
+    width: 10,
+    height: 18,
+    borderTopLeftRadius: 9,
+    borderBottomLeftRadius: 9,
+    backgroundColor: colors.neutral.canvas,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.border,
+    borderRightWidth: 0,
+    marginRight: -StyleSheet.hairlineWidth,
+  },
+
+  // ─── Ticket Body ──────────────────────────────────
+  ticketBody: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.xxs,
+  },
+  ticketDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.neutral.canvas,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.border,
+    padding: spacing.sm,
   },
   qrBox: {
     backgroundColor: colors.neutral.surface,
-    padding: 6,
-    borderRadius: 8,
-    borderWidth: 1,
+    padding: spacing.xxs,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.neutral.subtleBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  complianceMetaCol: {
+  ticketMetaCol: {
     flex: 1,
-    gap: 3,
+    gap: spacing.hairline + 1,
   },
-  complianceMetaText: {
+  ticketMetaText: {
     color: colors.neutral.text,
-    fontSize: typeScale.caption1.fontSize,
+    ...typeScale.caption1,
+    lineHeight: 16,
   },
-  complianceMetaSub: {
+  ticketMetaSub: {
     color: colors.neutral.subtleText,
-    fontSize: typeScale.caption2.fontSize,
+    ...typeScale.caption2,
     fontStyle: 'italic',
-    marginTop: 2,
+    marginTop: spacing.hairline,
   },
   boldText: {
     fontWeight: '700',
@@ -230,49 +316,53 @@ const styles = StyleSheet.create({
     color: colors.neutral.text,
     fontVariant: ['tabular-nums'],
   },
+  tabularBoldPrimary: {
+    fontWeight: '700',
+    color: customerPalette.primary,
+    fontVariant: ['tabular-nums'],
+  },
 
-  // ── Toolbar ───────────────────────────────────────
+  // ─── Toolbar ───────────────────────────────────────
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    gap: spacing.xs,
     backgroundColor: colors.neutral.surface,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.neutral.surfaceMuted,
   },
   downloadPdfBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: spacing.xs,
     backgroundColor: customerPalette.primary,
     minHeight: 44,
     minWidth: 44,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.2)',
     elevation: 2,
   },
   downloadPdfBtnText: {
-    color: colors.brand.text,
-    fontSize: 12,
+    color: colors.neutral.surface,
+    ...typeScale.caption1,
     fontWeight: '600',
   },
-  pressed: {
-    opacity: 0.85,
+  btnPressed: {
+    transform: [{ scale: 0.985 }],
+    opacity: 0.9,
   },
   errorText: {
     color: colors.danger.text,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    fontSize: 12,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xs,
+    ...typeScale.caption1,
   },
   webview: {
     flex: 1,

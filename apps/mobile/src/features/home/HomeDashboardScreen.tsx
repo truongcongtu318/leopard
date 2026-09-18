@@ -613,11 +613,11 @@ export function HomeDashboardScreen({
   // Hide the home tab bar while the booking flow is active (dropoff picked or full booking sheet open).
   // Single bottom action (action bar CTA) owns the thumb zone per iOS HIG.
   useEffect(() => {
-    tabBarVisibilityStore.setHidden(isFullBookingMode && !activeShipment);
+    tabBarVisibilityStore.setHidden(isFullBookingMode);
     return () => {
       tabBarVisibilityStore.setHidden(false);
     };
-  }, [isFullBookingMode, activeShipment]);
+  }, [isFullBookingMode]);
 
   const handleAddStop = useCallback(() => {
     if (stops.length >= 3) return;
@@ -1580,53 +1580,6 @@ export function HomeDashboardScreen({
               </View>
             )}
           </View>
-
-          {/* 2. Active Shipment / Tracking Capsule (testID="home-active-shipments") */}
-          {activeShipment ? (
-            <View style={styles.section} testID="home-active-shipments">
-              <View style={styles.sectionHeaderRow}>
-                <View style={styles.sectionTitleWithBadge}>
-                  <View style={styles.liveIndicatorDotActive} />
-                  <Text style={styles.sectionLabel}>Đang vận chuyển</Text>
-                </View>
-                <View style={styles.liveTagBadge}><Text style={styles.liveTagText}>Trực tiếp</Text></View>
-              </View>
-
-              <Pressable
-                accessibilityHint="Mở theo dõi lộ trình"
-                accessibilityLabel={`Chuyến đang vận chuyển từ ${activeShipment.origin} đến ${activeShipment.destination}`}
-                accessibilityRole="button" onPress={() => onOpenActiveOrder?.(activeShipment.orderId)}
-                style={({ pressed }) => [styles.activeCard, pressed && styles.activeCardPressed]}
-              >
-                <View style={styles.activeTop}>
-                  <StatusBadge domain="order" status={activeShipment.status} />
-                  {activeShipment.etaMinutes !== undefined ? (
-                    <View style={styles.etaPill} testID="active-shipment-eta-pill">
-                      <IconClock color={customerPalette.primary} size={14} />
-                      <Text style={styles.etaText}>ETA dự kiến {activeShipment.etaMinutes} phút</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <View style={styles.activeRouteContainer}>
-                  <RouteSpine
-                    destination={{ id: 'active-dest', label: activeShipment.destination }}
-                    origin={{ id: 'active-origin', label: activeShipment.origin }} stops={[]}
-                  />
-                </View>
-                <View style={styles.activeMeta}>
-                  <View style={styles.activeDriverBox}>
-                    <IconRoleDriver color={customerPalette.primary} size={16} />
-                    <Text numberOfLines={1} style={styles.driverText}>
-                      {activeShipment.cargoNote ? `${activeShipment.cargoNote} · ` : ''}
-                      {activeShipment.driverName ?? 'Chưa có tài xế'}
-                      {activeShipment.plate ? <Text style={styles.plateText}> · {activeShipment.plate}</Text> : null}
-                    </Text>
-                  </View>
-                  <View style={styles.activeTrackPill}><Text style={styles.trackText}>Theo dõi →</Text></View>
-                </View>
-              </Pressable>
-            </View>
-          ) : null}
 
           <View
             style={{ height: isFullBookingMode ? 140 : bottomNavPadding }}

@@ -1,37 +1,48 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import {
+  AppText,
   Badge,
   Box,
   Card,
-  HStack,
-  IconCheck,
-  IconChevron,
-  IconEye,
-  IconEyeOff,
-  IconQrPayment,
-  IconSecurityShield,
-  IconTxPayment,
-  IconTxRefund,
-  IconWallet,
-  ScreenScaffold,
-  Spinner,
-  VStack,
   colors,
   control,
   customerPalette,
   haptic,
   hitSlop,
   httpClient,
+  IconCheck,
+  IconChevron,
+  IconClose,
+  IconEye,
+  IconEyeOff,
+  IconPlus,
+  IconQrPayment,
+  IconSecurityShield,
+  IconTxPayment,
+  IconTxRefund,
+  IconTxTopup,
+  IconWallet,
   iosContinuousCurve,
   layout,
   leopardElevation,
   leopardPalette,
   radius,
+  ScreenScaffold,
   spacing,
+  Spinner,
   typeScale,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter, formatOrderReference, formatVndPrice } from '../orders/adapter';
@@ -84,6 +95,7 @@ export function CustomerWalletScreen({
   const port = useMemo(() => ordersPort ?? createCustomerHttpAdapter(), [ordersPort]);
   const [showBalance, setShowBalance] = useState(true);
   const [activeFilter, setActiveFilter] = useState<EscrowFilterType>('ALL');
+  const [activeActionModal, setActiveActionModal] = useState<'topup' | 'withdraw' | null>(null);
 
   const {
     data: escrowItems = [],
@@ -225,7 +237,11 @@ export function CustomerWalletScreen({
   return (
     <ScreenScaffold
       hasFloatingNavBar
-      onBack={() => router.back()}
+      onBack={() => {
+        haptic.selection();
+        router.back();
+      }}
+      subtitle="Ký quỹ an toàn LEOPARD Escrow"
       title="Lịch sử ký quỹ & thanh toán"
     >
       <ScrollView
@@ -235,22 +251,26 @@ export function CustomerWalletScreen({
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* 1. Thẻ Tổng Ký Quỹ Thật (Escrow Pool Card) */}
+        {/* 1. Thẻ Bento Số Dư Ví Chuẩn Apple Wallet (Midnight Navy #0B2545) */}
         <Card style={styles.balanceCard}>
-          <HStack style={styles.cardTopRow}>
-            <HStack style={styles.cardHeaderBrand}>
-              <IconWallet color={customerPalette.surfaceWhite} size={16} />
+          {/* Header thẻ: Thương hiệu & Bảo chứng an toàn */}
+          <View style={styles.cardTopRow}>
+            <View style={styles.cardHeaderBrand}>
+              <View style={styles.walletIconCircle}>
+                <IconWallet color={customerPalette.surfaceWhite} size={18} />
+              </View>
               <Text style={styles.cardHeaderTitle}>Ký quỹ an toàn</Text>
-            </HStack>
+            </View>
             <Badge action="success" size="sm" style={styles.securityBadge}>
               <IconSecurityShield color={colors.success.text} size={14} />
               <Badge.Text style={styles.securityBadgeText}>Bảo đảm 100%</Badge.Text>
             </Badge>
-          </HStack>
+          </View>
 
-          <VStack style={styles.balanceBody}>
+          {/* Thân thẻ: Số dư lớn typeScale.largeTitle màu trắng font tabular-nums */}
+          <View style={styles.balanceBody}>
             <Text style={styles.balanceEyebrow}>Tổng tiền ký quỹ theo đơn</Text>
-            <HStack style={styles.amountRow}>
+            <View style={styles.amountRow}>
               <Text style={styles.balanceAmount}>
                 {showBalance ? formatVndPrice(totalEscrowed) : '•••••••• ₫'}
               </Text>
@@ -273,26 +293,65 @@ export function CustomerWalletScreen({
                   <IconEyeOff color={customerPalette.surfaceWhite} size={18} />
                 )}
               </Pressable>
-            </HStack>
-          </VStack>
+            </View>
+          </View>
 
-          {/* Card Meta Footer */}
-          <HStack style={styles.cardFooter}>
-            <HStack style={styles.cardFooterLeft}>
-              <IconQrPayment color={customerPalette.surfaceWhite} size={14} />
+          {/* Các nút hành động Capsule nổi bật (Nạp tiền / Rút tiền) */}
+          <View style={styles.capsuleActionsRow}>
+            <Pressable
+              accessibilityLabel="Nạp tiền"
+              accessibilityRole="button"
+              onPress={() => {
+                haptic.light();
+                setActiveActionModal('topup');
+              }}
+              style={({ pressed }) => [
+                styles.topupCapsuleBtn,
+                pressed && styles.capsuleBtnPressed,
+              ]}
+            >
+              <View style={styles.capsuleIconBoxPrimary}>
+                <IconPlus color={customerPalette.primary} size={15} strokeWidth={2.5} />
+              </View>
+              <Text style={styles.topupCapsuleText}>Nạp tiền</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel="Rút tiền"
+              accessibilityRole="button"
+              onPress={() => {
+                haptic.light();
+                setActiveActionModal('withdraw');
+              }}
+              style={({ pressed }) => [
+                styles.withdrawCapsuleBtn,
+                pressed && styles.capsuleBtnPressed,
+              ]}
+            >
+              <View style={styles.capsuleIconBoxGlass}>
+                <IconTxRefund color={customerPalette.surfaceWhite} size={15} />
+              </View>
+              <Text style={styles.withdrawCapsuleText}>Rút tiền</Text>
+            </Pressable>
+          </View>
+
+          {/* Footer thẻ: Thông tin đối soát VietQR & Số lượng đơn */}
+          <View style={styles.cardFooter}>
+            <View style={styles.cardFooterLeft}>
+              <IconQrPayment color="rgba(255, 255, 255, 0.85)" size={15} />
               <Text numberOfLines={1} style={styles.cardFooterNapas}>
                 Thanh toán an toàn qua VietQR
               </Text>
-            </HStack>
-            <Box style={styles.cardFooterBadge}>
+            </View>
+            <View style={styles.cardFooterBadge}>
               <Text numberOfLines={1} style={styles.cardFooterNumber}>
                 {escrowItems.length} giao dịch đơn
               </Text>
-            </Box>
-          </HStack>
+            </View>
+          </View>
         </Card>
 
-        {/* 2. Lịch Sử Ký Quỹ & Thanh Toán Theo Đơn */}
+        {/* 2. Lịch Sử Biến Động Số Dư: Inset Grouped List chuẩn iOS Settings */}
         <View style={styles.historySection}>
           <View style={styles.historyHeaderRow}>
             <Text style={styles.sectionLabel}>Lịch sử ký quỹ theo đơn</Text>
@@ -308,55 +367,60 @@ export function CustomerWalletScreen({
               const active = activeFilter === tab.id;
               const count = filterCounts[tab.id];
               return (
-                <Pressable
-                  accessibilityLabel={tab.label}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
+                <Animated.View
                   key={tab.id}
-                  onPress={() => {
-                    haptic.selection();
-                    setActiveFilter(tab.id);
-                  }}
-                  style={({ pressed }) => [
-                    styles.filterChip,
-                    active ? styles.filterChipActive : null,
-                    pressed ? styles.pressed : null,
-                  ]}
+                  layout={LinearTransition.springify().damping(20).stiffness(240)}
                 >
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      active ? styles.filterChipTextActive : null,
+                  <Pressable
+                    accessibilityLabel={tab.label}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    onPress={() => {
+                      haptic.selection();
+                      setActiveFilter(tab.id);
+                    }}
+                    style={({ pressed }) => [
+                      styles.filterChip,
+                      active && styles.filterChipActive,
+                      pressed && styles.filterChipPressed,
                     ]}
                   >
-                    {tab.label}
-                  </Text>
-                  {count > 0 ? (
-                    <Badge
-                      action={active ? 'info' : 'muted'}
-                      size="sm"
-                      style={[styles.filterBadge, active && styles.filterBadgeActive]}
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        active && styles.filterChipTextActive,
+                      ]}
                     >
-                      <Badge.Text
-                        style={[
-                          styles.filterBadgeText,
-                          active && styles.filterBadgeTextActive,
-                        ]}
+                      {tab.label}
+                    </Text>
+                    {count > 0 ? (
+                      <Badge
+                        action={active ? 'info' : 'muted'}
+                        size="sm"
+                        style={[styles.filterBadge, active && styles.filterBadgeActive]}
                       >
-                        {count}
-                      </Badge.Text>
-                    </Badge>
-                  ) : null}
-                </Pressable>
+                        <Badge.Text
+                          style={[
+                            styles.filterBadgeText,
+                            active && styles.filterBadgeTextActive,
+                          ]}
+                        >
+                          {count}
+                        </Badge.Text>
+                      </Badge>
+                    ) : null}
+                  </Pressable>
+                </Animated.View>
               );
             })}
           </ScrollView>
 
+          {/* Nội dung danh sách Inset Grouped List */}
           {isLoading ? (
-            <VStack space="xs" style={styles.loadingContainer}>
-              <Spinner color={colors.brand.primary} size="small" />
+            <View style={styles.loadingContainer}>
+              <Spinner color={customerPalette.primary} size="small" />
               <Text style={styles.loadingText}>Đang tải lịch sử ký quỹ...</Text>
-            </VStack>
+            </View>
           ) : isError ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>Không thể tải dữ liệu</Text>
@@ -380,16 +444,33 @@ export function CustomerWalletScreen({
               </Text>
             </View>
           ) : (
-            <View style={styles.historyList}>
-              {filteredItems.map((item) => {
+            <View style={styles.insetGroupedCard}>
+              {filteredItems.map((item, index) => {
+                const isLast = index === filteredItems.length - 1;
                 const isRefund = item.status === 'REFUNDED';
                 const badgeStyle = getStatusBadgeStyle(item.status);
                 const canPayNow = item.status === 'PENDING';
 
                 return (
-                  <View key={item.id} style={styles.txRow}>
-                    <View style={styles.txMainCol}>
-                      <View style={styles.txTopMetaRow}>
+                  <View key={item.id} style={styles.insetRowWrap}>
+                    <Pressable
+                      accessibilityLabel={`${item.title}, ${formatVndPrice(item.amount)}, ${item.statusLabel}`}
+                      accessibilityRole="button"
+                      onPress={() => {
+                        haptic.selection();
+                        if (canPayNow) {
+                          router.push(`/customer/orders/checkout/${item.orderId}`);
+                        } else {
+                          router.push(`/customer/orders/detail/${item.orderId}`);
+                        }
+                      }}
+                      style={({ pressed }) => [
+                        styles.insetRowItem,
+                        pressed && styles.insetRowItemPressed,
+                      ]}
+                    >
+                      {/* Cột trái (flex: 1): Icon 36x36pt + Tiêu đề + Ngày/Mã đơn */}
+                      <View style={styles.leftCol}>
                         <View
                           style={[
                             styles.txIconBox,
@@ -397,9 +478,9 @@ export function CustomerWalletScreen({
                           ]}
                         >
                           {isRefund ? (
-                            <IconTxRefund color={leopardPalette.ecoGreen} size={20} />
+                            <IconTxRefund color={colors.success.text} size={18} />
                           ) : (
-                            <IconTxPayment color={customerPalette.textMutedSlate} size={20} />
+                            <IconTxPayment color={customerPalette.primary} size={18} />
                           )}
                         </View>
 
@@ -416,11 +497,14 @@ export function CustomerWalletScreen({
                             </View>
                           </View>
                         </View>
+                      </View>
 
-                        <View style={styles.txAmountCol}>
-                          <Text style={styles.txAmount}>
-                            {formatVndPrice(item.amount)}
-                          </Text>
+                      {/* Cột phải (alignItems: 'flex-end'): Số tiền cước + Status / Action Pill */}
+                      <View style={styles.rightCol}>
+                        <AppText style={styles.txAmount}>
+                          {formatVndPrice(item.amount)}
+                        </AppText>
+                        <View style={styles.statusActionRow}>
                           <View
                             style={[
                               styles.statusBadge,
@@ -439,26 +523,31 @@ export function CustomerWalletScreen({
                               {item.statusLabel}
                             </Text>
                           </View>
+
+                          {canPayNow ? (
+                            <Pressable
+                              accessibilityLabel={`Thanh toán ngay cho đơn ${item.orderReference}`}
+                              accessibilityRole="button"
+                              hitSlop={hitSlop(28, 44)}
+                              onPress={(e) => {
+                                haptic.light();
+                                router.push(`/customer/orders/checkout/${item.orderId}`);
+                              }}
+                              style={({ pressed }) => [
+                                styles.payNowPill,
+                                pressed && styles.payNowPillPressed,
+                              ]}
+                            >
+                              <IconQrPayment color={customerPalette.surfaceWhite} size={12} />
+                              <Text style={styles.payNowPillText}>Thanh toán ngay</Text>
+                            </Pressable>
+                          ) : null}
                         </View>
                       </View>
+                    </Pressable>
 
-                      {canPayNow ? (
-                        <View style={styles.txActionRow}>
-                          <Pressable
-                            accessibilityLabel={`Thanh toán ngay cho đơn ${item.orderReference}`}
-                            accessibilityRole="button"
-                            onPress={() => router.push(`/customer/orders/checkout/${item.orderId}`)}
-                            style={({ pressed }) => [
-                              styles.payNowBtn,
-                              pressed && styles.pressed,
-                            ]}
-                          >
-                            <IconQrPayment color={customerPalette.surfaceWhite} size={16} />
-                            <Text style={styles.payNowBtnText}>Thanh toán ngay</Text>
-                          </Pressable>
-                        </View>
-                      ) : null}
-                    </View>
+                    {/* Hairline Inset Divider (thụt lề 56pt chuẩn iOS Settings) */}
+                    {!isLast && <View style={styles.insetSeparator} />}
                   </View>
                 );
               })}
@@ -466,6 +555,73 @@ export function CustomerWalletScreen({
           )}
         </View>
       </ScrollView>
+
+      {/* Modal hướng dẫn Nạp tiền / Rút tiền */}
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setActiveActionModal(null)}
+        transparent={true}
+        visible={Boolean(activeActionModal)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.actionModalCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalHeaderTitle}>
+                {activeActionModal === 'topup' ? 'Nạp tiền ký quỹ' : 'Rút tiền ký quỹ'}
+              </Text>
+              <Pressable
+                accessibilityLabel="Đóng"
+                accessibilityRole="button"
+                onPress={() => setActiveActionModal(null)}
+                style={styles.modalCloseBtn}
+              >
+                <IconClose color={customerPalette.textSlateDark} size={18} />
+              </Pressable>
+            </View>
+
+            <View style={styles.modalContentBody}>
+              {activeActionModal === 'topup' ? (
+                <>
+                  <View style={styles.modalIconWrap}>
+                    <IconQrPayment color={customerPalette.primary} size={36} />
+                  </View>
+                  <Text style={styles.modalBodyTitle}>Nạp tiền tự động qua VietQR</Text>
+                  <Text style={styles.modalBodyDesc}>
+                    Hệ thống ký quỹ LEOPARD Escrow tự động gạch nợ tức thì khi bạn thanh toán cước chuyến đi qua VietQR Napas 24/7.
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setActiveActionModal(null);
+                      router.push('/customer/orders/new');
+                    }}
+                    style={styles.modalPrimaryBtn}
+                  >
+                    <Text style={styles.modalPrimaryBtnText}>Tạo đơn & Ký quỹ</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <View style={[styles.modalIconWrap, styles.modalIconWrapGreen]}>
+                    <IconSecurityShield color={colors.success.text} size={36} />
+                  </View>
+                  <Text style={styles.modalBodyTitle}>Hoàn cọc bảo đảm 100%</Text>
+                  <Text style={styles.modalBodyDesc}>
+                    Khoản tiền ký quỹ sẽ được tự động hoàn về tài khoản ngân hàng của bạn trong vòng 2 phút khi đơn hàng bị hủy hoặc không tìm được xe phù hợp.
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => setActiveActionModal(null)}
+                    style={styles.modalPrimaryBtn}
+                  >
+                    <Text style={styles.modalPrimaryBtnText}>Đã hiểu</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenScaffold>
   );
 }
@@ -477,19 +633,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     gap: spacing.md,
-    paddingBottom: layout.bottomNavClearance + spacing.xl,
+    paddingTop: spacing.xs,
+    paddingBottom: 110,
   },
   balanceCard: {
     backgroundColor: customerPalette.primary,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.16)',
     borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
     gap: spacing.md,
     padding: spacing.md,
-    ...leopardElevation.modal,
+    paddingVertical: spacing.lg,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
+    elevation: 8,
     position: 'relative',
-    overflow: 'hidden',
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -504,29 +665,43 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  walletIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cardHeaderTitle: {
     color: customerPalette.surfaceWhite,
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   securityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xxs,
     flexShrink: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
   },
   securityBadgeText: {
-    color: colors.success.text,
+    color: customerPalette.surfaceWhite,
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   balanceBody: {
     gap: spacing.xxs,
+    marginTop: spacing.xxs,
   },
   balanceEyebrow: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    ...typeScale.caption2,
+    color: 'rgba(255, 255, 255, 0.72)',
+    ...typeScale.caption1,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   amountRow: {
     flexDirection: 'row',
@@ -535,28 +710,94 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     color: customerPalette.surfaceWhite,
-    ...typeScale.title1,
-    fontWeight: '700',
+    ...typeScale.largeTitle,
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.6,
   },
   eyeToggleBtn: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   eyeToggleBtnPressed: {
-    opacity: 0.7,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    opacity: 0.75,
+    transform: [{ scale: 0.95 }],
+  },
+  // Capsule Buttons
+  capsuleActionsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  topupCapsuleBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.pill,
+    height: 44,
+    paddingHorizontal: spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  topupCapsuleText: {
+    color: customerPalette.primary,
+    ...typeScale.subheadline,
+    fontWeight: '700',
+  },
+  withdrawCapsuleBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    height: 44,
+    paddingHorizontal: spacing.md,
+  },
+  withdrawCapsuleText: {
+    color: customerPalette.surfaceWhite,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  capsuleIconBoxPrimary: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  capsuleIconBoxGlass: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  capsuleBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+    borderTopColor: 'rgba(255, 255, 255, 0.14)',
     paddingTop: spacing.sm,
     gap: spacing.xs,
   },
@@ -568,13 +809,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   cardFooterNapas: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.85)',
     ...typeScale.caption1,
     fontWeight: '500',
   },
   cardFooterBadge: {
     flexShrink: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xxs,
     borderRadius: radius.cardSm,
@@ -582,7 +823,7 @@ const styles = StyleSheet.create({
   cardFooterNumber: {
     color: customerPalette.surfaceWhite,
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
 
@@ -597,9 +838,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.hairline,
   },
   sectionLabel: {
-    color: colors.neutral.text,
+    color: customerPalette.textSlateDark,
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   filterTabsRow: {
     flexDirection: 'row',
@@ -613,11 +855,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.pill,
-    ...iosContinuousCurve,
-    backgroundColor: colors.neutral.surfaceMuted,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
   },
   filterChipActive: {
     backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
+  },
+  filterChipPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   filterChipText: {
     ...typeScale.footnote,
@@ -625,24 +873,24 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: customerPalette.surfaceWhite,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   filterBadge: {
     minWidth: 20,
     height: 18,
     borderRadius: radius.pill,
-    backgroundColor: customerPalette.surfaceWhite,
+    backgroundColor: colors.neutral.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xxs,
     marginLeft: spacing.xs,
   },
   filterBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   filterBadgeText: {
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
     color: customerPalette.textMutedSlate,
   },
@@ -672,13 +920,14 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...typeScale.subheadline,
-    fontWeight: '600',
-    color: colors.neutral.text,
+    fontWeight: '700',
+    color: customerPalette.textSlateDark,
   },
   emptySubtitle: {
     ...typeScale.caption1,
     color: customerPalette.textSubtle,
     textAlign: 'center',
+    lineHeight: 18,
   },
   retryBtn: {
     marginTop: spacing.xs,
@@ -696,115 +945,234 @@ const styles = StyleSheet.create({
     ...typeScale.footnote,
     fontWeight: '600',
   },
-  historyList: {
-    gap: spacing.sm,
-  },
-  txRow: {
+
+  /* Inset Grouped List chuẩn iOS Settings */
+  insetGroupedCard: {
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    padding: spacing.md,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    ...leopardElevation.subtle,
+    overflow: 'hidden',
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  txMainCol: {
+  insetRowWrap: {
+    backgroundColor: customerPalette.surfaceWhite,
+  },
+  insetRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
-  txTopMetaRow: {
+  insetRowItemPressed: {
+    backgroundColor: 'rgba(11, 37, 69, 0.04)',
+    transform: [{ scale: 0.99 }],
+    opacity: 0.96,
+  },
+  leftCol: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    minWidth: 0,
   },
   txIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.control,
+    width: 36,
+    height: 36,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   txIconBoxPayment: {
-    backgroundColor: colors.neutral.surfaceMuted,
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
   },
   txIconBoxRefund: {
-    backgroundColor: colors.success.background,
+    backgroundColor: 'rgba(52, 199, 89, 0.12)',
   },
   txMeta: {
     flex: 1,
-    gap: spacing.xxs,
+    minWidth: 0,
+    gap: 3,
   },
   txTitle: {
     ...typeScale.subheadline,
     fontWeight: '600',
-    color: colors.neutral.text,
+    color: customerPalette.textSlateDark,
   },
   txSubRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 6,
+    flexWrap: 'wrap',
   },
   txDate: {
     ...typeScale.caption2,
-    color: customerPalette.offlineGray,
+    color: customerPalette.textSubtle,
   },
   orderRefBadge: {
     backgroundColor: colors.neutral.surfaceMuted,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
     borderRadius: radius.cardSm,
   },
   orderRefBadgeText: {
     ...typeScale.caption2,
-    fontWeight: '600',
-    color: customerPalette.textMutedSlate,
+    fontWeight: '700',
+    color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
-  txAmountCol: {
+  rightCol: {
     alignItems: 'flex-end',
-    gap: spacing.xxs,
+    justifyContent: 'center',
+    gap: 4,
+    flexShrink: 0,
   },
   txAmount: {
     ...typeScale.headline,
     fontWeight: '700',
-    color: colors.neutral.text,
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.2,
+  },
+  statusActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   statusBadge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxs,
-    borderRadius: radius.cardSm,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
     borderWidth: 1,
   },
   statusBadgeText: {
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  txActionRow: {
-    borderTopWidth: 1,
-    borderTopColor: customerPalette.cardBorder,
-    paddingTop: spacing.sm,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  payNowBtn: {
+  payNowPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
+    gap: 4,
     backgroundColor: customerPalette.primary,
-    minHeight: control.minimumTouchHeight,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.control,
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  payNowBtnText: {
+  payNowPillPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
+  },
+  payNowPillText: {
     color: customerPalette.surfaceWhite,
-    ...typeScale.subheadline,
-    fontWeight: '600',
+    ...typeScale.caption2,
+    fontWeight: '700',
+  },
+  insetSeparator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: customerPalette.cardBorder,
+    marginLeft: 56, // Thụt lề bằng chiều rộng icon 36 + gap 12 + lề
   },
   pressed: {
     opacity: 0.8,
+  },
+
+  /* Action Modal */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(11, 37, 69, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  actionModalCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.modal,
+    ...iosContinuousCurve,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 340,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.24,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  modalHeaderTitle: {
+    ...typeScale.headline,
+    fontWeight: '700',
+    color: customerPalette.textSlateDark,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.neutral.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalContentBody: {
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  modalIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  modalIconWrapGreen: {
+    backgroundColor: colors.success.background,
+  },
+  modalBodyTitle: {
+    ...typeScale.headline,
+    fontWeight: '700',
+    color: customerPalette.textSlateDark,
+    textAlign: 'center',
+  },
+  modalBodyDesc: {
+    ...typeScale.subheadline,
+    color: customerPalette.textSubtle,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  modalPrimaryBtn: {
+    width: '100%',
+    height: 48,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    backgroundColor: customerPalette.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalPrimaryBtnText: {
+    color: customerPalette.surfaceWhite,
+    ...typeScale.subheadline,
+    fontWeight: '700',
   },
 });

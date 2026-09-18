@@ -20,6 +20,7 @@ import {
   VStack,
   colors,
   driverPrimitives,
+  haptic,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -41,6 +42,9 @@ export type HistoryTripItem = Readonly<{
   hasProof: boolean;
   signerName?: string;
   vehicleLabel?: string;
+  tipAmount?: number;
+  rating?: number;
+  durationLabel?: string;
 }>;
 
 export type DriverHistoryScreenProps = Readonly<{
@@ -135,8 +139,15 @@ export function DriverHistoryScreen({
             accessibilityLabel="Lọc tất cả chuyến xe"
             accessibilityRole="button"
             accessibilityState={{ selected: dateFilter === 'ALL' }}
-            onPress={() => setDateFilter('ALL')}
-            style={[styles.segmentBtn, dateFilter === 'ALL' ? styles.segmentBtnActive : null]}
+            onPress={() => {
+              haptic.selection();
+              setDateFilter('ALL');
+            }}
+            style={({ pressed }) => [
+              styles.segmentBtn,
+              dateFilter === 'ALL' ? styles.segmentBtnActive : null,
+              pressed ? styles.pressedSegment : null,
+            ]}
           >
             <Text style={[styles.segmentBtnText, dateFilter === 'ALL' ? styles.segmentBtnTextActive : null]}>
               Mọi lúc
@@ -147,8 +158,15 @@ export function DriverHistoryScreen({
             accessibilityLabel="Lọc chuyến hôm nay"
             accessibilityRole="button"
             accessibilityState={{ selected: dateFilter === 'today' }}
-            onPress={() => setDateFilter('today')}
-            style={[styles.segmentBtn, dateFilter === 'today' ? styles.segmentBtnActive : null]}
+            onPress={() => {
+              haptic.selection();
+              setDateFilter('today');
+            }}
+            style={({ pressed }) => [
+              styles.segmentBtn,
+              dateFilter === 'today' ? styles.segmentBtnActive : null,
+              pressed ? styles.pressedSegment : null,
+            ]}
           >
             <Text style={[styles.segmentBtnText, dateFilter === 'today' ? styles.segmentBtnTextActive : null]}>
               Hôm nay
@@ -159,8 +177,15 @@ export function DriverHistoryScreen({
             accessibilityLabel="Lọc chuyến tuần này"
             accessibilityRole="button"
             accessibilityState={{ selected: dateFilter === 'week' }}
-            onPress={() => setDateFilter('week')}
-            style={[styles.segmentBtn, dateFilter === 'week' ? styles.segmentBtnActive : null]}
+            onPress={() => {
+              haptic.selection();
+              setDateFilter('week');
+            }}
+            style={({ pressed }) => [
+              styles.segmentBtn,
+              dateFilter === 'week' ? styles.segmentBtnActive : null,
+              pressed ? styles.pressedSegment : null,
+            ]}
           >
             <Text style={[styles.segmentBtnText, dateFilter === 'week' ? styles.segmentBtnTextActive : null]}>
               Tuần này
@@ -182,17 +207,38 @@ export function DriverHistoryScreen({
                 <Pressable
                   accessibilityLabel={`Chuyến xe ${item.reference}`}
                   accessibilityRole="button"
-                  onPress={() => router.push(`/orders/${item.id}`)}
+                  onPress={() => {
+                    haptic.selection();
+                    router.push(`/orders/${item.id}`);
+                  }}
                   style={({ pressed }) => (pressed ? styles.pressed : null)}
                 >
-                  {/* Header: Reference & Payout */}
+                  {/* Header: Reference & Rating & Payout & Tip */}
                   <HStack style={styles.tripHeaderRow}>
-                    <Badge action="muted" size="sm" style={styles.tripReferenceBadge}>
-                      <Badge.Text style={styles.tripReferenceText}>{item.reference}</Badge.Text>
-                    </Badge>
-                    <Text style={styles.tripPayoutText}>
-                      {item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
-                    </Text>
+                    <HStack style={styles.tripHeaderLeft}>
+                      <Badge action="muted" size="sm" style={styles.tripReferenceBadge}>
+                        <Badge.Text style={styles.tripReferenceText}>{item.reference}</Badge.Text>
+                      </Badge>
+                      <HStack style={styles.ratingBadge}>
+                        <Text style={styles.ratingStar}>★</Text>
+                        <Text style={styles.ratingText}>
+                          {typeof item.rating === 'number' ? item.rating.toFixed(1) : '5.0'}
+                        </Text>
+                      </HStack>
+                    </HStack>
+
+                    <HStack style={styles.tripHeaderRight}>
+                      {typeof item.tipAmount === 'number' && item.tipAmount > 0 ? (
+                        <Badge action="warning" size="sm" style={styles.tipBadge}>
+                          <Badge.Text style={styles.tipBadgeText}>
+                            +{formatCurrency(item.tipAmount)} Tip
+                          </Badge.Text>
+                        </Badge>
+                      ) : null}
+                      <Text style={styles.tripPayoutText}>
+                        {item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
+                      </Text>
+                    </HStack>
                   </HStack>
 
                   {/* Route */}
@@ -211,7 +257,9 @@ export function DriverHistoryScreen({
                     <HStack style={styles.tripMetaWrap}>
                       <Text style={styles.distanceText}>{item.distanceLabel}</Text>
                       <Text style={styles.metaDot}> · </Text>
-                      <Text style={styles.timeText}>{item.completedAtLabel}</Text>
+                      <Text style={styles.timeText}>
+                        {item.durationLabel ? `${item.durationLabel} · ${item.completedAtLabel}` : item.completedAtLabel}
+                      </Text>
                       {item.vehicleLabel ? (
                         <>
                           <Text style={styles.metaDot}> · </Text>
@@ -227,9 +275,13 @@ export function DriverHistoryScreen({
                         hitSlop={8}
                         onPress={(e) => {
                           e.stopPropagation();
+                          haptic.light();
                           setSelectedEpodTrip(item);
                         }}
-                        style={styles.proofBadgeBtn}
+                        style={({ pressed }) => [
+                          styles.proofBadgeBtn,
+                          pressed ? styles.pressedProofBtn : null,
+                        ]}
                         testID={`btn-view-epod-${item.id}`}
                       >
                         <IconCheck color="#059669" size={11} strokeWidth={2.5} />
@@ -414,6 +466,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  tripHeaderLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  tripHeaderRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  ratingBadge: {
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+  },
+  ratingStar: {
+    color: driverPrimitives.colors.amber500,
+    ...typeScale.caption2,
+    fontWeight: '700',
+  },
+  ratingText: {
+    color: '#B45309',
+    ...typeScale.caption2,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  tipBadge: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  tipBadgeText: {
+    color: '#B45309',
+    ...typeScale.caption2,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
   tripReferenceBadge: {
     backgroundColor: 'rgba(11, 37, 69, 0.05)',
     borderColor: 'rgba(11, 37, 69, 0.08)',
@@ -432,7 +530,7 @@ const styles = StyleSheet.create({
   tripPayoutText: {
     color: driverPrimitives.colors.green700,
     ...typeScale.subheadline,
-    fontWeight: '700',
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   routeRow: {
@@ -498,6 +596,14 @@ const styles = StyleSheet.create({
     color: driverPrimitives.colors.green700,
     ...typeScale.caption2,
     fontWeight: '600',
+  },
+  pressedProofBtn: {
+    opacity: 0.8,
+    transform: [{ scale: 0.96 }],
+  },
+  pressedSegment: {
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
   },
 
   /* Empty Box */

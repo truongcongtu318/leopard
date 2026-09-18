@@ -28,6 +28,29 @@ jest.mock('react-native-qrcode-svg', () => {
   };
 });
 
+// Mock react-native-reanimated
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      View,
+      createAnimatedComponent: (c: any) => c,
+    },
+    useSharedValue: (init: any) => ({ value: init }),
+    useAnimatedStyle: (fn: any) => fn() || {},
+    withSpring: (val: any) => val,
+    withTiming: (val: any) => val,
+    withRepeat: (val: any) => val,
+    withSequence: (...vals: any[]) => vals[0],
+    Easing: {
+      out: () => (t: any) => t,
+      cubic: (t: any) => t,
+      ease: (t: any) => t,
+    },
+  };
+});
+
 // Import screen components
 import LocationPickerScreen from '../../../../app/customer/location-picker';
 import OrderSearchingScreen from '../../../../app/customer/orders/searching/[id]';

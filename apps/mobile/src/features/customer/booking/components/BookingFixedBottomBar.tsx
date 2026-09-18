@@ -48,7 +48,7 @@ export function BookingFixedBottomBar({
       pointerEvents="box-none"
       style={[
         styles.dockOuterWrapper,
-        { paddingBottom: Math.max(insets.bottom, spacing.xs) + spacing.xs },
+        { paddingBottom: Math.max(insets.bottom, spacing.xxs) + spacing.xs },
       ]}
     >
       <View style={styles.floatingDock}>
@@ -94,7 +94,7 @@ export function BookingFixedBottomBar({
           ]}
         >
           <Text style={[styles.ctaText, !isValid && styles.ctaTextDisabled]}>
-            {isLoading ? 'Đang tạo đơn...' : 'Đặt xe'}
+            {isLoading ? 'Đang tạo...' : 'Đặt xe'}
           </Text>
         </Pressable>
       </View>
@@ -116,18 +116,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'rgba(255, 255, 255, 0.96)',
-    borderRadius: radius.cardXl,
+    borderRadius: radius.cardLg,
     borderWidth: 1,
     borderColor: 'rgba(226, 232, 240, 0.95)',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    minHeight: 74,
-    boxShadow: '0 12px 32px rgba(11, 37, 69, 0.14), 0 2px 8px rgba(0, 0, 0, 0.04)',
+    paddingVertical: spacing.xs,
+    minHeight: 64,
+    height: 64,
+    boxShadow: '0 8px 24px rgba(11, 37, 69, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
     shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 10,
     ...iosContinuousCurve,
   },
   dockLeftSection: {
@@ -139,23 +140,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginBottom: spacing.hairline,
+    marginBottom: 1,
   },
   fareLabel: {
-    ...typeScale.footnote,
+    ...typeScale.caption1,
     fontWeight: '500',
     color: customerPalette.textSubtle,
   },
   fareValue: {
-    ...typeScale.title2,
+    ...typeScale.title3,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.3,
   },
   detailsBtn: {
-    paddingVertical: 2,
-    paddingHorizontal: spacing.xs,
+    paddingVertical: 1,
+    paddingHorizontal: spacing.xxs + 2,
     backgroundColor: customerPalette.primaryBg,
     borderRadius: radius.pill,
     ...iosContinuousCurve,
@@ -166,18 +167,20 @@ const styles = StyleSheet.create({
   },
   detailsBtnText: {
     ...typeScale.caption2,
+    fontSize: 10,
+    lineHeight: 12,
     fontWeight: '600',
     color: customerPalette.primary,
   },
   ctaButton: {
-    height: 50,
+    height: 46,
     paddingHorizontal: spacing.lg,
     backgroundColor: customerPalette.primary,
-    borderRadius: radius.cardLg,
+    borderRadius: radius.control,
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 128,
-    boxShadow: '0 4px 14px rgba(11, 37, 69, 0.28)',
+    minWidth: 120,
+    boxShadow: '0 3px 10px rgba(11, 37, 69, 0.22)',
     ...iosContinuousCurve,
   },
   ctaButtonDisabled: {
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   ctaText: {
-    ...typeScale.headline,
+    ...typeScale.subheadline,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.2,

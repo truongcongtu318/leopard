@@ -11,6 +11,8 @@ import {
   StatusBadge,
   VStack,
   colors,
+  driverPrimitives,
+  haptic,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -80,8 +82,15 @@ export function DriverNearbyOrderCard({
       <Pressable
         accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
         accessibilityRole="button"
-        onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-        style={({ pressed }) => [styles.cardPressable, pressed ? styles.pressed : null]}
+        onPress={
+          onOpenOrder
+            ? () => {
+                haptic.light();
+                onOpenOrder(item.id);
+              }
+            : undefined
+        }
+        style={({ pressed }) => [styles.cardPressable, pressed ? styles.pressedCard : null]}
       >
         {/* Row 1: Vehicle Badge + Proximity | Price */}
         <HStack style={styles.topRow}>
@@ -115,7 +124,7 @@ export function DriverNearbyOrderCard({
             </Text>
           </VStack>
           <HStack style={styles.distanceBadge}>
-            <IconRoute color={colors.neutral.subtleText} size={11} />
+            <IconRoute color="#1D4ED8" size={12} />
             <Text style={styles.distanceText}>{distanceEtaText}</Text>
           </HStack>
         </HStack>
@@ -145,8 +154,15 @@ export function DriverNearbyOrderCard({
         <Pressable
           accessibilityLabel="Bỏ qua đơn này"
           accessibilityRole="button"
-          onPress={onDecline ? () => onDecline(item.id) : undefined}
-          style={({ pressed }) => [styles.declineBtn, pressed ? styles.pressed : null]}
+          onPress={
+            onDecline
+              ? () => {
+                  haptic.light();
+                  onDecline(item.id);
+                }
+              : undefined
+          }
+          style={({ pressed }) => [styles.declineBtn, pressed ? styles.pressedDecline : null]}
         >
           <Text style={styles.declineText}>Bỏ qua</Text>
         </Pressable>
@@ -154,8 +170,15 @@ export function DriverNearbyOrderCard({
         <Pressable
           accessibilityLabel={`Nhận đơn ${item.reference}`}
           accessibilityRole="button"
-          onPress={onOpenOrder ? () => onOpenOrder(item.id) : undefined}
-          style={({ pressed }) => [styles.acceptBtn, pressed ? styles.pressed : null]}
+          onPress={
+            onOpenOrder
+              ? () => {
+                  haptic.medium();
+                  onOpenOrder(item.id);
+                }
+              : undefined
+          }
+          style={({ pressed }) => [styles.acceptBtn, pressed ? styles.pressedAccept : null]}
         >
           <Text style={styles.acceptText}>Nhận đơn</Text>
         </Pressable>
@@ -168,71 +191,80 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: colors.neutral.surface,
     borderColor: 'rgba(11, 30, 66, 0.08)',
-    borderRadius: 14,
+    borderRadius: 16,
     ...iosContinuousCurve,
     borderWidth: 1,
-    elevation: 1,
+    elevation: 2,
     marginBottom: 8,
-    padding: 12,
+    padding: 14,
     shadowColor: leopardPalette.primary,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
   cardPressable: {},
+  pressedCard: {
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
+  },
   // Row 1: Top metadata + Price
   topRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   tagGroup: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
   },
   vehicleBadge: {
     alignItems: 'center',
     backgroundColor: '#F0F4F9',
-    borderRadius: 6,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    borderWidth: 1,
     ...iosContinuousCurve,
     flexDirection: 'row',
     gap: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   vehicleTagText: {
     ...typeScale.caption2,
     color: leopardPalette.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   proximityText: {
     ...typeScale.caption1,
-    color: colors.neutral.mutedText,
+    color: driverPrimitives.colors.gray700,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   priceWrap: {
     alignItems: 'flex-end',
   },
   priceAmount: {
-    ...typeScale.headline,
-    color: leopardPalette.primary,
+    ...typeScale.title3,
+    fontSize: 20,
+    color: driverPrimitives.colors.orange500,
     fontVariant: ['tabular-nums'],
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
 
   // Row 2: Route Spine
   routeRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   spineCol: {
     alignItems: 'center',
-    height: 32,
+    height: 36,
     justifyContent: 'space-between',
-    marginRight: 8,
+    marginRight: 10,
     paddingVertical: 2,
     width: 8,
   },
@@ -256,7 +288,7 @@ const styles = StyleSheet.create({
   },
   addressCol: {
     flex: 1,
-    gap: 3,
+    gap: 4,
     justifyContent: 'center',
   },
   addressText: {
@@ -266,22 +298,21 @@ const styles = StyleSheet.create({
   },
   distanceBadge: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: 6,
-    ...iosContinuousCurve,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderRadius: 9999,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
     marginLeft: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   distanceText: {
     ...typeScale.caption2,
-    color: colors.neutral.mutedText,
+    color: '#1D4ED8',
     fontVariant: ['tabular-nums'],
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   // Row 3: Metadata snippet
@@ -290,12 +321,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginBottom: 10,
+    marginBottom: 12,
     paddingHorizontal: 2,
   },
   cargoNameText: {
     ...typeScale.caption1,
     color: colors.neutral.mutedText,
+    fontWeight: '500',
   },
   cargoWeightText: {
     ...typeScale.caption1,
@@ -324,41 +356,51 @@ const styles = StyleSheet.create({
     borderTopColor: colors.neutral.surfaceMuted,
     borderTopWidth: 1,
     flexDirection: 'row',
-    gap: 8,
-    paddingTop: 8,
+    gap: 10,
+    paddingTop: 10,
   },
   declineBtn: {
     alignItems: 'center',
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: 8,
+    borderColor: colors.neutral.border,
+    borderRadius: 10,
+    borderWidth: 1,
     ...iosContinuousCurve,
-    height: 36,
+    height: 40,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   declineText: {
     ...typeScale.footnote,
     color: colors.neutral.subtleText,
     fontWeight: '600',
   },
+  pressedDecline: {
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
+  },
   acceptBtn: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.primary,
-    borderRadius: 8,
+    backgroundColor: driverPrimitives.colors.orange500,
+    borderRadius: 10,
     ...iosContinuousCurve,
     flex: 1,
-    height: 36,
+    height: 40,
     justifyContent: 'center',
-    shadowColor: leopardPalette.primary,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: driverPrimitives.colors.orange500,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 2,
   },
   acceptText: {
     ...typeScale.subheadline,
-    color: colors.neutral.surface,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  pressedAccept: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   pressed: {
     opacity: 0.8,

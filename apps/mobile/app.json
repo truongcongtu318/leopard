@@ -36,6 +36,7 @@
       [
         "expo-image-picker",
         {
+          "cameraPermission": "LEOPARD cần quyền truy cập máy ảnh để chụp ảnh hàng hóa hoặc giấy tờ.",
           "photosPermission": "LEOPARD cần quyền truy cập thư viện ảnh để chọn ảnh hàng hóa hoặc ảnh xác nhận giao hàng."
         }
       ],

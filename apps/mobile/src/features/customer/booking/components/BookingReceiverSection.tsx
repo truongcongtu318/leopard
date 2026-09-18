@@ -72,7 +72,7 @@ export function BookingReceiverSection({
                 importantForAccessibility="no"
                 style={styles.contactIconCircle}
               >
-                <IconUser color={customerPalette.primary} size={18} />
+                <IconUser color={customerPalette.primary} size={15} />
               </View>
             </Pressable>
           </View>
@@ -107,45 +107,46 @@ export function BookingReceiverSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm + 2,
   },
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '700',
     color: colors.neutral.mutedText,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xxs + 2,
     letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
   insetGroupedCard: {
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: radius.cardLg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     overflow: 'hidden',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
     ...iosContinuousCurve,
   },
   fieldRow: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   fieldLabel: {
-    ...typeScale.caption1,
-    fontWeight: '500',
+    ...typeScale.caption2,
+    fontWeight: '600',
     color: customerPalette.textSubtle,
-    marginBottom: spacing.xxs,
+    marginBottom: 2,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 42,
   },
   textInput: {
     flex: 1,
-    height: 36,
-    ...typeScale.body,
+    height: 42,
+    ...typeScale.subheadline,
     fontWeight: '500',
     color: colors.neutral.text,
     padding: 0,
@@ -161,8 +162,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.96 }],
   },
   contactIconCircle: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderRadius: radius.pill,
     backgroundColor: customerPalette.primaryBg,
     justifyContent: 'center',
@@ -172,10 +173,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    height: 42,
   },
   countryCodeBadge: {
     paddingHorizontal: spacing.xs,
-    height: 34,
+    height: 30,
     backgroundColor: colors.neutral.surfaceMuted,
     borderRadius: radius.cardSm,
     justifyContent: 'center',
@@ -183,14 +185,14 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
   },
   countryCodeText: {
-    ...typeScale.subheadline,
+    ...typeScale.caption1,
     fontWeight: '600',
     color: colors.neutral.text,
   },
   phoneTextInput: {
     flex: 1,
-    height: 36,
-    ...typeScale.body,
+    height: 42,
+    ...typeScale.subheadline,
     fontWeight: '500',
     color: colors.neutral.text,
     padding: 0,
@@ -202,8 +204,8 @@ const styles = StyleSheet.create({
     marginLeft: spacing.md,
   },
   errorText: {
-    ...typeScale.caption1,
+    ...typeScale.caption2,
     color: colors.danger.text,
-    marginTop: spacing.xxs,
+    marginTop: 2,
   },
 });

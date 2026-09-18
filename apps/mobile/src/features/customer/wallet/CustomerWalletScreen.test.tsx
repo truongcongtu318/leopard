@@ -13,6 +13,29 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn() }),
 }));
 
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  const chain: any = {
+    springify: () => chain,
+    damping: () => chain,
+    stiffness: () => chain,
+    duration: () => chain,
+    delay: () => chain,
+  };
+  return {
+    __esModule: true,
+    default: {
+      View,
+      createAnimatedComponent: (c: any) => c,
+    },
+    LinearTransition: chain,
+    useSharedValue: (init: any) => ({ value: init }),
+    useAnimatedStyle: (fn: any) => fn() || {},
+    withSpring: (val: any) => val,
+    withTiming: (val: any) => val,
+  };
+});
+
 async function renderWithClient(ui: React.ReactElement) {
   const client = new QueryClient({
     defaultOptions: {
@@ -168,10 +191,13 @@ describe('CustomerWalletScreen', () => {
     expect(screen.getByText('Bảo đảm 100%')).toBeTruthy();
     expect(screen.getByText('Tổng tiền ký quỹ theo đơn')).toBeTruthy();
 
+    // Verify capsule action buttons
+    expect(screen.getByText('Nạp tiền')).toBeTruthy();
+    expect(screen.getByText('Rút tiền')).toBeTruthy();
+
     // Verify fake wallet elements are GONE
     expect(screen.queryByText('Ví VietQR LEOPARD')).toBeNull();
     expect(screen.queryByText('+ Nạp tiền')).toBeNull();
-    expect(screen.queryByText('Rút tiền')).toBeNull();
     expect(screen.queryByText('•••• 8839')).toBeNull();
     expect(screen.queryByText(/1\.250\.000/)).toBeNull();
 

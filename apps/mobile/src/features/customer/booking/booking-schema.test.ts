@@ -63,4 +63,13 @@ describe('validateBookingForm', () => {
     expect(result.errors.vatTaxId).toBe('Vui lòng nhập mã số thuế');
     expect(result.errors.vatEmail).toBe('Email nhận hóa đơn không hợp lệ');
   });
+
+  it('enforces at least one cargo image as mandatory', () => {
+    const result = validateBookingForm({
+      ...validDraft,
+      cargoImages: [],
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.errors.cargoImages).toBe('Vui lòng thêm ít nhất 1 ảnh hàng hóa');
+  });
 });

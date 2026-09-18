@@ -5,6 +5,8 @@ import {
   ScreenScaffold,
   ScreenState,
   SlideToAction,
+  driverPrimitives,
+  haptic,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
@@ -247,6 +249,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const startProofCapture = useCallback(
     async (leg: 'pickup' | 'delivery') => {
       if (capture.isCapturing) return;
+      haptic.medium();
       setPendingLeg(leg);
 
       const outcome = await captureProofPhoto();
@@ -332,6 +335,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
 
     // `undefined` means a legacy handler that does not report status.
     if (uploaded === false) {
+      haptic.error();
       // Keeping the sheet open is right, but returning silently is not: the
       // driver tapped a button and saw nothing happen, so the failure was
       // indistinguishable from a dead control.
@@ -342,6 +346,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
       return;
     }
 
+    haptic.success();
     // Fall back to the current task only when the caller reports no follow-up.
     const commandId = nextCommandId ?? directView.primaryTask.command.id;
 
@@ -470,6 +475,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
           onCancel={handleCancelCapture}
           onConfirm={() => void handleConfirmCapture()}
           onRetake={handleRetakeCapture}
+          orderReference={view.order.reference}
           photoUri={captured.uri}
           title={
             pendingLeg === 'pickup'

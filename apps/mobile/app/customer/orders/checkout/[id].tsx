@@ -7,20 +7,28 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
+  AppText,
+  Button,
   colors,
   customerPalette,
-  IconChevron,
+  haptic,
+  IconBank,
   IconCopy,
+  IconPaymentConvenient,
+  IconQrPayment,
+  IconReceipt,
   IconSecurityShield,
+  IconWallet,
   iosContinuousCurve,
   leopardPalette,
+  radius,
+  ScreenScaffold,
+  spacing,
   systemFontFamily,
   typeScale,
 } from '@leopard/mobile-core';
@@ -57,6 +65,8 @@ interface PaymentApiResponse {
   memo?: string;
   referenceLabel?: string;
 }
+
+type PaymentMethodType = 'vietqr' | 'wallet' | 'cash';
 
 function formatVnd(val: number): string {
   return new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
@@ -112,6 +122,7 @@ export default function OrderCheckoutScreen({
   const initialRawAmount = propAmount ?? (params.amount ? Number(params.amount) : 280000);
   const initialAmount = Number.isFinite(initialRawAmount) ? initialRawAmount : 280000;
 
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('vietqr');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(PAYMENT_EXPIRY_SECONDS);
@@ -294,11 +305,13 @@ export default function OrderCheckoutScreen({
   }, [isReconciling, id, onSuccess, router, activeClient]);
 
   function handleRetryReconcile() {
+    haptic.selection();
     setShowTimeoutBanner(false);
     setIsReconciling(true);
   }
 
   async function handleCancelOrder() {
+    haptic.warning();
     try {
       await activeClient.post(`/orders/${id}/cancel`, {
         reason: 'Khách hàng hủy đơn từ màn thanh toán',
@@ -310,6 +323,7 @@ export default function OrderCheckoutScreen({
   }
 
   const handleCopy = (field: string, text: string) => {
+    haptic.light();
     setCopiedField(field);
     try {
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -327,6 +341,7 @@ export default function OrderCheckoutScreen({
   };
 
   const handleBack = () => {
+    haptic.selection();
     if (onBack) {
       onBack();
     } else {
@@ -335,41 +350,132 @@ export default function OrderCheckoutScreen({
   };
 
   const handleConfirmPaid = () => {
+    haptic.medium();
     setIsReconciling(true);
   };
 
-  // ponytail: fallback dummy string avoids react-native-qrcode-svg crash before dynamic API response arrives
+  // Fallback dummy string avoids react-native-qrcode-svg crash before dynamic API response arrives
   const qrDisplayValue = qrPayload || `LEOPARD-ORDER-${id}`;
 
-  return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
-      {/* Top Header */}
-      <View style={styles.topHeader}>
-        <Pressable
-          accessibilityLabel="Quay lại"
-          accessibilityRole="button"
-          onPress={handleBack}
-          style={styles.backBtn}
-        >
-          <IconChevron color={customerPalette.textSlateDark} direction="left" size={22} />
-        </Pressable>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>Thanh toán VietQR & Ký quỹ</Text>
-          <Text style={styles.headerSubtitle}>
-            Ký quỹ bảo vệ chuyến đi LEOPARD Escrow
-          </Text>
-        </View>
-        <View style={styles.headerPlaceholder} />
-      </View>
+  // Calculated breakdown amounts
+  const baseShippingFee = Math.round(amount * 0.85);
+  const handlingFee = Math.max(0, amount - baseShippingFee);
 
+  const paymentMethods: Array<{
+    id: PaymentMethodType;
+    title: string;
+    subtitle: string;
+    badge?: string;
+    icon: (selected: boolean) => React.ReactNode;
+  }> = [
+    {
+      id: 'vietqr',
+      title: 'Chuyển khoản VietQR',
+      subtitle: 'Napas 24/7 · Xác thực tự động tức thì',
+      badge: 'Khuyên dùng',
+      icon: (selected) => (
+        <IconQrPayment
+          color={selected ? customerPalette.primary : customerPalette.textSlateDark}
+          size={22}
+        />
+      ),
+    },
+    {
+      id: 'wallet',
+      title: 'Ví LEOPARD Escrow',
+      subtitle: 'Khả dụng: 1.250.000 ₫ · Trừ trực tiếp',
+      badge: 'Bảo chứng',
+      icon: (selected) => (
+        <IconWallet
+          color={selected ? customerPalette.primary : customerPalette.textSlateDark}
+          size={22}
+        />
+      ),
+    },
+    {
+      id: 'cash',
+      title: 'Tiền mặt khi nhận hàng',
+      subtitle: 'Thanh toán trực tiếp cho tài xế COD',
+      icon: (selected) => (
+        <IconPaymentConvenient
+          color={selected ? customerPalette.primary : customerPalette.textSlateDark}
+          size={22}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <ScreenScaffold
+      onBack={handleBack}
+      subtitle="Ký quỹ bảo vệ chuyến đi LEOPARD Escrow"
+      title="Xác nhận & Thanh toán"
+      stickyFooter={
+        <View style={styles.stickyFooterContainer}>
+          {/* Timeout banner */}
+          {showTimeoutBanner && !isReconciling ? (
+            <View style={styles.timeoutBanner} testID="reconcile-timeout-banner">
+              <AppText style={styles.timeoutTitle} variant="subheadline">
+                Chưa ghi nhận giao dịch
+              </AppText>
+              <AppText style={styles.timeoutDesc} variant="footnote">
+                Hệ thống chưa nhận được tiền sau 60 giây. Nếu bạn đã chuyển khoản,
+                ngân hàng có thể đang xử lý chậm. Hãy kiểm tra lại hoặc hủy đơn.
+              </AppText>
+            </View>
+          ) : null}
+
+          {/* Sticky Bottom Actions */}
+          {isReconciling ? (
+            <View style={styles.reconcileBox}>
+              <ActivityIndicator color={colors.warning.text} size="small" />
+              <AppText style={styles.reconcileText} variant="subheadline">
+                Đang đối soát tự động... Gạch nợ trong vài giây
+              </AppText>
+            </View>
+          ) : showTimeoutBanner ? (
+            <View style={styles.retryRow}>
+              <View style={styles.flexOne}>
+                <Button
+                  label="Kiểm tra lại"
+                  onPress={handleRetryReconcile}
+                  size="large"
+                  variant="prominent"
+                />
+              </View>
+              <View style={styles.flexOne}>
+                <Button
+                  label="Hủy đơn"
+                  onPress={handleCancelOrder}
+                  size="large"
+                  variant="destructive"
+                />
+              </View>
+            </View>
+          ) : (
+            <Button
+              label="Xác nhận đã thanh toán"
+              onPress={handleConfirmPaid}
+              size="large"
+              variant="prominent"
+            />
+          )}
+        </View>
+      }
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
       >
         {/* Price Hero Section */}
         <View style={styles.priceCard}>
-          <Text style={styles.priceLabel}>Tổng tiền ký quỹ (Escrow)</Text>
-          <Text style={styles.priceAmount}>{formatVnd(amount)}</Text>
+          <AppText style={styles.priceLabel} variant="footnote">
+            TỔNG TIỀN KÝ QUỸ (ESCROW)
+          </AppText>
+          <AppText style={styles.priceAmount} variant="largeTitle">
+            {formatVnd(amount)}
+          </AppText>
 
           {/* Countdown pill */}
           <View
@@ -383,7 +489,7 @@ export default function OrderCheckoutScreen({
             ]}
             testID="payment-expiry-countdown"
           >
-            <Text
+            <AppText
               style={[
                 styles.countdownText,
                 secondsRemaining <= 30 && styles.countdownTextUrgent,
@@ -391,320 +497,501 @@ export default function OrderCheckoutScreen({
                   secondsRemaining <= 120 &&
                   styles.countdownTextWarning,
               ]}
+              variant="footnote"
             >
               Hết hạn sau {formatCountdown(secondsRemaining)}
-            </Text>
+            </AppText>
           </View>
+
           <View style={styles.escrowNoticeRow}>
             <IconSecurityShield color={colors.success.text} size={16} />
-            <Text style={styles.escrowNoticeText}>
+            <AppText style={styles.escrowNoticeText} variant="caption1">
               Bảo chứng 100% · Hoàn cọc tức thì nếu tài xế không nhận cuốc
-            </Text>
+            </AppText>
           </View>
         </View>
 
-        {/* VietQR Dynamic Code & Bank Details */}
+        {/* Payment Methods Selector */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Chuyển khoản VietQR payOS</Text>
+          <AppText style={styles.sectionTitle} variant="subheadline">
+            PHƯƠNG THỨC THANH TOÁN
+          </AppText>
+        </View>
+
+        <View style={styles.methodsCard}>
+          {paymentMethods.map((method, index) => {
+            const isSelected = paymentMethod === method.id;
+            const isLast = index === paymentMethods.length - 1;
+
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                key={method.id}
+                onPress={() => {
+                  haptic.selection();
+                  setPaymentMethod(method.id);
+                }}
+                style={({ pressed }) => [
+                  styles.methodRow,
+                  isSelected && styles.methodRowSelected,
+                  !isLast && styles.methodRowDivider,
+                  pressed && styles.methodRowPressed,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.methodIconBox,
+                    isSelected && styles.methodIconBoxSelected,
+                  ]}
+                >
+                  {method.icon(isSelected)}
+                </View>
+
+                <View style={styles.methodInfo}>
+                  <View style={styles.methodTitleRow}>
+                    <AppText
+                      style={[
+                        styles.methodTitle,
+                        isSelected && styles.methodTitleSelected,
+                      ]}
+                      variant="subheadline"
+                    >
+                      {method.title}
+                    </AppText>
+                    {method.badge ? (
+                      <View
+                        style={[
+                          styles.methodBadge,
+                          isSelected && styles.methodBadgeSelected,
+                        ]}
+                      >
+                        <AppText
+                          style={[
+                            styles.methodBadgeText,
+                            isSelected && styles.methodBadgeTextSelected,
+                          ]}
+                          variant="caption2"
+                        >
+                          {method.badge}
+                        </AppText>
+                      </View>
+                    ) : null}
+                  </View>
+                  <AppText style={styles.methodSubtitle} variant="caption1">
+                    {method.subtitle}
+                  </AppText>
+                </View>
+
+                {/* Radio Indicator */}
+                <View
+                  style={[
+                    styles.radioCircle,
+                    isSelected && styles.radioCircleSelected,
+                  ]}
+                >
+                  {isSelected && <View style={styles.radioDot} />}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* VietQR Dynamic Code & Bank Details Table */}
+        <View style={styles.sectionHeader}>
+          <AppText style={styles.sectionTitle} variant="subheadline">
+            CHUYỂN KHOẢN VIETQR PAYOS
+          </AppText>
         </View>
 
         <View style={styles.qrDoubleBezelOuter}>
-            <View style={styles.qrDoubleBezelInner}>
-              <View style={styles.napasBadgeRow}>
-                <Text style={styles.napasBankTitle}>{bankTitle}</Text>
-                <View style={styles.napasBadge}>
-                  <Text style={styles.napasBadgeText}>NAPAS 24/7</Text>
-                </View>
+          <View style={styles.qrDoubleBezelInner}>
+            <View style={styles.napasBadgeRow}>
+              <View style={styles.bankTitleBox}>
+                <IconBank color={customerPalette.primary} size={18} />
+                <AppText style={styles.napasBankTitle} variant="subheadline">
+                  {bankTitle}
+                </AppText>
               </View>
-
-              {/* QR Code Container */}
-              <View style={styles.qrCodeWrapper}>
-                {isLoadingPayment ? (
-                  <ActivityIndicator color={customerPalette.textSlateDark} size="large" />
-                ) : (
-                  <QRCode
-                    size={190}
-                    testID="vietqr-code"
-                    value={qrDisplayValue}
-                  />
-                )}
+              <View style={styles.napasBadge}>
+                <AppText style={styles.napasBadgeText} variant="caption2">
+                  NAPAS 24/7
+                </AppText>
               </View>
-
-              <Text style={styles.qrInstruction}>
-                Sử dụng ứng dụng ngân hàng bất kỳ để quét mã thanh toán tức thì
-              </Text>
             </View>
 
-            {/* Bank Transfer Details Table */}
-            <View style={styles.bankDetailsTable}>
-              {/* Bank Name */}
-              <View style={styles.bankDetailRow}>
-                <Text style={styles.detailLabel}>Ngân hàng thụ hưởng</Text>
-                <Text style={styles.detailValueBold}>{bankName}</Text>
-              </View>
+            {/* QR Code Container */}
+            <View style={styles.qrCodeWrapper}>
+              {isLoadingPayment ? (
+                <ActivityIndicator color={customerPalette.primary} size="large" />
+              ) : (
+                <QRCode
+                  size={190}
+                  testID="vietqr-code"
+                  value={qrDisplayValue}
+                />
+              )}
+            </View>
 
-              {/* Account Number */}
-              {accountNumber ? (
-                <View style={styles.bankDetailRow}>
-                  <View>
-                    <Text style={styles.detailLabel}>Số tài khoản</Text>
-                    <Text style={styles.detailValueMono}>{accountNumber}</Text>
-                  </View>
-                  <Pressable
-                    accessibilityLabel="Sao chép số tài khoản"
-                    accessibilityRole="button"
-                    onPress={() => handleCopy('accountNumber', accountNumber)}
-                    style={styles.copyBtn}
-                  >
-                    <IconCopy color={customerPalette.textSlateDark} size={16} />
-                    <Text style={styles.copyBtnText}>
-                      {copiedField === 'accountNumber' ? 'Đã sao chép' : 'Sao chép'}
-                    </Text>
-                  </Pressable>
-                </View>
-              ) : null}
+            <AppText style={styles.qrInstruction} variant="caption1">
+              Sử dụng ứng dụng ngân hàng bất kỳ để quét mã thanh toán tức thì
+            </AppText>
+          </View>
 
-              {/* Account Name */}
+          {/* Bank Transfer Details Table */}
+          <View style={styles.bankDetailsTable}>
+            {/* Bank Name */}
+            <View style={styles.bankDetailRow}>
+              <AppText style={styles.detailLabel} variant="caption2">
+                Ngân hàng thụ hưởng
+              </AppText>
+              <AppText style={styles.detailValueBold} variant="subheadline">
+                {bankName}
+              </AppText>
+            </View>
+
+            {/* Account Number */}
+            {accountNumber ? (
               <View style={styles.bankDetailRow}>
                 <View style={styles.flexOne}>
-                  <Text style={styles.detailLabel}>Chủ tài khoản</Text>
-                  <Text numberOfLines={1} style={styles.detailValueBold}>
-                    {accountName}
-                  </Text>
+                  <AppText style={styles.detailLabel} variant="caption2">
+                    Số tài khoản
+                  </AppText>
+                  <AppText style={styles.detailValueMono} variant="headline">
+                    {accountNumber}
+                  </AppText>
                 </View>
                 <Pressable
-                  accessibilityLabel="Sao chép tên chủ tài khoản"
+                  accessibilityLabel="Sao chép số tài khoản"
                   accessibilityRole="button"
-                  onPress={() => handleCopy('accountName', accountName)}
-                  style={styles.copyBtn}
+                  onPress={() => handleCopy('accountNumber', accountNumber)}
+                  style={({ pressed }) => [
+                    styles.copyBtn,
+                    pressed && styles.copyBtnPressed,
+                  ]}
                 >
-                  <IconCopy color={customerPalette.textSlateDark} size={16} />
-                  <Text style={styles.copyBtnText}>
-                    {copiedField === 'accountName' ? 'Đã sao chép' : 'Sao chép'}
-                  </Text>
+                  <IconCopy color={customerPalette.textSlateDark} size={15} />
+                  <AppText style={styles.copyBtnText} variant="caption1">
+                    {copiedField === 'accountNumber' ? 'Đã sao chép' : 'Sao chép'}
+                  </AppText>
                 </Pressable>
               </View>
+            ) : null}
 
-              {/* Payment Memo */}
-              <View style={styles.bankDetailRow}>
-                <View>
-                  <Text style={styles.detailLabel}>Nội dung chuyển khoản</Text>
-                  <Text style={styles.detailValueMono}>{orderReference}</Text>
-                </View>
-                <Pressable
-                  accessibilityLabel="Sao chép nội dung chuyển khoản"
-                  accessibilityRole="button"
-                  onPress={() => handleCopy('memo', orderReference)}
-                  style={styles.copyBtn}
-                >
-                  <IconCopy color={customerPalette.textSlateDark} size={16} />
-                  <Text style={styles.copyBtnText}>
-                    {copiedField === 'memo' ? 'Đã sao chép' : 'Sao chép'}
-                  </Text>
-                </Pressable>
+            {/* Account Name */}
+            <View style={styles.bankDetailRow}>
+              <View style={styles.flexOne}>
+                <AppText style={styles.detailLabel} variant="caption2">
+                  Chủ tài khoản
+                </AppText>
+                <AppText numberOfLines={1} style={styles.detailValueBold} variant="subheadline">
+                  {accountName}
+                </AppText>
               </View>
+              <Pressable
+                accessibilityLabel="Sao chép tên chủ tài khoản"
+                accessibilityRole="button"
+                onPress={() => handleCopy('accountName', accountName)}
+                style={({ pressed }) => [
+                  styles.copyBtn,
+                  pressed && styles.copyBtnPressed,
+                ]}
+              >
+                <IconCopy color={customerPalette.textSlateDark} size={15} />
+                <AppText style={styles.copyBtnText} variant="caption1">
+                  {copiedField === 'accountName' ? 'Đã sao chép' : 'Sao chép'}
+                </AppText>
+              </Pressable>
+            </View>
+
+            {/* Payment Memo */}
+            <View style={styles.bankDetailRow}>
+              <View style={styles.flexOne}>
+                <AppText style={styles.detailLabel} variant="caption2">
+                  Nội dung chuyển khoản
+                </AppText>
+                <AppText style={styles.detailValueMono} variant="headline">
+                  {orderReference}
+                </AppText>
+              </View>
+              <Pressable
+                accessibilityLabel="Sao chép nội dung chuyển khoản"
+                accessibilityRole="button"
+                onPress={() => handleCopy('memo', orderReference)}
+                style={({ pressed }) => [
+                  styles.copyBtn,
+                  pressed && styles.copyBtnPressed,
+                ]}
+              >
+                <IconCopy color={customerPalette.textSlateDark} size={15} />
+                <AppText style={styles.copyBtnText} variant="caption1">
+                  {copiedField === 'memo' ? 'Đã sao chép' : 'Sao chép'}
+                </AppText>
+              </Pressable>
             </View>
           </View>
+        </View>
+
+        {/* Fare Breakdown Card */}
+        <View style={styles.sectionHeader}>
+          <AppText style={styles.sectionTitle} variant="subheadline">
+            CHI TIẾT CƯỚC & KÝ QUỸ
+          </AppText>
+        </View>
+
+        <View style={styles.breakdownCard}>
+          <View style={styles.breakdownHeaderRow}>
+            <IconReceipt color={customerPalette.primary} size={18} />
+            <AppText style={styles.breakdownHeaderText} variant="subheadline">
+              Bảng kê cước tạm tính
+            </AppText>
+          </View>
+
+          <View style={styles.breakdownItemRow}>
+            <AppText style={styles.breakdownItemLabel} variant="footnote">
+              Cước vận chuyển cơ bản
+            </AppText>
+            <AppText style={styles.breakdownItemValue} variant="footnote">
+              {formatVnd(baseShippingFee)}
+            </AppText>
+          </View>
+
+          <View style={styles.breakdownItemRow}>
+            <AppText style={styles.breakdownItemLabel} variant="footnote">
+              Phụ phí bốc dỡ & xếp hàng
+            </AppText>
+            <AppText style={styles.breakdownItemValue} variant="footnote">
+              {formatVnd(handlingFee)}
+            </AppText>
+          </View>
+
+          <View style={styles.breakdownItemRow}>
+            <AppText style={styles.breakdownItemLabel} variant="footnote">
+              Bảo hiểm ký quỹ Escrow
+            </AppText>
+            <AppText style={styles.breakdownFreeTag} variant="footnote">
+              Miễn phí
+            </AppText>
+          </View>
+
+          <View style={styles.breakdownDivider} />
+
+          <View style={styles.breakdownTotalRow}>
+            <AppText style={styles.breakdownTotalLabel} variant="subheadline">
+              Tổng thanh toán
+            </AppText>
+            <AppText style={styles.breakdownTotalValue} variant="headline">
+              {formatVnd(amount)}
+            </AppText>
+          </View>
+        </View>
       </ScrollView>
 
-      {/* Timeout banner */}
-      {showTimeoutBanner && !isReconciling ? (
-        <View style={styles.timeoutBanner} testID="reconcile-timeout-banner">
-          <Text style={styles.timeoutTitle}>Chưa ghi nhận giao dịch</Text>
-          <Text style={styles.timeoutDesc}>
-            Hệ thống chưa nhận được tiền sau 60 giây. Nếu bạn đã chuyển khoản,
-            ngân hàng có thể đang xử lý chậm. Hãy kiểm tra lại hoặc hủy đơn.
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Sticky Bottom Action Dock */}
-      <View style={styles.stickyBottomBar}>
-        {isReconciling ? (
-          <View style={styles.reconcileBox}>
-            <ActivityIndicator color={customerPalette.textSlateDark} size="small" />
-            <Text style={styles.reconcileText}>
-              Đang đối soát tự động... Gạch nợ trong vài giây
-            </Text>
-          </View>
-        ) : showTimeoutBanner ? (
-          <View style={styles.retryRow}>
-            <Pressable
-              accessibilityLabel="Kiểm tra lại"
-              accessibilityRole="button"
-              onPress={handleRetryReconcile}
-              style={({ pressed }) => [
-                styles.confirmPaidBtn,
-                pressed ? styles.btnPressed : null,
-              ]}
-            >
-              <Text style={styles.confirmPaidText}>Kiểm tra lại</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="Hủy đơn hàng này"
-              accessibilityRole="button"
-              onPress={handleCancelOrder}
-              style={({ pressed }) => [
-                styles.cancelOrderBtn,
-                pressed ? styles.btnPressed : null,
-              ]}
-            >
-              <Text style={styles.cancelOrderText}>Hủy đơn</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable
-            accessibilityLabel="Xác nhận đã thanh toán"
-            accessibilityRole="button"
-            onPress={handleConfirmPaid}
-            style={({ pressed }) => [
-              styles.confirmPaidBtn,
-              pressed ? styles.btnPressed : null,
-            ]}
-          >
-            <Text style={styles.confirmPaidText}>Xác nhận đã thanh toán</Text>
-          </Pressable>
-        )}
-      </View>
-
-      {/* Expired modal */}
+      {/* Expired Modal */}
       {renderExpired ? (
         <View style={styles.expiredOverlay} testID="payment-expired-modal">
           <View style={styles.expiredCard}>
-            <Text style={styles.expiredTitle}>Hết hạn thanh toán</Text>
-            <Text style={styles.expiredDesc}>
+            <View style={styles.expiredIconRing}>
+              <IconSecurityShield color={colors.danger.text} size={32} />
+            </View>
+            <AppText style={styles.expiredTitle} variant="headline">
+              Hết hạn thanh toán
+            </AppText>
+            <AppText style={styles.expiredDesc} variant="subheadline">
               Đơn hàng đã hết hạn thanh toán sau 10 phút. Đơn đã được tự động
               hủy. Vui lòng tạo đơn mới nếu bạn vẫn cần vận chuyển.
-            </Text>
-            <Pressable
-              accessibilityLabel="Về danh sách đơn"
-              accessibilityRole="button"
-              onPress={() => router.replace('/customer/orders')}
-              style={styles.expiredBtn}
-            >
-              <Text style={styles.expiredBtnText}>Về danh sách đơn</Text>
-            </Pressable>
+            </AppText>
+            <View style={styles.expiredBtnWrap}>
+              <Button
+                label="Về danh sách đơn"
+                onPress={() => router.replace('/customer/orders')}
+                size="large"
+                variant="prominent"
+              />
+            </View>
           </View>
         </View>
       ) : null}
-    </SafeAreaView>
+    </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
-    backgroundColor: customerPalette.canvas,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: customerPalette.surfaceWhite,
-    borderBottomWidth: 1,
-    borderBottomColor: customerPalette.cardBorder,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitleWrap: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: customerPalette.textSlateDark,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: customerPalette.textSubtle,
-    marginTop: 1,
-  },
-  headerPlaceholder: {
-    width: 44,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingBottom: spacing.xl,
   },
   priceCard: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 20,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
-    padding: 16,
+    padding: spacing.md,
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: customerPalette.textSlateDark,
+    marginBottom: spacing.md,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 2,
   },
   priceLabel: {
-    fontSize: 13,
     color: customerPalette.textSubtle,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    fontWeight: '600',
+    letterSpacing: 0.6,
+    fontWeight: '700',
   },
   priceAmount: {
-    fontSize: typeScale.largeTitle.fontSize,
-    fontWeight: '700',
-    color: customerPalette.textSlateDark,
+    color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
-    marginVertical: 6,
+    marginVertical: spacing.xxs,
+    letterSpacing: -0.5,
   },
   escrowNoticeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: leopardPalette.ecoGreenBg,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginTop: 4,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginTop: spacing.xs,
   },
   escrowNoticeText: {
-    fontSize: 12,
     fontWeight: '600',
     color: colors.success.text,
-    marginLeft: 6,
+    marginLeft: spacing.xs,
   },
   sectionHeader: {
-    marginBottom: 10,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.xxs,
   },
   sectionTitle: {
-    fontSize: typeScale.subheadline.fontSize,
+    fontWeight: '700',
+    color: customerPalette.textSubtle,
+    letterSpacing: 0.4,
+  },
+  // Methods selection
+  methodsCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  methodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  methodRowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: customerPalette.cardBorder,
+  },
+  methodRowSelected: {
+    backgroundColor: 'rgba(11, 37, 69, 0.03)',
+  },
+  methodRowPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.985 }],
+  },
+  methodIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    backgroundColor: customerPalette.canvas,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  methodIconBoxSelected: {
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
+  },
+  methodInfo: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  methodTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  methodTitle: {
     fontWeight: '600',
     color: customerPalette.textSlateDark,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
+  methodTitleSelected: {
+    color: customerPalette.primary,
+    fontWeight: '700',
+  },
+  methodSubtitle: {
+    color: customerPalette.textSubtle,
+    marginTop: 2,
+  },
+  methodBadge: {
+    backgroundColor: customerPalette.canvas,
+    borderRadius: radius.cardSm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  methodBadgeSelected: {
+    backgroundColor: customerPalette.accent,
+  },
+  methodBadgeText: {
+    fontWeight: '600',
+    color: customerPalette.textSubtle,
+  },
+  methodBadgeTextSelected: {
+    color: customerPalette.surfaceWhite,
+    fontWeight: '700',
+  },
+  radioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: customerPalette.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioCircleSelected: {
+    borderColor: customerPalette.primary,
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: customerPalette.primary,
+  },
+  // Double Bezel VietQR
   qrDoubleBezelOuter: {
-    borderRadius: 24,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.08)',
     backgroundColor: customerPalette.surfaceWhite,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: customerPalette.textSlateDark,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
-    elevation: 4,
+    elevation: 3,
   },
   qrDoubleBezelInner: {
-    borderRadius: 18,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     backgroundColor: customerPalette.canvas,
     borderWidth: 1,
     borderColor: 'rgba(11, 30, 66, 0.04)',
-    padding: 16,
+    padding: spacing.md,
     alignItems: 'center',
   },
   napasBadgeRow: {
@@ -712,12 +999,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
+  },
+  bankTitleBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   napasBankTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: customerPalette.textSlateDark,
+    fontWeight: '700',
+    color: customerPalette.primary,
   },
   napasBadge: {
     backgroundColor: colors.brand.blue,
@@ -726,120 +1017,149 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   napasBadgeText: {
-    fontSize: typeScale.caption2.fontSize,
-    fontWeight: '600',
+    fontWeight: '700',
     color: customerPalette.surfaceWhite,
     letterSpacing: 0.5,
   },
   qrCodeWrapper: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    padding: spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
-    marginVertical: 8,
+    marginVertical: spacing.xs,
     minWidth: 214,
     minHeight: 214,
     justifyContent: 'center',
     alignItems: 'center',
   },
   qrInstruction: {
-    fontSize: 12,
     color: customerPalette.textSubtle,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: spacing.xs,
     lineHeight: 16,
   },
   bankDetailsTable: {
-    marginTop: 14,
-    gap: 12,
+    marginTop: spacing.md,
+    gap: spacing.sm,
   },
   bankDetailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: spacing.xxs,
   },
   flexOne: {
     flex: 1,
-    marginRight: 8,
   },
   detailLabel: {
-    fontSize: 11,
-    color: leopardPalette.inputPlaceholder,
+    color: customerPalette.textSubtle,
     textTransform: 'uppercase',
+    fontWeight: '600',
+    letterSpacing: 0.4,
   },
   detailValueBold: {
-    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
     marginTop: 2,
   },
   detailValueMono: {
-    fontSize: 15,
     fontWeight: '700',
-    color: customerPalette.textSlateDark,
+    color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
     marginTop: 2,
+    letterSpacing: -0.3,
   },
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    minHeight: 40,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
     backgroundColor: colors.neutral.surfaceMuted,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+  },
+  copyBtnPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
   copyBtnText: {
-    fontSize: 12,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
-    marginLeft: 6,
+    color: customerPalette.primary,
+    marginLeft: spacing.xxs,
   },
-  stickyBottomBar: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: Platform.select({ ios: 16, default: 14 }),
+  // Breakdown Card
+  breakdownCard: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderTopWidth: 1,
-    borderTopColor: customerPalette.cardBorder,
-    shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  confirmPaidBtn: {
-    height: 54,
-    minHeight: 54,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    backgroundColor: customerPalette.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.32,
-    shadowRadius: 12,
-    elevation: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
-  confirmPaidText: {
-    color: customerPalette.surfaceWhite,
-    fontFamily: systemFontFamily,
-    fontSize: 16,
+  breakdownHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: customerPalette.cardBorder,
+  },
+  breakdownHeaderText: {
     fontWeight: '700',
-    letterSpacing: -0.2,
+    color: customerPalette.primary,
   },
-  btnPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.99 }],
+  breakdownItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xxs,
+  },
+  breakdownItemLabel: {
+    color: customerPalette.textSubtle,
+  },
+  breakdownItemValue: {
+    color: customerPalette.textSlateDark,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  breakdownFreeTag: {
+    color: colors.success.text,
+    fontWeight: '700',
+  },
+  breakdownDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: customerPalette.cardBorder,
+    marginVertical: spacing.xs,
+  },
+  breakdownTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: spacing.xxs,
+  },
+  breakdownTotalLabel: {
+    fontWeight: '700',
+    color: customerPalette.primary,
+  },
+  breakdownTotalValue: {
+    fontWeight: '800',
+    color: customerPalette.primary,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.3,
+  },
+  // Sticky footer & banner
+  stickyFooterContainer: {
+    width: '100%',
+    gap: spacing.xs,
   },
   reconcileBox: {
     flexDirection: 'row',
@@ -847,24 +1167,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 52,
     minHeight: 52,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     backgroundColor: colors.warning.background,
     borderWidth: 1,
     borderColor: colors.warning.border,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
   },
   reconcileText: {
-    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
     color: colors.warning.text,
-    marginLeft: 10,
+    marginLeft: spacing.xs,
   },
   countdownPill: {
-    marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
     backgroundColor: colors.neutral.surfaceMuted,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
@@ -879,7 +1198,6 @@ const styles = StyleSheet.create({
     borderColor: colors.danger.border,
   },
   countdownText: {
-    fontSize: 13,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
@@ -892,102 +1210,77 @@ const styles = StyleSheet.create({
     color: colors.danger.text,
   },
   timeoutBanner: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     backgroundColor: colors.warning.background,
     borderWidth: 1,
     borderColor: colors.warning.border,
   },
   timeoutTitle: {
-    fontSize: typeScale.subheadline.fontSize,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.warning.text,
   },
   timeoutDesc: {
-    fontSize: 13,
     lineHeight: 18,
     color: colors.warning.text,
-    marginTop: 4,
+    marginTop: spacing.xxs,
   },
   retryRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
   },
-  cancelOrderBtn: {
-    flex: 1,
-    height: 52,
-    minHeight: 52,
-    borderRadius: 16,
-    ...iosContinuousCurve,
-    backgroundColor: customerPalette.surfaceWhite,
-    borderWidth: 1,
-    borderColor: colors.danger.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  cancelOrderText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.danger.text,
-  },
+  // Expired Modal
   expiredOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(11, 30, 66, 0.45)',
+    backgroundColor: 'rgba(11, 37, 69, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.lg,
+    zIndex: 999,
   },
   expiredCard: {
     width: '100%',
     maxWidth: 340,
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 24,
+    borderRadius: radius.modal,
     ...iosContinuousCurve,
-    paddingHorizontal: 24,
-    paddingVertical: 28,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
     alignItems: 'center',
-    shadowColor: customerPalette.textSlateDark,
+    shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.28,
     shadowRadius: 24,
     elevation: 8,
   },
+  expiredIconRing: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.danger.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
   expiredTitle: {
-    fontSize: typeScale.body.fontSize,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
     textAlign: 'center',
   },
   expiredDesc: {
-    fontSize: typeScale.subheadline.fontSize,
     lineHeight: 20,
-    color: customerPalette.textMutedSlate,
+    color: customerPalette.textSubtle,
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: spacing.xs,
   },
-  expiredBtn: {
-    marginTop: 20,
+  expiredBtnWrap: {
+    marginTop: spacing.lg,
     width: '100%',
-    height: 52,
-    minHeight: 52,
-    borderRadius: 16,
-    ...iosContinuousCurve,
-    backgroundColor: customerPalette.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  expiredBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: customerPalette.surfaceWhite,
   },
 });

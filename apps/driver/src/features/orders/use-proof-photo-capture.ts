@@ -64,16 +64,20 @@ export function useProofPhotoCapture(deps: PodCaptureDeps = {}) {
       try {
         asset = await capture();
       } catch (error) {
-        // Only a permission denial justifies the library fallback; any other
-        // camera failure is surfaced so the driver knows the shot was not taken.
-        if (!(error instanceof DeviceCameraPermissionError)) {
-          return {
-            kind: 'error',
-            message: 'Không mở được máy ảnh. Vui lòng thử lại.',
-          };
+        // Tự động fallback sang thư viện ảnh nếu không mở được máy ảnh
+        // (từ chối quyền camera, máy ảo simulator không có camera, hoặc lỗi phần cứng/web)
+        try {
+          asset = await pick();
+        } catch {
+          asset = null;
         }
-        asset = await pick();
-        if (!asset) return { kind: 'permission-denied' };
+
+        if (!asset) {
+          if (error instanceof DeviceCameraPermissionError) {
+            return { kind: 'permission-denied' };
+          }
+          return { kind: 'canceled' };
+        }
       }
 
       if (!asset) return { kind: 'canceled' };

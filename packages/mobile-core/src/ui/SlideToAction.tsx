@@ -134,8 +134,11 @@ export function SlideToAction({
               } catch {
                 // safe fallback
               }
-              onActionCompleteRef.current();
             });
+
+            // Trigger action immediately in the user gesture tick so browsers
+            // and native runtimes don't block user-activated actions like camera or file picker
+            onActionCompleteRef.current();
           } else {
             lastHapticMilestone.current = 0;
             try {

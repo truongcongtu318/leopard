@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ListRenderItemInfo } from 'react-native';
+import type { LayoutChangeEvent, ListRenderItemInfo } from 'react-native';
 import {
   Animated,
   FlatList,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
@@ -16,10 +16,8 @@ import {
   Badge,
   Box,
   Button,
-  Card,
   colors,
   customerPalette,
-  Divider,
   haptic,
   HStack,
   IconClock,
@@ -35,11 +33,10 @@ import {
   radius,
   ScreenScaffold,
   ScreenState,
-  SkeletonCard,
   SkeletonBar,
-  StatusBadge,
+  SkeletonCard,
   spacing,
-  typography,
+  StatusBadge,
   typeScale,
   VStack,
 } from '@leopard/mobile-core';
@@ -62,6 +59,8 @@ export type CustomerOrdersScreenProps = Readonly<{
   onClearFilters?: () => void;
   onRetry?: () => void;
   onLoadMore?: () => void;
+  onRefresh?: () => Promise<void> | void;
+  isRefreshing?: boolean;
 }>;
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -103,7 +102,7 @@ function getActiveStatusAccentColor(status: OrderStatus): string {
 
 const PulseDot = React.memo(function PulseDot({
   color,
-  size = 8,
+  size = 6,
 }: Readonly<{ color: string; size?: number }>) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -136,7 +135,7 @@ const PulseDot = React.memo(function PulseDot({
   );
 });
 
-// ── iOS 18 Segmented Control ─────────────────────────────────────────
+// ── Apple Inset Pill Segmented Control ───────────────────────────────
 
 function AppleSegmentedControl({
   activeSegment,
@@ -147,34 +146,76 @@ function AppleSegmentedControl({
   activeCount: number;
   onSegmentChange: (segment: OrdersSegment) => void;
 }>) {
+  const [trackWidth, setTrackWidth] = useState(0);
+  const slideAnim = useRef(new Animated.Value(activeSegment === 'active' ? 0 : 1)).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: activeSegment === 'active' ? 0 : 1,
+      damping: 24,
+      stiffness: 280,
+      mass: 0.8,
+      useNativeDriver: false,
+    }).start();
+  }, [activeSegment, slideAnim]);
+
+  const handleLayout = (e: LayoutChangeEvent) => {
+    setTrackWidth(e.nativeEvent.layout.width);
+  };
+
+  const pillWidth = trackWidth > 0 ? (trackWidth - 6) / 2 : 0;
+  const pillTranslateX = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [3, pillWidth + 3],
+  });
+
   return (
-    <HStack accessibilityRole="tablist" style={s.segmentedBar}>
+    <View
+      accessibilityRole="tablist"
+      onLayout={handleLayout}
+      style={s.segmentedContainer}
+    >
+      {/* Smooth Sliding Pill Indicator */}
+      {pillWidth > 0 ? (
+        <Animated.View
+          style={[
+            s.segmentedPillIndicator,
+            {
+              width: pillWidth,
+              transform: [{ translateX: pillTranslateX }],
+            },
+          ]}
+        />
+      ) : null}
+
       <Pressable
-        accessibilityLabel={`Đang giao${activeCount > 0 ? ` (${activeCount})` : ''}`}
+        accessibilityLabel={`Đang giao · Đang thực hiện${activeCount > 0 ? ` (${activeCount})` : ''}`}
         accessibilityRole="tab"
         accessibilityState={{ selected: activeSegment === 'active' }}
-        onPress={() => { haptic.selection(); onSegmentChange('active'); }}
-        style={[s.segmentTab, activeSegment === 'active' && s.segmentTabActive]}
+        onPress={() => {
+          haptic.selection();
+          onSegmentChange('active');
+        }}
+        style={s.segmentTab}
       >
         {activeCount > 0 ? (
           <PulseDot
-            color={activeSegment === 'active' ? '#6EE7B7' : customerPalette.onlineGreen}
+            color={activeSegment === 'active' ? customerPalette.primary : customerPalette.onlineGreen}
             size={5}
           />
         ) : null}
-        <Text style={[s.segmentLabel, activeSegment === 'active' && s.segmentLabelActive]}>
-          Đang giao
+        <Text
+          numberOfLines={1}
+          style={[s.segmentLabel, activeSegment === 'active' && s.segmentLabelActive]}
+        >
+          Đang thực hiện
         </Text>
         {activeCount > 0 ? (
-          <Badge
-            action={activeSegment === 'active' ? 'success' : 'muted'}
-            size="sm"
-            style={[s.segmentBadge, activeSegment === 'active' && s.segmentBadgeActive]}
-          >
-            <Badge.Text style={activeSegment === 'active' ? s.segmentBadgeTextActive : s.segmentBadgeText}>
+          <View style={[s.segmentBadge, activeSegment === 'active' && s.segmentBadgeActive]}>
+            <Text style={[s.segmentBadgeText, activeSegment === 'active' && s.segmentBadgeTextActive]}>
               {activeCount}
-            </Badge.Text>
-          </Badge>
+            </Text>
+          </View>
         ) : null}
       </Pressable>
 
@@ -182,14 +223,20 @@ function AppleSegmentedControl({
         accessibilityLabel="Lịch sử"
         accessibilityRole="tab"
         accessibilityState={{ selected: activeSegment === 'all' }}
-        onPress={() => { haptic.selection(); onSegmentChange('all'); }}
-        style={[s.segmentTab, activeSegment === 'all' && s.segmentTabActive]}
+        onPress={() => {
+          haptic.selection();
+          onSegmentChange('all');
+        }}
+        style={s.segmentTab}
       >
-        <Text style={[s.segmentLabel, activeSegment === 'all' && s.segmentLabelActive]}>
+        <Text
+          numberOfLines={1}
+          style={[s.segmentLabel, activeSegment === 'all' && s.segmentLabelActive]}
+        >
           Lịch sử
         </Text>
       </Pressable>
-    </HStack>
+    </View>
   );
 }
 
@@ -219,7 +266,7 @@ function OrdersSearchBar({
       <InputSlot style={s.searchIconSlot}>
         <IconSearch
           color={isFocused ? customerPalette.primary : leopardPalette.textMutedSlate}
-          size={17}
+          size={16}
         />
       </InputSlot>
       <InputField
@@ -240,9 +287,12 @@ function OrdersSearchBar({
           <Pressable
             accessibilityLabel="Xóa tìm kiếm"
             accessibilityRole="button"
-            hitSlop={8}
-            onPress={onClear}
-            style={s.clearSearchBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => {
+              haptic.light();
+              onClear();
+            }}
+            style={({ pressed }) => [s.clearSearchBtn, pressed && s.cardPressed]}
           >
             <Text style={s.clearSearchIcon}>✕</Text>
           </Pressable>
@@ -252,7 +302,7 @@ function OrdersSearchBar({
   );
 }
 
-// ── Hero Active Order Card ───────────────────────────────────────────
+// ── Hero Active Order Card (Apple Inset Grouped) ─────────────────────
 
 const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
   order,
@@ -269,10 +319,13 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
       accessibilityHint="Theo dõi chuyến hàng"
       accessibilityLabel={`${order.reference}, ${statusLabel}`}
       accessibilityRole="button"
-      onPress={() => { haptic.light(); onPress?.(order.id); }}
-      style={({ pressed }) => [s.heroCard, pressed && s.heroCardPressed]}
+      onPress={() => {
+        haptic.light();
+        onPress?.(order.id);
+      }}
+      style={({ pressed }) => [s.heroCard, pressed && s.cardPressed]}
     >
-      {/* Dark gradient map strip */}
+      {/* Dark gradient route strip */}
       <Box style={s.heroMapStrip}>
         <Box style={s.heroMapGradient} />
         {/* Route line overlay */}
@@ -320,8 +373,8 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
           <HStack style={s.heroMetaRight}>
             {order.etaLabel ? (
               <HStack style={s.heroEtaPill}>
-                <IconClock color={colors.neutral.subtleText} size={12} />
-                <Text style={s.heroEtaText}>{order.etaLabel}</Text>
+                <IconClock color={customerPalette.primary} size={12} />
+                <Text style={s.heroEtaText}>ETA dự kiến: {order.etaLabel}</Text>
               </HStack>
             ) : null}
             {order.priceLabel ? (
@@ -341,7 +394,7 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
   );
 });
 
-// ── Completed Order Card (Apple-style clean) ─────────────────────────
+// ── Completed Order Card (Apple Inset Grouped) ───────────────────────
 
 const CompletedOrderCard = React.memo(function CompletedOrderCard({
   order,
@@ -355,8 +408,11 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
       accessibilityHint="Xem chi tiết đơn hàng"
       accessibilityLabel={`Đơn ${order.reference}`}
       accessibilityRole="button"
-      onPress={() => { haptic.light(); onPress?.(order.id); }}
-      style={({ pressed }) => [s.completedCard, pressed && s.completedCardPressed]}
+      onPress={() => {
+        haptic.light();
+        onPress?.(order.id);
+      }}
+      style={({ pressed }) => [s.completedCard, pressed && s.cardPressed]}
     >
       {/* Header: icon + reference + status */}
       <HStack style={s.completedHeader}>
@@ -370,7 +426,7 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
         <StatusBadge domain="order" status={order.status} />
       </HStack>
 
-      {/* Route: horizontal compact */}
+      {/* Route: horizontal compact flow */}
       <HStack style={s.completedRoute}>
         <HStack style={s.completedRouteFlow}>
           <Box style={[s.completedDot, { backgroundColor: colors.success.text }]} />
@@ -386,7 +442,7 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
         </HStack>
       </HStack>
 
-      {/* Footer: price + distance */}
+      {/* Footer: price + distance + ETA */}
       <HStack style={s.completedFooter}>
         <Text style={s.completedPrice}>{order.priceLabel || '—'}</Text>
         {order.route.distanceLabel ? (
@@ -435,26 +491,16 @@ function Notice({ view }: Readonly<{ view: CustomerListContentView }>) {
   );
 }
 
-// ── Time Group Header ────────────────────────────────────────────────
-
-function TimeGroupHeader({ label }: Readonly<{ label: string }>) {
-  return (
-    <View style={s.timeGroupHeader}>
-      <Text style={s.timeGroupText}>{label}</Text>
-    </View>
-  );
-}
-
 // ── Loading Skeleton (Apple style) ───────────────────────────────────
 
 function OrdersSkeleton() {
   return (
     <View style={s.skeletonWrap}>
       {/* Fake segmented control */}
-      <SkeletonBar height={36} borderRadius={10} />
+      <SkeletonBar borderRadius={radius.pill} height={38} />
       {/* Fake cards */}
       <SkeletonCard>
-        <SkeletonBar height={48} width="100%" borderRadius={12} />
+        <SkeletonBar borderRadius={radius.cardSm} height={48} width="100%" />
         <SkeletonBar height={14} width="70%" />
         <SkeletonBar height={14} width="50%" />
       </SkeletonCard>
@@ -475,10 +521,12 @@ function OrdersSkeleton() {
 // ── Main Screen ──────────────────────────────────────────────────────
 
 export function CustomerOrdersScreen({
+  isRefreshing,
   onClearFilters,
   onCreate,
   onLoadMore,
   onOpenOrder,
+  onRefresh,
   onRetry,
   onSelectStatus,
   view,
@@ -486,6 +534,27 @@ export function CustomerOrdersScreen({
   const [segment, setSegment] = useState<OrdersSegment>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [localRefreshing, setLocalRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    if (onRefresh) {
+      setLocalRefreshing(true);
+      haptic.light();
+      try {
+        await onRefresh();
+      } finally {
+        setLocalRefreshing(false);
+      }
+    } else if (onRetry) {
+      setLocalRefreshing(true);
+      haptic.light();
+      try {
+        onRetry();
+      } finally {
+        setLocalRefreshing(false);
+      }
+    }
+  }, [onRefresh, onRetry]);
 
   // Loading state
   if (view.kind === 'loading') {
@@ -565,8 +634,11 @@ export function CustomerOrdersScreen({
           <Pressable
             accessibilityLabel="Đặt chuyến mới"
             accessibilityRole="button"
-            onPress={() => { haptic.light(); onCreate(); }}
-            style={({ pressed }) => [s.floatingCta, pressed && s.floatingCtaPressed]}
+            onPress={() => {
+              haptic.light();
+              onCreate();
+            }}
+            style={({ pressed }) => [s.floatingCta, pressed && s.cardPressed]}
           >
             <IconSpeedTruck color={colors.neutral.surface} size={18} />
             <Text style={s.floatingCtaText}>Đặt chuyến mới</Text>
@@ -579,31 +651,6 @@ export function CustomerOrdersScreen({
         contentContainerStyle={s.listContent}
         data={segment === 'active' ? activeOrders : filteredOrders}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <View style={s.headerContent}>
-            {/* Apple-style Segmented Control */}
-            <AppleSegmentedControl
-              activeCount={activeOrders.length}
-              activeSegment={segment}
-              onSegmentChange={setSegment}
-            />
-
-            {/* Search bar in "Lịch sử" tab */}
-            {segment === 'all' ? (
-              <>
-                <OrdersSearchBar
-                  isFocused={isSearchFocused}
-                  onBlur={() => setIsSearchFocused(false)}
-                  onChangeText={setSearchQuery}
-                  onClear={() => setSearchQuery('')}
-                  onFocus={() => setIsSearchFocused(true)}
-                  value={searchQuery}
-                />
-                <Notice view={view} />
-              </>
-            ) : null}
-          </View>
-        }
         ListEmptyComponent={
           segment === 'active' ? (
             <EmptyActiveState />
@@ -630,6 +677,39 @@ export function CustomerOrdersScreen({
             </View>
           ) : null
         }
+        ListHeaderComponent={
+          <View style={s.headerContent}>
+            {/* Apple Inset Pill Segmented Control */}
+            <AppleSegmentedControl
+              activeCount={activeOrders.length}
+              activeSegment={segment}
+              onSegmentChange={setSegment}
+            />
+
+            {/* Search bar in "Lịch sử" tab */}
+            {segment === 'all' ? (
+              <>
+                <OrdersSearchBar
+                  isFocused={isSearchFocused}
+                  onBlur={() => setIsSearchFocused(false)}
+                  onChangeText={setSearchQuery}
+                  onClear={() => setSearchQuery('')}
+                  onFocus={() => setIsSearchFocused(true)}
+                  value={searchQuery}
+                />
+                <Notice view={view} />
+              </>
+            ) : null}
+          </View>
+        }
+        refreshControl={
+          <RefreshControl
+            colors={[customerPalette.primary]}
+            onRefresh={handleRefresh}
+            refreshing={isRefreshing ?? localRefreshing}
+            tintColor={customerPalette.primary}
+          />
+        }
         renderItem={segment === 'active' ? renderActiveItem : renderCompletedItem}
         showsVerticalScrollIndicator={false}
       />
@@ -655,14 +735,28 @@ const s = StyleSheet.create({
     gap: spacing.sm,
   },
 
-  // ─── iOS 18 Segmented Control ──────────────────────────────────
-  segmentedBar: {
+  // ─── Apple Inset Pill Segmented Control ─────────────────────────
+  segmentedContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.control,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
     padding: spacing.hairline + 1,
-    gap: spacing.hairline,
+    height: 42,
+    position: 'relative',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.border,
+  },
+  segmentedPillIndicator: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+    backgroundColor: colors.neutral.surface,
+    borderRadius: radius.pill,
+    ...iosContinuousCurve,
+    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.12)',
+    elevation: 2,
   },
   segmentTab: {
     flex: 1,
@@ -670,14 +764,11 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    paddingVertical: spacing.xs + 1,
+    height: '100%',
     paddingHorizontal: spacing.sm,
-    borderRadius: radius.control - 3,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
-  },
-  segmentTabActive: {
-    backgroundColor: customerPalette.primary,
-    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.2)',
+    zIndex: 1,
   },
   segmentLabel: {
     ...typeScale.subheadline,
@@ -686,24 +777,24 @@ const s = StyleSheet.create({
   },
   segmentLabelActive: {
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: customerPalette.primary,
   },
   segmentBadge: {
     backgroundColor: customerPalette.onlineGreen,
     borderRadius: radius.pill,
-    minWidth: 20,
-    height: 20,
+    minWidth: 18,
+    height: 18,
     paddingHorizontal: spacing.xxs,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: customerPalette.primary,
   },
   segmentBadgeText: {
     color: colors.neutral.surface,
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   segmentBadgeTextActive: {
@@ -717,15 +808,16 @@ const s = StyleSheet.create({
     borderColor: colors.neutral.border,
     borderRadius: radius.control,
     ...iosContinuousCurve,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
-    paddingVertical: Platform.OS === 'ios' ? spacing.xs + 1 : spacing.xxs + 2,
+    paddingVertical: Platform.OS === 'ios' ? spacing.xs : spacing.xxs,
     minHeight: 40,
   },
   searchBarFocused: {
     borderColor: customerPalette.primary,
+    borderWidth: 1,
   },
   searchIconSlot: {
     paddingLeft: spacing.xxs,
@@ -759,7 +851,7 @@ const s = StyleSheet.create({
     borderColor: colors.neutral.border,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     gap: spacing.xs,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.lg,
@@ -776,19 +868,16 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ─── Hero Active Order Card ───────────────────────────────────
+  // ─── Hero Active Order Card (Inset Grouped) ───────────────────
   heroCard: {
     backgroundColor: colors.neutral.surface,
-    borderRadius: radius.cardXl,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.neutral.border,
-    boxShadow: '0 6px 16px rgba(11, 37, 69, 0.08)',
-  },
-  heroCardPressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.99 }],
+    boxShadow: '0 4px 12px rgba(11, 37, 69, 0.06)',
+    elevation: 2,
   },
 
   // Map strip
@@ -799,14 +888,18 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
   heroMapGradient: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: colors.neutral.text,
-    opacity: 0.9,
+    opacity: 0.92,
   },
   heroRouteLine: {
     position: 'absolute',
-    left: 24,
-    right: 24,
+    left: spacing.lg,
+    right: spacing.lg,
     top: '50%',
     marginTop: -3,
     flexDirection: 'row',
@@ -816,14 +909,14 @@ const s = StyleSheet.create({
   heroRouteEndpoint: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: radius.pill,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.6)',
+    borderColor: 'rgba(255,255,255,0.7)',
   },
   heroRouteDash: {
     flex: 1,
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(255,255,255,0.3)',
     borderRadius: 1,
   },
   heroStatusPill: {
@@ -834,7 +927,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xxs,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxs,
+    paddingVertical: spacing.hairline,
     borderRadius: radius.pill,
   },
   heroStatusText: {
@@ -860,7 +953,7 @@ const s = StyleSheet.create({
   heroOriginDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: radius.pill,
     backgroundColor: colors.success.text,
   },
   heroDestDot: {
@@ -897,7 +990,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.neutral.surfaceMuted,
     paddingTop: spacing.xs,
   },
@@ -921,14 +1014,16 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xxs,
-    backgroundColor: '#F0F4F9',
+    backgroundColor: colors.neutral.canvas,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.hairline,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.border,
   },
   heroEtaText: {
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '600',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
@@ -959,20 +1054,17 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // ─── Completed Order Card ─────────────────────────────────────
+  // ─── Completed Order Card (Inset Grouped) ─────────────────────
   completedCard: {
     backgroundColor: colors.neutral.surface,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     padding: spacing.md,
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.neutral.surfaceMuted,
-    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
-  },
-  completedCardPressed: {
-    opacity: 0.88,
-    backgroundColor: '#FAFBFC',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.border,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)',
+    elevation: 1,
   },
   completedHeader: {
     flexDirection: 'row',
@@ -1118,29 +1210,17 @@ const s = StyleSheet.create({
   noticeWarning: {
     backgroundColor: colors.warning.background,
     borderColor: colors.warning.border,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   noticeError: {
     backgroundColor: colors.danger.background,
     borderColor: colors.danger.border,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   noticeText: {
     ...typeScale.footnote,
     color: colors.neutral.text,
     lineHeight: 18,
-  },
-
-  // ─── Time group ───────────────────────────────────────────────
-  timeGroupHeader: {
-    paddingVertical: spacing.xxs,
-    paddingHorizontal: spacing.hairline,
-  },
-  timeGroupText: {
-    ...typeScale.footnote,
-    fontWeight: '600',
-    color: colors.neutral.subtleText,
-    letterSpacing: 0.3,
   },
 
   // ─── Floating CTA ─────────────────────────────────────────────
@@ -1156,10 +1236,7 @@ const s = StyleSheet.create({
     paddingVertical: spacing.md,
     minHeight: 52,
     boxShadow: '0 6px 14px rgba(11, 37, 69, 0.2)',
-  },
-  floatingCtaPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.985 }],
+    elevation: 4,
   },
   floatingCtaText: {
     color: colors.neutral.surface,
@@ -1172,8 +1249,9 @@ const s = StyleSheet.create({
     paddingTop: spacing.xxs,
   },
 
-  // Shared
-  pressed: {
-    opacity: 0.85,
+  // ─── Emil Kowalski Active State ───────────────────────────────
+  cardPressed: {
+    transform: [{ scale: 0.985 }],
+    opacity: 0.92,
   },
 });

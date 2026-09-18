@@ -6,18 +6,9 @@ import { addressStore, type SavedAddress } from '../../../src/features/customer/
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
   HomeDashboardScreen,
-  type ActiveShipment,
   type RecentOrder,
 } from '../../../src/features/home/HomeDashboardScreen';
 import type { VehicleCategory } from '@leopard/mobile-core';
-
-const ACTIVE_ORDER_STATUSES = [
-  'REQUESTED',
-  'ACCEPTED',
-  'PICKING_UP',
-  'PICKED_UP',
-  'IN_TRANSIT',
-] as const;
 
 function resolveVehicleOrderType(
   fleetVehicleId?: string,
@@ -53,11 +44,9 @@ export default function CustomerHomePage() {
   );
 
   const [customerUser, setCustomerUser] = useState<{ name?: string; phone?: string } | null>(null);
-  const [activeShipment, setActiveShipment] = useState<ActiveShipment | null>(null);
   const [recentOrders, setRecentOrders] = useState<readonly RecentOrder[]>([]);
 
-  // Load the customer's own orders to drive the "active shipment" and
-  // "recent orders" cards instead of showing fixed sample data.
+  // Load the customer's own recent orders
   useEffect(() => {
     let mounted = true;
     const port = createCustomerHttpAdapter();
@@ -67,57 +56,22 @@ export default function CustomerHomePage() {
         const view = await port.getOrdersView('ALL');
         if (!mounted || view.kind !== 'content') return;
 
-        const activeOrder = view.orders.find((order) =>
-          (ACTIVE_ORDER_STATUSES as readonly string[]).includes(order.status),
+        setRecentOrders(
+          view.orders
+            .filter((order) => order.status === 'DELIVERED' || order.status === 'CANCELLED')
+            .slice(0, 5)
+            .map((order) => ({
+              id: order.id,
+              reference: order.reference,
+              status: order.status,
+              origin: order.route.origin.label,
+              destination: order.route.destination.label,
+              price: order.priceLabel,
+              updated: order.updatedAtLabel,
+            })),
         );
-
-        if (activeOrder) {
-          const detail = await port.getOrderDetailView(activeOrder.id);
-          if (mounted && detail.kind === 'content') {
-            const isFinished =
-              detail.order.status === 'DELIVERED' || detail.order.status === 'CANCELLED';
-            setActiveShipment({
-              orderId: detail.order.id,
-              status: detail.order.status,
-              origin: detail.order.route.origin.label,
-              originCoords: detail.order.route.origin.coords
-                ? { lat: detail.order.route.origin.coords.lat, lng: detail.order.route.origin.coords.lng }
-                : undefined,
-              destination: detail.order.route.destination.label,
-              destinationCoords: detail.order.route.destination.coords
-                ? { lat: detail.order.route.destination.coords.lat, lng: detail.order.route.destination.coords.lng }
-                : undefined,
-              cargoNote: detail.order.cargo.note ?? undefined,
-              driverName: detail.order.assignedDriver?.name ?? undefined,
-              plate: detail.order.assignedDriver?.licensePlate ?? undefined,
-              etaMinutes: isFinished
-                ? undefined
-                : Math.max(1, Math.round(detail.order.etaDurationSeconds / 60)),
-              routeCoords: detail.order.route.routeCoords,
-            });
-          }
-        } else if (mounted) {
-          setActiveShipment(null);
-        }
-
-        if (mounted) {
-          setRecentOrders(
-            view.orders
-              .filter((order) => (order.status === 'DELIVERED' || order.status === 'CANCELLED') && order.id !== activeOrder?.id)
-              .slice(0, 5)
-              .map((order) => ({
-                id: order.id,
-                reference: order.reference,
-                status: order.status,
-                origin: order.route.origin.label,
-                destination: order.route.destination.label,
-                price: order.priceLabel,
-                updated: order.updatedAtLabel,
-              })),
-          );
-        }
       } catch {
-        // Silently ignore — Home falls back to no active shipment / empty recent list
+        // Silently ignore — Home falls back to empty recent list
       }
     }
 
@@ -222,7 +176,7 @@ export default function CustomerHomePage() {
 
   return (
     <HomeDashboardScreen
-      activeShipment={activeShipment}
+      activeShipment={null}
       defaultPickupLabel={defaultAddress?.label}
       defaultPickupLocation={defaultAddress?.address}
       recentOrders={recentOrders}

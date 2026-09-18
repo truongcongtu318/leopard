@@ -9,15 +9,14 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
-  IconChevron,
   IconClock,
   IconPhone,
   IconShield,
   IconTruck,
+  ScreenScaffold,
   colors,
   driverPrimitives,
   driverSemantics,
@@ -100,34 +99,22 @@ export default function KycPendingRoute() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Pressable
-          accessibilityLabel="Quay lại"
-          accessibilityRole="button"
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          onPress={handleBack}
-          style={styles.backBtn}
-          testID="btn-back"
-        >
-          <IconChevron color={driverSemantics.text.primary} direction="left" size={20} />
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.headerTitle}>
-          Trạng thái hồ sơ
-        </Text>
+    <ScreenScaffold
+      headerRight={
         <Pressable
           accessibilityLabel="Đăng xuất"
           accessibilityRole="button"
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={handleLogout}
-          style={styles.logoutBtn}
           testID="btn-logout"
         >
           <Text style={styles.logoutBtnText}>Thoát</Text>
         </Pressable>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.content} style={styles.scroll}>
+      }
+      onBack={handleBack}
+      title="Trạng thái hồ sơ"
+    >
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Main Status Hero Card */}
         <View style={styles.heroCard} testID="kyc-status-card">
           <View style={styles.heroBadge}>
@@ -216,52 +203,19 @@ export default function KycPendingRoute() {
           Trong quá trình duyệt, đội ngũ hỗ trợ có thể liên hệ số điện thoại của bạn để xác thực thông tin đối tác.
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.neutral.canvas,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 56,
-    backgroundColor: colors.neutral.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.neutral.surfaceMuted,
-  },
-  backBtn: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    ...typeScale.headline,
-    fontWeight: '700',
-    color: driverSemantics.text.primary,
-  },
-  logoutBtn: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   logoutBtnText: {
     ...typeScale.subheadline,
     fontWeight: '600',
     color: leopardPalette.textMutedSlate,
   },
-  scroll: {
-    flex: 1,
-  },
   content: {
-    padding: spacing.xl - spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
     alignItems: 'center',
   },

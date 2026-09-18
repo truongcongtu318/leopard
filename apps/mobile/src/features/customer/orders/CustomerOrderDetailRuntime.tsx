@@ -75,17 +75,21 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
 
   return (
     <CustomerOrderDetailScreen
+      isRefreshing={query.isRefetching}
       onBack={() => router.back()}
       onCancel={(actionId, reason) => void runIntent({ actionId, orderId, value: reason })}
+      onOpenInvoice={(invoiceId) => handleOpenInvoice(invoiceId)}
       onOpenTracking={(id) =>
         router.push({ pathname: '/customer/tracking', params: { orderId: id } })
       }
       onPaymentAction={(actionId) => void runIntent({ actionId, orderId })}
       onPickCargoImage={() => void handlePickCargoImage()}
       onPrimaryAction={(actionId) => void runIntent({ actionId, orderId })}
-      onOpenInvoice={(invoiceId) => handleOpenInvoice(invoiceId)}
-      onSendInvoiceEmail={(invoiceId, email) => void handleSendInvoiceEmail(invoiceId, email)}
+      onRefresh={async () => {
+        await query.refetch();
+      }}
       onRetry={() => query.refetch()}
+      onSendInvoiceEmail={(invoiceId, email) => void handleSendInvoiceEmail(invoiceId, email)}
       view={view}
     />
   );

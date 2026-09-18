@@ -62,7 +62,7 @@ describe('useProofPhotoCapture', () => {
     expect(outcome).toEqual({ kind: 'permission-denied' });
   });
 
-  it('surfaces a non-permission camera failure instead of silently substituting', async () => {
+  it('falls back to the photo library when camera fails to open (e.g. simulator/hardware)', async () => {
     const capture = jest.fn(async () => {
       throw new Error('camera hardware unavailable');
     });
@@ -74,9 +74,11 @@ describe('useProofPhotoCapture', () => {
       outcome = await result.current.captureProofPhoto();
     });
 
-    expect(outcome).toMatchObject({ kind: 'error' });
-    // The library must NOT be used as a cover for an unknown camera failure.
-    expect(pick).not.toHaveBeenCalled();
+    expect(outcome).toMatchObject({
+      kind: 'captured',
+      photo: { uri: REAL_ASSET.uri },
+    });
+    expect(pick).toHaveBeenCalledTimes(1);
   });
 
   it('treats a canceled picker as canceled', async () => {

@@ -5,6 +5,7 @@ import {
   Box,
   VStack,
   colors,
+  haptic,
   iconSize,
   IconShieldAlert,
   ScreenScaffold,
@@ -57,6 +58,7 @@ export function DriverOrderBoardScreen({
   }, []);
 
   const handleBack = useCallback(() => {
+    haptic.selection();
     if (onBack) {
       onBack();
       return;

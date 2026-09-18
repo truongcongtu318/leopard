@@ -31,6 +31,7 @@ export interface BookingCargoSectionProps {
   cargoImages: string[];
   onAddImage: (uri: string) => void;
   onRemoveImage: (index: number) => void;
+  imageError?: string;
 }
 
 const CARGO_CATEGORIES: CargoCategory[] = [
@@ -49,6 +50,7 @@ export function BookingCargoSection({
   cargoImages,
   onAddImage,
   onRemoveImage,
+  imageError,
 }: BookingCargoSectionProps) {
   const handleSelectCategory = (cat: CargoCategory) => {
     haptic.selection();
@@ -77,7 +79,7 @@ export function BookingCargoSection({
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>Hàng hóa</Text>
 
-      {/* Chip cuộn ngang loại hàng */}
+      {/* Chip cuộn ngang loại hàng dạng pill compact */}
       <ScrollView
         contentContainerStyle={styles.chipsScroll}
         horizontal
@@ -107,13 +109,13 @@ export function BookingCargoSection({
       </ScrollView>
 
       <View style={styles.insetGroupedCard}>
-        {/* Ô nhập ghi chú nhiều dòng */}
+        {/* Ô nhập ghi chú nhiều dòng gọn gàng */}
         <View style={styles.noteWrap}>
           <Text style={styles.fieldLabel}>Ghi chú hàng hóa</Text>
           <TextInput
             accessibilityLabel="Ghi chú hàng hóa"
             multiline
-            numberOfLines={3}
+            numberOfLines={2}
             onChangeText={onChangeNote}
             placeholder="Khối lượng, tính chất hàng, lưu ý khi bốc dỡ"
             placeholderTextColor={customerPalette.offlineGray}
@@ -127,7 +129,10 @@ export function BookingCargoSection({
         {/* Lưới ảnh hàng hóa */}
         <View style={styles.photoSection}>
           <View style={styles.photoHeader}>
-            <Text style={styles.fieldLabel}>Ảnh hàng hóa</Text>
+            <View style={styles.photoLabelRow}>
+              <Text style={styles.fieldLabel}>Ảnh hàng hóa</Text>
+              <Text style={styles.requiredStar}>*</Text>
+            </View>
             <Text style={styles.photoCount}>{cargoImages.length}/5 ảnh</Text>
           </View>
 
@@ -143,7 +148,7 @@ export function BookingCargoSection({
                   style={styles.deletePhotoBtn}
                 >
                   <View style={styles.deletePhotoCircle}>
-                    <IconClose color="#FFFFFF" size={10} />
+                    <IconClose color="#FFFFFF" size={9} />
                   </View>
                 </Pressable>
               </View>
@@ -163,12 +168,16 @@ export function BookingCargoSection({
                   accessibilityElementsHidden={true}
                   importantForAccessibility="no"
                 >
-                  <IconCamera color={customerPalette.primary} size={22} />
+                  <IconCamera color={customerPalette.primary} size={18} />
                 </View>
-                <Text style={styles.addPhotoText}>+ Thêm ảnh</Text>
+                <Text style={styles.addPhotoText}>Thêm ảnh</Text>
               </Pressable>
             )}
           </View>
+
+          {imageError ? (
+            <Text style={styles.errorText}>{imageError}</Text>
+          ) : null}
         </View>
       </View>
     </View>
@@ -177,33 +186,34 @@ export function BookingCargoSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm + 2,
   },
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '700',
     color: colors.neutral.mutedText,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xxs + 2,
     letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
   chipsScroll: {
     paddingHorizontal: spacing.md,
     gap: spacing.xs,
-    paddingBottom: spacing.xs,
+    paddingBottom: spacing.xxs + 2,
   },
   chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xxs + 1,
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    minHeight: 36,
+    minHeight: 30,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
     ...iosContinuousCurve,
   },
   chipSelected: {
@@ -211,11 +221,11 @@ const styles = StyleSheet.create({
     borderColor: customerPalette.primary,
   },
   chipPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.965 }],
   },
   chipText: {
-    ...typeScale.footnote,
+    ...typeScale.caption1,
     fontWeight: '500',
     color: colors.neutral.text,
   },
@@ -226,35 +236,35 @@ const styles = StyleSheet.create({
   insetGroupedCard: {
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: radius.cardLg,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: spacing.md,
+    padding: spacing.sm,
     overflow: 'hidden',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
     ...iosContinuousCurve,
   },
   noteWrap: {
-    paddingBottom: spacing.xxs,
+    paddingBottom: spacing.hairline,
   },
   fieldLabel: {
-    ...typeScale.caption1,
-    fontWeight: '500',
+    ...typeScale.caption2,
+    fontWeight: '600',
     color: customerPalette.textSubtle,
-    marginBottom: spacing.xxs,
+    marginBottom: 2,
   },
   multilineInput: {
-    ...typeScale.callout,
+    ...typeScale.subheadline,
     color: colors.neutral.text,
-    minHeight: 64,
+    minHeight: 48,
     textAlignVertical: 'top',
     padding: 0,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   separator: {
     height: 0.5,
     backgroundColor: colors.neutral.border,
-    marginVertical: spacing.sm,
+    marginVertical: spacing.xs,
   },
   photoSection: {
     paddingTop: spacing.hairline,
@@ -263,53 +273,63 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xxs + 2,
+  },
+  photoLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  requiredStar: {
+    ...typeScale.caption2,
+    fontWeight: '700',
+    color: colors.danger.text,
   },
   photoCount: {
-    ...typeScale.footnote,
+    ...typeScale.caption2,
     color: customerPalette.textSubtle,
     fontVariant: ['tabular-nums'],
   },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   thumbnailWrapper: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.control,
+    width: 60,
+    height: 60,
+    borderRadius: radius.cardSm,
     position: 'relative',
     ...iosContinuousCurve,
   },
   thumbnailImage: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.control,
+    width: 60,
+    height: 60,
+    borderRadius: radius.cardSm,
     backgroundColor: colors.neutral.surfaceMuted,
   },
   deletePhotoBtn: {
     position: 'absolute',
-    top: -6,
-    right: -6,
-    width: 44,
-    height: 44,
+    top: -5,
+    right: -5,
+    width: 32,
+    height: 32,
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     zIndex: 10,
   },
   deletePhotoCircle: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     borderRadius: radius.pill,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   addPhotoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.control,
+    width: 60,
+    height: 60,
+    borderRadius: radius.cardSm,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: customerPalette.primaryBorder,
@@ -320,8 +340,15 @@ const styles = StyleSheet.create({
   },
   addPhotoText: {
     ...typeScale.caption2,
+    fontSize: 10,
+    lineHeight: 12,
     fontWeight: '600',
     color: customerPalette.primary,
-    marginTop: spacing.hairline,
+    marginTop: 2,
+  },
+  errorText: {
+    ...typeScale.caption2,
+    color: colors.danger.text,
+    marginTop: spacing.xxs + 2,
   },
 });

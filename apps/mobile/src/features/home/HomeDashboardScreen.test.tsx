@@ -127,13 +127,8 @@ describe('HomeDashboardScreen', () => {
     await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 1.25T/));
     expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK', 'TRUCK_125T');
 
-    // Active shipment sits below booking: status + route + ETA, opens on press
-    expect(screen.getAllByText('Đang vận chuyển')[0]).toBeTruthy();
-    expect(screen.getByText('Kho Tân Bình')).toBeTruthy();
-    expect(screen.getAllByText(/18 phút/)[0]).toBeTruthy();
-    expect(screen.getByText(/59C-882\.14/)).toBeTruthy();
-    await fireEvent.press(screen.getByLabelText(/Chuyến đang vận chuyển/));
-    expect(onOpenActiveOrder).toHaveBeenCalledWith('ord-active-1');
+    // Active shipment is removed from home sheet (tracked in Orders tab instead)
+    expect(screen.queryByTestId('home-active-shipments')).toBeNull();
 
     // Quick book by Ba Gác jumps into the create flow
     await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Ba Gác/));
@@ -257,18 +252,10 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it.each([
-    { shipment: activeShipment, shouldShow: true },
-    { shipment: null, shouldShow: false },
-  ])('handles active shipment with progressive disclosure ($shouldShow)', async ({ shipment, shouldShow }) => {
-    const screen = await render(<HomeDashboardScreen activeShipment={shipment} />);
+  it('does not display active shipment in home bottom sheet to keep home calm and avoid navbar overlap', async () => {
+    const screen = await render(<HomeDashboardScreen activeShipment={activeShipment} />);
     expect(screen.getByTestId('home-booking')).toBeTruthy();
-    if (shouldShow) {
-      expect(screen.getByTestId('home-active-shipments')).toBeTruthy();
-      expect(screen.getByLabelText(/Chuyến đang vận chuyển/)).toBeTruthy();
-    } else {
-      expect(screen.queryByTestId('home-active-shipments')).toBeNull();
-    }
+    expect(screen.queryByTestId('home-active-shipments')).toBeNull();
 
     await screen.unmount();
   });
@@ -841,11 +828,8 @@ describe('HomeDashboardScreen', () => {
     expect(hubChipStyle.backgroundColor).toBe('#F5F6F8');
     expect(hubChipStyle.borderColor).toBe('#E8E8E8');
 
-    // Active shipment ETA pill
-    const etaPill = screen.getByTestId('active-shipment-eta-pill');
-    expect(StyleSheet.flatten(etaPill.props.style).backgroundColor).toBe('#F0F2F5');
-    const etaText = screen.getByText(/ETA dự kiến 18 phút/);
-    expect(StyleSheet.flatten(etaText.props.style).color).toBe('#0B2545');
+    // Active shipment is removed from home sheet
+    expect(screen.queryByTestId('home-active-shipments')).toBeNull();
 
     await screen.unmount();
   });

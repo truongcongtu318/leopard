@@ -21,6 +21,7 @@ import {
   VStack,
   colors,
   driverPrimitives,
+  haptic,
   iosContinuousCurve,
   typeScale,
 } from '@leopard/mobile-core';
@@ -60,7 +61,14 @@ export function DriverEarningsScreen({
     totalOrderCount > 0 ? Math.round((deliveredOrderCount / totalOrderCount) * 100) : 0;
 
   const handleNavigate = useCallback(
-    (route: string) => (onNavigate ? onNavigate(route) : router.push(route as never)),
+    (route: string) => {
+      haptic.selection();
+      if (onNavigate) {
+        onNavigate(route);
+      } else {
+        router.push(route as never);
+      }
+    },
     [onNavigate, router],
   );
 
@@ -95,7 +103,7 @@ export function DriverEarningsScreen({
               <HStack style={styles.heroHeaderRow}>
                 <HStack style={styles.heroTitleGroup}>
                   <Box style={styles.heroIconBox}>
-                    <IconEarnings color="#FFFFFF" size={18} />
+                    <IconEarnings color="#FFFFFF" size={20} />
                   </Box>
                   <Text style={styles.heroTitle}>Thu nhập hôm nay</Text>
                 </HStack>
@@ -114,7 +122,14 @@ export function DriverEarningsScreen({
                   accessibilityLabel="Xem chi tiết Thu nhập hôm nay"
                   accessibilityRole="button"
                   hitSlop={8}
-                  onPress={() => handleNavigate('/history')}
+                  onPress={() => {
+                    haptic.light();
+                    handleNavigate('/history');
+                  }}
+                  style={({ pressed }) => [
+                    styles.detailLinkBtn,
+                    pressed ? styles.detailLinkBtnPressed : null,
+                  ]}
                 >
                   <Text style={styles.detailLinkText}>Xem chi tiết →</Text>
                 </Pressable>
@@ -135,7 +150,7 @@ export function DriverEarningsScreen({
                 >
                   <HStack style={styles.itemLeft}>
                     <Box style={styles.itemIconBox}>
-                      <IconSpeedTruck color={driverPrimitives.colors.gray500} size={20} />
+                      <IconSpeedTruck color={driverPrimitives.colors.gray700} size={20} />
                     </Box>
                     <Text style={styles.itemTitle}>Cuốc xe đã hoàn tất</Text>
                   </HStack>
@@ -151,12 +166,12 @@ export function DriverEarningsScreen({
                 <HStack style={styles.itemRow}>
                   <HStack style={styles.itemLeft}>
                     <Box style={styles.itemIconBox}>
-                      <IconCheck color={driverPrimitives.colors.gray500} size={20} strokeWidth={2.5} />
+                      <IconCheck color={driverPrimitives.colors.green700} size={20} strokeWidth={2.5} />
                     </Box>
                     <Text style={styles.itemTitle}>Tỷ lệ giao thành công</Text>
                   </HStack>
                   <Box style={styles.itemRight}>
-                    <Text style={styles.itemValue}>{completionRate}%</Text>
+                    <Text style={styles.itemValueSuccess}>{completionRate}%</Text>
                   </Box>
                 </HStack>
               </Card>
@@ -176,7 +191,7 @@ export function DriverEarningsScreen({
                 >
                   <HStack style={styles.itemLeft}>
                     <Box style={styles.itemIconBox}>
-                      <IconEarnings color={driverPrimitives.colors.gray500} size={20} />
+                      <IconEarnings color={driverPrimitives.colors.orange500} size={20} />
                     </Box>
                     <Text style={styles.itemTitle}>Tổng thu nhập (trọn đời)</Text>
                   </HStack>
@@ -197,7 +212,7 @@ export function DriverEarningsScreen({
                 >
                   <HStack style={styles.itemLeft}>
                     <Box style={styles.itemIconBox}>
-                      <IconWallet color={driverPrimitives.colors.gray500} size={20} />
+                      <IconWallet color={driverPrimitives.colors.gray700} size={20} />
                     </Box>
                     <VStack style={styles.itemTitleCol}>
                       <Text style={styles.itemTitle}>Số dư khả dụng để rút</Text>
@@ -205,7 +220,7 @@ export function DriverEarningsScreen({
                     </VStack>
                   </HStack>
                   <HStack style={styles.itemRight}>
-                    <Text style={styles.itemValue}>{formatCurrency(availableBalanceVnd)}</Text>
+                    <Text style={styles.itemValueHighlight}>{formatCurrency(availableBalanceVnd)}</Text>
                     <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
                   </HStack>
                 </Pressable>
@@ -242,16 +257,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
 
-  /* Hero Card - Brand Primary Blue (Midnight Navy) */
+  /* Hero Bento Card - High Contrast Midnight Navy (#0B2545) */
   heroCard: {
-    backgroundColor: colors.brand.primary,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    borderRadius: 20,
+    backgroundColor: driverPrimitives.colors.dark950,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    borderRadius: 22,
     ...iosContinuousCurve,
     borderWidth: 1,
-    gap: 12,
-    padding: 16,
-    ...driverPrimitives.shadows.md,
+    gap: 14,
+    padding: 18,
+    shadowColor: driverPrimitives.colors.dark950,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    elevation: 8,
   },
   heroHeaderRow: {
     alignItems: 'center',
@@ -261,44 +280,45 @@ const styles = StyleSheet.create({
   heroTitleGroup: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   heroIconBox: {
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 8,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: 10,
     borderWidth: 1,
-    height: 32,
+    height: 36,
     justifyContent: 'center',
-    width: 32,
+    width: 36,
   },
   heroTitle: {
     color: '#FFFFFF',
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   jobsBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: driverPrimitives.colors.amber500,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 9999,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
   jobsBadgeText: {
     color: '#FFFFFF',
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   heroAmount: {
     color: '#FFFFFF',
     ...typeScale.largeTitle,
+    fontSize: 36,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
   heroFooterRow: {
     alignItems: 'center',
@@ -307,8 +327,17 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   heroScopeNote: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.75)',
     ...typeScale.caption1,
+    fontWeight: '500',
+  },
+  detailLinkBtn: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  detailLinkBtnPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.985 }],
   },
   detailLinkText: {
     color: '#93C5FD',
@@ -323,7 +352,7 @@ const styles = StyleSheet.create({
   sectionHeading: {
     color: driverPrimitives.colors.gray900,
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: -0.2,
     paddingHorizontal: 4,
   },
@@ -340,24 +369,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 56,
+    minHeight: 58,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   itemPressed: {
     backgroundColor: driverPrimitives.colors.gray50,
+    opacity: 0.95,
   },
   itemLeft: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
     flex: 1,
   },
   itemIconBox: {
     alignItems: 'center',
-    height: 24,
+    backgroundColor: driverPrimitives.colors.gray100,
+    borderRadius: 10,
+    height: 36,
     justifyContent: 'center',
-    width: 24,
+    width: 36,
   },
   itemTitleCol: {
     flex: 1,
@@ -384,9 +416,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
+  itemValueSuccess: {
+    color: driverPrimitives.colors.green700,
+    ...typeScale.subheadline,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  itemValueHighlight: {
+    color: driverPrimitives.colors.orange600,
+    ...typeScale.subheadline,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
   itemDivider: {
     backgroundColor: driverPrimitives.colors.gray100,
     height: 1,
-    marginLeft: 52,
+    marginLeft: 66,
   },
 });

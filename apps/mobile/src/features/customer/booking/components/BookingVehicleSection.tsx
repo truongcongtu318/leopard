@@ -49,13 +49,13 @@ export function BookingVehicleSection({
     const iconColor = isSelected ? customerPalette.primary : '#475569';
     switch (id) {
       case 'BIKE_3W':
-        return <IconVehicle3Wheel color={iconColor} size={26} />;
+        return <IconVehicle3Wheel color={iconColor} size={22} />;
       case 'VAN_500KG':
-        return <IconVehicleVan color={iconColor} size={26} />;
+        return <IconVehicleVan color={iconColor} size={22} />;
       case 'TRUCK_125T':
-        return <IconVehicleLightTruck color={iconColor} size={26} />;
+        return <IconVehicleLightTruck color={iconColor} size={22} />;
       case 'TRUCK_25T':
-        return <IconVehicleHeavyTruck color={iconColor} size={26} />;
+        return <IconVehicleHeavyTruck color={iconColor} size={22} />;
     }
   };
 
@@ -87,7 +87,7 @@ export function BookingVehicleSection({
                 pressed && styles.vehicleCardPressed,
               ]}
             >
-              {/* Vehicle Silhouette Box */}
+              {/* Vehicle Silhouette Box: 40x40 squircle */}
               <View
                 accessibilityElementsHidden={true}
                 importantForAccessibility="no"
@@ -96,10 +96,10 @@ export function BookingVehicleSection({
                 {renderVehicleIcon(id, isSelected)}
               </View>
 
-              {/* Thông tin xe */}
+              {/* Thông tin xe: 2 dòng gọn gàng */}
               <View style={styles.vehicleInfo}>
                 <View style={styles.nameTagRow}>
-                  <Text style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
+                  <Text numberOfLines={1} style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
                     {rate.name}
                   </Text>
                   <Badge action={getBadgeAction(id)} size="sm" style={styles.tagBadge}>
@@ -109,15 +109,17 @@ export function BookingVehicleSection({
                   </Badge>
                 </View>
                 <Text numberOfLines={1} style={styles.specsText}>
-                  Thùng {rate.dimensions} · {rate.capacityKg.toLocaleString('vi-VN')} kg
+                  {rate.dimensions} · {rate.capacityKg.toLocaleString('vi-VN')} kg
                 </Text>
               </View>
 
-              {/* Giá cước & Checkmark */}
+              {/* Giá cước & Checkmark: căn phải sắc nét */}
               <View style={styles.rightCol}>
-                <Text selectable style={[styles.priceText, isSelected && styles.priceTextSelected]}>
-                  {fare !== null ? `${fare.toLocaleString('vi-VN')} đ` : 'Đang tính…'}
-                </Text>
+                {fare !== null ? (
+                  <Text selectable style={[styles.priceText, isSelected && styles.priceTextSelected]}>
+                    {`${fare.toLocaleString('vi-VN')} đ`}
+                  </Text>
+                ) : null}
                 <View
                   accessibilityElementsHidden={true}
                   importantForAccessibility="no"
@@ -125,7 +127,7 @@ export function BookingVehicleSection({
                 >
                   {isSelected ? (
                     <View style={styles.checkCircle}>
-                      <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
+                      <IconCheck color="#FFFFFF" size={11} strokeWidth={2.5} />
                     </View>
                   ) : (
                     <View style={styles.checkCircleEmpty} />
@@ -153,14 +155,14 @@ export function BookingVehicleSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
   sectionHeader: {
     ...typeScale.footnote,
     fontWeight: '700',
     color: colors.neutral.mutedText,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xxs + 2,
     letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
@@ -169,38 +171,39 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   vehicleCard: {
-    borderRadius: radius.cardLg,
+    borderRadius: radius.card,
     ...iosContinuousCurve,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    minHeight: 76,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    minHeight: 62,
+    height: 62,
   },
   vehicleCardSelected: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: customerPalette.primary,
-    boxShadow: '0 4px 16px rgba(11, 37, 69, 0.08)',
+    boxShadow: '0 3px 12px rgba(11, 37, 69, 0.08)',
   },
   vehicleCardUnselected: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
   },
   vehicleCardPressed: {
     opacity: 0.92,
-    transform: [{ scale: 0.982 }],
+    transform: [{ scale: 0.985 }],
   },
   vehicleIconBox: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.card,
+    width: 40,
+    height: 40,
+    borderRadius: radius.cardSm,
     backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.sm,
+    marginRight: spacing.xs + 2,
     borderWidth: 1,
     borderColor: '#EDF2F7',
     ...iosContinuousCurve,
@@ -217,12 +220,11 @@ const styles = StyleSheet.create({
   nameTagRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginBottom: spacing.hairline,
+    gap: spacing.xxs + 2,
+    marginBottom: 1,
   },
   vehicleName: {
-    ...typeScale.headline,
+    ...typeScale.subheadline,
     fontWeight: '600',
     color: customerPalette.textSlateDark,
   },
@@ -232,25 +234,27 @@ const styles = StyleSheet.create({
   },
   tagBadge: {
     borderRadius: radius.pill,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.xxs + 2,
     paddingVertical: 1,
   },
   tagBadgeText: {
     ...typeScale.caption2,
     fontWeight: '600',
+    fontSize: 10,
+    lineHeight: 12,
   },
   specsText: {
-    ...typeScale.footnote,
+    ...typeScale.caption1,
     color: '#64748B',
   },
   rightCol: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: spacing.xs,
+    gap: 2,
     paddingLeft: spacing.xxs,
   },
   priceText: {
-    ...typeScale.headline,
+    ...typeScale.subheadline,
     fontWeight: '700',
     color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
@@ -259,29 +263,29 @@ const styles = StyleSheet.create({
     color: customerPalette.primary,
   },
   checkSlot: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkCircle: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     borderRadius: radius.pill,
     backgroundColor: customerPalette.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.2)',
+    boxShadow: '0 2px 5px rgba(11, 37, 69, 0.2)',
   },
   checkCircleEmpty: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
   },
   footerLinkWrap: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
@@ -290,7 +294,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   footerLinkText: {
-    ...typeScale.footnote,
+    ...typeScale.caption1,
     fontWeight: '600',
     color: customerPalette.primary,
   },

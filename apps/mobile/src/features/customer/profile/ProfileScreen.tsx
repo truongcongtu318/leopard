@@ -634,6 +634,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 1,
     overflow: 'hidden',
+    padding: 0,
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,

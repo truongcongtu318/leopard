@@ -1,31 +1,37 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Animated,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import {
+  AppText,
+  Button,
   colors,
   customerPalette,
+  haptic,
   IconCheck,
-  IconChevron,
-  IconClose,
-  IconLocationPin,
   IconRadarPulse,
-  IconRoute,
   IconSecurityShield,
   IconSpeedTruck,
   iosContinuousCurve,
   leopardPalette,
-  systemFontFamily,
+  radius,
+  ScreenScaffold,
+  spacing,
   typeScale,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from '../../../../src/features/customer/orders/adapter';
@@ -83,25 +89,6 @@ export default function OrderSearchingScreen({
   const id = propOrderId || params.id || '';
   const [fetchedVehicleLabel, setFetchedVehicleLabel] = useState<string | null>(null);
 
-  if (!id) {
-    return (
-      <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: customerPalette.textSlateDark, textAlign: 'center' }}>
-            Không tìm thấy mã đơn hàng cần điều phối.
-          </Text>
-          <Pressable
-            accessibilityLabel="Quay lại"
-            accessibilityRole="button"
-            onPress={() => router.replace('/customer/orders')}
-            style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 12, backgroundColor: customerPalette.primary, borderRadius: 12 }}
-          >
-            <Text style={{ color: customerPalette.surfaceWhite, fontWeight: '700' }}>Về danh sách đơn</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
   const origin = params.origin || 'Kho Tân Bình, TP.HCM';
   const destination = params.destination || 'KCN Vĩnh Lộc, Bình Chánh';
   const vehicleLabel = params.vehicleName || fetchedVehicleLabel || formatVehicleLabel(params.vehicleType);
@@ -112,28 +99,49 @@ export default function OrderSearchingScreen({
     initialMatchedDriver ? { driverName: initialMatchedDriver } : null,
   );
 
-  // Pulse animation for radar visual
-  const pulseAnim = useRef(new Animated.Value(0)).current;
+  // Reanimated 60fps native UI thread pulse wave for radar visual
+  const pulse1 = useSharedValue(0);
+  const pulse2 = useSharedValue(0);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'test') return undefined;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]),
+
+    pulse1.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2400, easing: Easing.out(Easing.cubic) }),
+        withTiming(0, { duration: 0 }),
+      ),
+      -1,
+      false,
     );
-    loop.start();
-    return () => loop.stop();
-  }, [pulseAnim]);
+
+    const timer2 = setTimeout(() => {
+      pulse2.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 2400, easing: Easing.out(Easing.cubic) }),
+          withTiming(0, { duration: 0 }),
+        ),
+        -1,
+        false,
+      );
+    }, 1200);
+
+    return () => clearTimeout(timer2);
+  }, [pulse1, pulse2]);
+
+  const animatedPulseStyle1 = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: 0.85 + pulse1.value * 0.75 }],
+      opacity: (1 - pulse1.value) * 0.7,
+    };
+  });
+
+  const animatedPulseStyle2 = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: 0.85 + pulse2.value * 0.75 }],
+      opacity: (1 - pulse2.value) * 0.7,
+    };
+  });
 
   // 30-second countdown
   useEffect(() => {
@@ -192,6 +200,7 @@ export default function OrderSearchingScreen({
   }, [secondsLeft, id, onMatched, matchedInfo]);
 
   const handleMatchedConfirm = () => {
+    haptic.selection();
     setMatchedInfo(null);
     if (onMatched) {
       onMatched(id);
@@ -201,6 +210,7 @@ export default function OrderSearchingScreen({
   };
 
   const handleCancelConfirm = async () => {
+    haptic.medium();
     setShowCancelModal(false);
     try {
       const port = createCustomerHttpAdapter();
@@ -220,6 +230,7 @@ export default function OrderSearchingScreen({
   };
 
   const handleBack = () => {
+    haptic.light();
     if (onBack) {
       onBack();
       return;
@@ -231,76 +242,99 @@ export default function OrderSearchingScreen({
     }
   };
 
+  if (!id) {
+    return (
+      <ScreenScaffold onBack={() => router.replace('/customer/orders')} title="Tìm tài xế nhận chuyến">
+        <View style={styles.notFoundWrap}>
+          <AppText tone="primary" variant="headline" style={styles.notFoundText}>
+            Không tìm thấy mã đơn hàng cần điều phối.
+          </AppText>
+          <Button
+            label="Về danh sách đơn"
+            onPress={() => router.replace('/customer/orders')}
+            size="large"
+            style={styles.notFoundBtn}
+            variant="primary"
+          />
+        </View>
+      </ScreenScaffold>
+    );
+  }
+
   const timerFormatted = `00:${secondsLeft.toString().padStart(2, '0')}`;
 
-  const ringScale1 = pulseAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.8, 1.4],
-  });
-  const ringOpacity1 = pulseAnim.interpolate({
-    inputRange: [0, 0.7, 1],
-    outputRange: [0.8, 0.3, 0],
-  });
+  const stickyCancelFooter = (
+    <View style={styles.fixedBottomBar}>
+      <Button
+        label="Hủy tìm xe"
+        onPress={() => {
+          haptic.light();
+          setShowCancelModal(true);
+        }}
+        size="large"
+        style={styles.cancelBtn}
+        testID="btn-cancel-searching"
+        variant="secondary"
+      />
+    </View>
+  );
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
+    <ScreenScaffold
+      headerTone="plain"
+      onBack={handleBack}
+      stickyFooter={stickyCancelFooter}
+      stickyFooterBleed={true}
+      subtitle="Hệ thống điều phối thông minh LEOPARD"
+      title="Tìm tài xế nhận chuyến"
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header bar */}
-        <View style={styles.topHeader}>
-          <View style={styles.headerRow}>
-            <Pressable
-              accessibilityLabel="Quay lại"
-              accessibilityRole="button"
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              onPress={handleBack}
-              style={({ pressed }) => [styles.backBtn, pressed ? styles.backBtnPressed : null]}
-            >
-              <IconChevron color={customerPalette.textSlateDark} direction="left" size={22} />
-            </Pressable>
-            <View style={styles.headerTitleWrap}>
-              <Text style={styles.headerTitle}>Tìm tài xế nhận chuyến</Text>
-              <Text style={styles.headerSubtitle}>
-                Hệ thống điều phối thông minh LEOPARD
-              </Text>
-            </View>
-            <View style={styles.headerPlaceholder} />
-          </View>
-        </View>
-
-        {/* Radar visual container */}
+        {/* Radar visual container - Apple HIG & Reanimated UI Thread pulse */}
         <View style={styles.radarSection} testID="radar-visual-container">
           <View style={styles.radarRingOuter}>
+            {/* Wave 1: Midnight Navy & Cheetah Glow */}
             <Animated.View
               style={[
-                styles.radarPulseWave,
-                {
-                  transform: [{ scale: ringScale1 }],
-                  opacity: ringOpacity1,
-                },
+                styles.radarPulseWavePrimary,
+                animatedPulseStyle1,
               ]}
             />
+            {/* Wave 2: Outer Amber Glow */}
+            <Animated.View
+              style={[
+                styles.radarPulseWaveSecondary,
+                animatedPulseStyle2,
+              ]}
+            />
+
+            {/* Middle decorative concentric ring */}
             <View style={styles.radarRingMid}>
+              {/* Radar center circle button */}
               <View style={styles.radarCenterCircle}>
-                <IconRadarPulse color={leopardPalette.accentYellow} size={40} />
+                <IconRadarPulse color={leopardPalette.accentYellow} size={42} />
               </View>
             </View>
           </View>
 
-          <Text style={styles.radarStatusText}>
+          <AppText tone="primary" variant="headline" style={styles.radarStatusText}>
             Đang quét tìm xe trong bán kính 5km...
-          </Text>
-          <Text style={styles.radarNoticeText}>
+          </AppText>
+          <AppText tone="secondary" variant="footnote" style={styles.radarNoticeText}>
             Tài xế gần nhất sẽ phản hồi và nhận lệnh trong giây lát.
-          </Text>
+          </AppText>
         </View>
 
-        {/* 30s Countdown timer */}
+        {/* 30s Countdown timer - Inset Grouped Squircle Card */}
         <View style={styles.timerCard} testID="searching-countdown-timer">
-          <Text style={styles.timerLabel}>Thời gian chờ ghép xe tự động</Text>
-          <Text style={styles.timerValue}>{timerFormatted}</Text>
+          <AppText tone="subtle" variant="caption2" style={styles.timerLabel}>
+            THỜI GIAN CHỜ GHÉP XE TỰ ĐỘNG
+          </AppText>
+          <AppText numeric tone="accent" variant="largeTitle" style={styles.timerValue}>
+            {timerFormatted}
+          </AppText>
           <View style={styles.timerProgressBarTrack}>
             <View
               style={[
@@ -316,31 +350,39 @@ export default function OrderSearchingScreen({
           </View>
         </View>
 
-        {/* Double-Bezel Order Info Card */}
+        {/* Double-Bezel Order Info Card - Apple Inset Grouped */}
         <View style={styles.orderOuterCard}>
           <View style={styles.orderInnerCard}>
             <View style={styles.orderCardHeader}>
               <View>
-                <Text style={styles.orderLabelSmall}>Mã đơn hàng</Text>
-                <Text style={styles.orderIdValue}>{formatOrderRef(id)}</Text>
+                <AppText tone="subtle" variant="caption2" style={styles.orderLabelSmall}>
+                  MÃ ĐƠN HÀNG
+                </AppText>
+                <AppText numeric tone="primary" variant="subheadline" style={styles.orderIdValue}>
+                  {formatOrderRef(id)}
+                </AppText>
               </View>
               <View style={styles.vehicleBadge}>
-                <IconSpeedTruck color={customerPalette.textSlateDark} size={16} />
-                <Text style={styles.vehicleBadgeText}>{vehicleLabel}</Text>
+                <IconSpeedTruck color={customerPalette.primary} size={16} />
+                <AppText tone="primary" variant="caption1" style={styles.vehicleBadgeText}>
+                  {vehicleLabel}
+                </AppText>
               </View>
             </View>
 
             <View style={styles.dividerLine} />
 
-            {/* Route origin & destination */}
+            {/* Route origin & destination timeline */}
             <View style={styles.routeTimeline}>
               <View style={styles.routeItem}>
                 <View style={styles.pickupDot} />
                 <View style={styles.routeTextWrap}>
-                  <Text style={styles.routeTypeLabel}>Điểm lấy hàng</Text>
-                  <Text numberOfLines={2} style={styles.routeAddressText}>
+                  <AppText tone="subtle" variant="caption2" style={styles.routeTypeLabel}>
+                    ĐIỂM LẤY HÀNG
+                  </AppText>
+                  <AppText numberOfLines={2} tone="primary" variant="subheadline" style={styles.routeAddressText}>
                     {origin}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
 
@@ -349,31 +391,18 @@ export default function OrderSearchingScreen({
               <View style={styles.routeItem}>
                 <View style={styles.dropoffDot} />
                 <View style={styles.routeTextWrap}>
-                  <Text style={styles.routeTypeLabel}>Điểm giao hàng</Text>
-                  <Text numberOfLines={2} style={styles.routeAddressText}>
+                  <AppText tone="subtle" variant="caption2" style={styles.routeTypeLabel}>
+                    ĐIỂM GIAO HÀNG
+                  </AppText>
+                  <AppText numberOfLines={2} tone="primary" variant="subheadline" style={styles.routeAddressText}>
                     {destination}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             </View>
           </View>
         </View>
       </ScrollView>
-
-      {/* Fixed Bottom Cancel Action Bar (Apple HIG Thumb-friendly Cancel Control) */}
-      <View style={styles.fixedBottomBar}>
-        <Pressable
-          accessibilityLabel="Hủy tìm xe"
-          accessibilityRole="button"
-          onPress={() => setShowCancelModal(true)}
-          style={({ pressed }) => [
-            styles.cancelBtn,
-            pressed && styles.cancelBtnPressed,
-          ]}
-        >
-          <Text style={styles.cancelBtnText}>Hủy tìm xe</Text>
-        </Pressable>
-      </View>
 
       {/* Cancel Confirmation Modal with 100% Escrow refund */}
       <Modal
@@ -386,41 +415,42 @@ export default function OrderSearchingScreen({
           <Pressable onPress={() => setShowCancelModal(false)} style={StyleSheet.absoluteFill} />
           <View style={styles.modalContentCard}>
             <View style={styles.modalIconWrap}>
-              <IconSecurityShield color="#16A34A" size={26} />
+              <IconSecurityShield color={colors.success.text} size={28} />
             </View>
 
-            <Text style={styles.modalTitle}>Xác nhận hủy tìm xe?</Text>
+            <AppText tone="primary" variant="headline" style={styles.modalTitle}>
+              Xác nhận hủy tìm xe?
+            </AppText>
 
             <View style={styles.refundHighlightBox}>
-              <Text style={styles.refundHighlightText}>
+              <AppText tone="success" variant="footnote" style={styles.refundHighlightText}>
                 Hoàn cọc 100% tức thì về ví hoặc tài khoản ngân hàng của bạn theo chính sách bảo vệ quyền lợi khách hàng LEOPARD.
-              </Text>
+              </AppText>
             </View>
 
-            <Text style={styles.modalDescription}>
+            <AppText tone="secondary" variant="footnote" style={styles.modalDescription}>
               Bạn có thể tạo lại cuốc xe mới bất kỳ lúc nào mà không phát sinh thêm phí.
-            </Text>
+            </AppText>
 
             <View style={styles.modalActionButtons}>
-              <Pressable
-                accessibilityLabel="Xác nhận hủy và hoàn tiền"
-                accessibilityRole="button"
+              <Button
+                label="Xác nhận hủy và hoàn tiền"
                 onPress={handleCancelConfirm}
-                style={({ pressed }) => [styles.modalConfirmCancelBtn, pressed && styles.btnPressed]}
-              >
-                <Text style={styles.modalConfirmCancelText}>
-                  Xác nhận hủy và hoàn tiền
-                </Text>
-              </Pressable>
+                size="large"
+                style={styles.modalConfirmCancelBtn}
+                variant="destructive"
+              />
 
-              <Pressable
-                accessibilityLabel="Tiếp tục tìm xe"
-                accessibilityRole="button"
-                onPress={() => setShowCancelModal(false)}
-                style={({ pressed }) => [styles.modalKeepWaitingBtn, pressed && styles.btnPressed]}
-              >
-                <Text style={styles.modalKeepWaitingText}>Tiếp tục tìm xe</Text>
-              </Pressable>
+              <Button
+                label="Tiếp tục tìm xe"
+                onPress={() => {
+                  haptic.light();
+                  setShowCancelModal(false);
+                }}
+                size="large"
+                style={styles.modalKeepWaitingBtn}
+                variant="secondary"
+              />
             </View>
           </View>
         </View>
@@ -436,158 +466,133 @@ export default function OrderSearchingScreen({
         <View style={styles.modalOverlay}>
           <View style={styles.matchedModalCard}>
             <View style={styles.matchedIconWrap}>
-              <IconCheck color={leopardPalette.ecoGreen} size={32} />
+              <IconCheck color={colors.success.text} size={32} />
             </View>
-            <Text style={styles.matchedTitle}>Tài xế đã nhận đơn!</Text>
-            <Text style={styles.matchedSubtitle}>
+            <AppText tone="primary" variant="title3" style={styles.matchedTitle}>
+              Tài xế đã nhận đơn!
+            </AppText>
+            <AppText tone="secondary" variant="footnote" style={styles.matchedSubtitle}>
               {matchedInfo?.driverName || 'Tài xế'} đã nhận lệnh và đang di chuyển tới điểm lấy hàng.
-            </Text>
+            </AppText>
 
             <View style={styles.matchedOrderBox}>
-              <Text style={styles.matchedOrderRef}>{formatOrderRef(id)}</Text>
-              <Text numberOfLines={1} style={styles.matchedOrderRoute}>
+              <AppText numeric tone="primary" variant="subheadline" style={styles.matchedOrderRef}>
+                {formatOrderRef(id)}
+              </AppText>
+              <AppText numberOfLines={1} tone="secondary" variant="footnote" style={styles.matchedOrderRoute}>
                 {origin} → {destination}
-              </Text>
+              </AppText>
             </View>
 
-            <Pressable
-              accessibilityLabel="Theo dõi hành trình"
-              accessibilityRole="button"
+            <Button
+              label="Theo dõi hành trình"
               onPress={handleMatchedConfirm}
-              style={({ pressed }) => [
-                styles.matchedActionBtn,
-                pressed ? styles.btnPressed : null,
-              ]}
-            >
-              <Text style={styles.matchedActionText}>Theo dõi hành trình</Text>
-            </Pressable>
+              size="large"
+              style={styles.matchedActionBtn}
+              variant="prominent"
+            />
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </ScreenScaffold>
   );
 }
 
-// ponytail: basic pulse animation; add live driver GPS socket stream when real dispatch cluster attached.
 const styles = StyleSheet.create({
-  container: {
+  notFoundWrap: {
     flex: 1,
-    backgroundColor: customerPalette.canvas,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  topHeader: {
-    width: '100%',
-    marginBottom: 16,
-    marginTop: 4,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.neutral.surfaceMuted,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
-  backBtnPressed: {
-    opacity: 0.7,
-    backgroundColor: customerPalette.cardBorder,
+  notFoundText: {
+    textAlign: 'center',
   },
-  headerTitleWrap: {
-    flex: 1,
+  notFoundBtn: {
+    minWidth: 200,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
-  },
-  headerPlaceholder: {
-    width: 44,
-  },
-  headerTitle: {
-    fontSize: typeScale.body.fontSize,
-    fontWeight: '700',
-    color: customerPalette.textSlateDark,
-    letterSpacing: -0.3,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: customerPalette.textSubtle,
-    marginTop: 1,
   },
   radarSection: {
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: spacing.md,
     width: '100%',
   },
   radarRingOuter: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 2,
-    borderColor: 'rgba(245, 158, 11, 0.25)',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    borderWidth: 1.5,
+    borderColor: 'rgba(11, 37, 69, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    marginBottom: 20,
+    marginBottom: spacing.md,
   },
-  radarPulseWave: {
+  radarPulseWavePrimary: {
     position: 'absolute',
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    backgroundColor: 'rgba(11, 37, 69, 0.14)',
   },
-  radarRingMid: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+  radarPulseWaveSecondary: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     borderWidth: 2,
     borderColor: 'rgba(245, 158, 11, 0.4)',
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+  },
+  radarRingMid: {
+    width: 124,
+    height: 124,
+    borderRadius: 62,
+    borderWidth: 1.5,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+    backgroundColor: 'rgba(245, 158, 11, 0.04)',
   },
   radarCenterCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: customerPalette.surfaceWhite,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.25)',
     shadowColor: leopardPalette.accentYellow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 5,
   },
   radarStatusText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: customerPalette.textSlateDark,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   radarNoticeText: {
-    fontSize: 13,
-    color: customerPalette.textSubtle,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.lg,
   },
   timerCard: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 20,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    borderColor: 'rgba(11, 37, 69, 0.08)',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     alignItems: 'center',
     width: '100%',
-    marginVertical: 12,
+    marginVertical: spacing.sm,
     shadowColor: customerPalette.textSlateDark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
@@ -595,19 +600,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   timerLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: customerPalette.textSubtle,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: 4,
+    letterSpacing: 0.5,
+    marginBottom: spacing.xxs,
   },
   timerValue: {
-    fontSize: typeScale.largeTitle.fontSize,
-    fontWeight: '700',
-    color: leopardPalette.accentYellow,
-    fontVariant: ['tabular-nums'],
-    marginBottom: 8,
+    marginVertical: spacing.xxs,
   },
   timerProgressBarTrack: {
     width: '100%',
@@ -615,6 +612,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: colors.neutral.surfaceMuted,
     overflow: 'hidden',
+    marginTop: spacing.xxs,
   },
   timerProgressBarFill: {
     height: '100%',
@@ -623,26 +621,27 @@ const styles = StyleSheet.create({
   },
   orderOuterCard: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderColor: 'rgba(11, 37, 69, 0.08)',
     backgroundColor: customerPalette.surfaceWhite,
-    padding: 16,
-    marginTop: 8,
-    marginBottom: 24,
+    padding: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
     shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   orderInnerCard: {
-    borderRadius: 18,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.04)',
-    padding: 14,
-    marginBottom: 14,
+    borderColor: 'rgba(11, 37, 69, 0.04)',
+    padding: spacing.sm,
   },
   orderCardHeader: {
     flexDirection: 'row',
@@ -650,37 +649,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   orderLabelSmall: {
-    fontSize: 11,
-    color: customerPalette.textSubtle,
-    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   orderIdValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: customerPalette.textSlateDark,
-    fontVariant: ['tabular-nums'],
+    marginTop: 2,
   },
   vehicleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: customerPalette.cardBorder,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
   },
   vehicleBadgeText: {
-    fontSize: 12,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
-    marginLeft: 6,
+    marginLeft: spacing.xs,
   },
   dividerLine: {
     height: 1,
     backgroundColor: customerPalette.cardBorder,
-    marginVertical: 12,
+    marginVertical: spacing.sm,
   },
   routeTimeline: {
-    paddingLeft: 4,
+    paddingLeft: spacing.xxs,
   },
   routeItem: {
     flexDirection: 'row',
@@ -692,7 +685,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: leopardPalette.accentYellow,
     marginTop: 5,
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
   dropoffDot: {
     width: 10,
@@ -700,31 +693,29 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: colors.success.text,
     marginTop: 5,
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
   routeDottedConnector: {
     width: 2,
     height: 20,
     backgroundColor: colors.neutral.subtleBorder,
     marginLeft: 4,
-    marginVertical: 3,
+    marginVertical: 2,
   },
   routeTextWrap: {
     flex: 1,
   },
   routeTypeLabel: {
-    fontSize: 11,
-    color: leopardPalette.inputPlaceholder,
+    letterSpacing: 0.4,
   },
   routeAddressText: {
-    fontSize: 13,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
+    marginTop: 1,
   },
   fixedBottomBar: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: Platform.select({ ios: 16, default: 14 }),
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: Platform.select({ ios: spacing.md, default: spacing.sm }),
     backgroundColor: customerPalette.surfaceWhite,
     borderTopWidth: 1,
     borderTopColor: customerPalette.cardBorder,
@@ -733,134 +724,89 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 6,
+    width: '100%',
   },
   cancelBtn: {
-    height: 50,
-    minHeight: 50,
-    borderRadius: 14,
-    ...iosContinuousCurve,
-    borderWidth: 1,
+    minHeight: 52,
     borderColor: 'rgba(255, 59, 48, 0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-  },
-  cancelBtnPressed: {
-    backgroundColor: '#FFF1F2',
-    opacity: 0.88,
-    transform: [{ scale: 0.99 }],
-  },
-  cancelBtnText: {
-    fontFamily: systemFontFamily,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FF3B30',
-    letterSpacing: -0.2,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   modalContentCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 24,
-    width: '100%',
-    maxWidth: 330,
-    alignItems: 'center',
-    boxShadow: '0 12px 36px rgba(0, 0, 0, 0.18)',
-    elevation: 10,
+    borderRadius: radius.modal,
     ...iosContinuousCurve,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 28,
+    elevation: 10,
   },
   modalIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#F0FDF4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: spacing.sm,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
-    letterSpacing: -0.3,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.xs,
   },
   refundHighlightBox: {
     backgroundColor: '#F0FDF4',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
-    width: '100%',
+    borderRadius: radius.control,
     ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.xs,
+    width: '100%',
   },
   refundHighlightText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#15803D',
-    lineHeight: 18,
     textAlign: 'center',
+    lineHeight: 18,
   },
   modalDescription: {
-    fontSize: 13,
-    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 18,
-    marginBottom: 20,
-    paddingHorizontal: 4,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xxs,
   },
   modalActionButtons: {
     width: '100%',
-    gap: 8,
+    gap: spacing.xs,
   },
   modalConfirmCancelBtn: {
     minHeight: 48,
-    borderRadius: 14,
-    backgroundColor: '#FF3B30',
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...iosContinuousCurve,
-  },
-  modalConfirmCancelText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
   },
   modalKeepWaitingBtn: {
     minHeight: 46,
-    borderRadius: 14,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...iosContinuousCurve,
-  },
-  modalKeepWaitingText: {
-    color: '#000000',
-    fontSize: 15,
-    fontWeight: '600',
   },
   matchedModalCard: {
     backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: radius.modal,
+    ...iosContinuousCurve,
+    padding: spacing.lg,
     width: '100%',
     maxWidth: 380,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 24,
     elevation: 10,
-    gap: 12,
+    gap: spacing.sm,
   },
   matchedIconWrap: {
     width: 64,
@@ -869,62 +815,33 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success.background,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xxs,
   },
   matchedTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: customerPalette.textSlateDark,
     textAlign: 'center',
   },
   matchedSubtitle: {
-    fontSize: typeScale.footnote.fontSize,
-    color: customerPalette.textSubtle,
     textAlign: 'center',
     lineHeight: 19,
   },
   matchedOrderBox: {
     width: '100%',
     backgroundColor: customerPalette.canvas,
-    borderRadius: 14,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    padding: 12,
-    gap: 4,
-    marginVertical: 4,
+    padding: spacing.sm,
+    gap: spacing.xxs,
+    marginVertical: spacing.xxs,
   },
   matchedOrderRef: {
-    fontSize: typeScale.subheadline.fontSize,
     fontWeight: '600',
-    color: customerPalette.textSlateDark,
   },
-  matchedOrderRoute: {
-    fontSize: typeScale.footnote.fontSize,
-    color: customerPalette.textSubtle,
-  },
+  matchedOrderRoute: {},
   matchedActionBtn: {
     width: '100%',
     minHeight: 52,
-    borderRadius: 16,
-    ...iosContinuousCurve,
-    backgroundColor: customerPalette.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 4,
-    shadowColor: customerPalette.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  matchedActionText: {
-    color: customerPalette.surfaceWhite,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  btnPressed: {
-    opacity: 0.75,
+    marginTop: spacing.xxs,
   },
 });
