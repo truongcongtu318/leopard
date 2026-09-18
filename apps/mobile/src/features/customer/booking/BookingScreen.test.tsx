@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { httpClient } from '@leopard/mobile-core';
 import { BookingScreen } from './BookingScreen';
@@ -85,6 +85,26 @@ describe('BookingScreen Full Page Flow', () => {
     expect(screen.queryByText('200.000 đ')).toBeNull();
   });
 
+  it('allows user to switch vehicle type when initialVehicleId is provided', async () => {
+    mockEstimate(5_000, 1_200);
+    const screen = await render(
+      <BookingScreen {...ROUTE_PROPS} initialVehicleId="TRUCK_125T" />,
+    );
+
+    await screen.findByText(/Khoảng 5,0 km/);
+    expect(bookingDraftStore.getDraft().vehicleId).toBe('TRUCK_125T');
+
+    // Tap on 'Xe Van 500kg'
+    const vanOption = await screen.findByText('Xe Van 500kg');
+    fireEvent.press(vanOption);
+
+    await waitFor(() => {
+      expect(bookingDraftStore.getDraft().vehicleId).toBe('VAN_500KG');
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(bookingDraftStore.getDraft().vehicleId).toBe('VAN_500KG');
+  });
+
   it('opens Price Detail Sheet when "Chi tiết ⌵" is tapped', async () => {
     mockEstimate(5_000, 1_200);
     const screen = await render(<BookingScreen {...ROUTE_PROPS} />);
@@ -92,4 +112,29 @@ describe('BookingScreen Full Page Flow', () => {
     fireEvent.press(await screen.findByText('Chi tiết ⌵'));
     expect(await screen.findByText('Chi tiết cước vận chuyển')).toBeTruthy();
   });
+
+  it('keeps vehicle price tags stable when switching vehicles', async () => {
+    mockEstimate(20_000, 2_400);
+    const screen = await render(
+      <BookingScreen {...ROUTE_PROPS} initialVehicleId="TRUCK_125T" />,
+    );
+
+    await screen.findByText(/Khoảng 20,0 km/);
+
+    expect((await screen.findAllByText('360.000 đ')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('280.000 đ')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('200.000 đ')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('440.000 đ')).length).toBeGreaterThan(0);
+
+    fireEvent.press(await screen.findByText('Xe Van 500kg'));
+    await waitFor(() => {
+      expect(bookingDraftStore.getDraft().vehicleId).toBe('VAN_500KG');
+    });
+
+    expect((await screen.findAllByText('360.000 đ')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('280.000 đ')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('200.000 đ')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('440.000 đ')).length).toBeGreaterThan(0);
+  });
 });
+

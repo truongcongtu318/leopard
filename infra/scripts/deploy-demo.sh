@@ -336,10 +336,14 @@ else
   # this VPS: concurrent BuildKit frontends are what tripped the OOM killer
   # before, and the 4GB swap on top of 3.8GB RAM is the margin that makes 2 safe.
   # Measure per service so a slow one is visible instead of hidden in the total.
-  BUILD_CONCURRENCY="${BUILD_CONCURRENCY:-2}"
+  DEFAULT_CONCURRENCY=2
+  if [ "$TOTAL_MB" -gt 0 ] && { [ "$TOTAL_MB" -le 4500 ] || [ $((TOTAL_MB + SWAP_MB)) -lt 7000 ]; }; then
+    DEFAULT_CONCURRENCY=1
+  fi
+  BUILD_CONCURRENCY="${BUILD_CONCURRENCY:-$DEFAULT_CONCURRENCY}"
   SERVICES=(api migrate admin customer driver gateway)
 
-  echo "  ℹ️  ${TOTAL_MB}MB RAM + swap — building ${BUILD_CONCURRENCY} at a time"
+  echo "  ℹ️  ${TOTAL_MB}MB RAM + ${SWAP_MB}MB swap — building ${BUILD_CONCURRENCY} at a time"
   BUILD_FAILED=0
   declare -A BUILD_PID_OF=()
 
@@ -370,6 +374,9 @@ else
     exit 1
   fi
   echo "  ✅ Images ready (cached layers reused)"
+
+  # Automatically prune dangling images to prevent filling the 30GB disk
+  docker image prune -f >/dev/null 2>&1 || true
 fi
 
 # ── Step 4: Database up, migrate, and seed only when that is safe ──

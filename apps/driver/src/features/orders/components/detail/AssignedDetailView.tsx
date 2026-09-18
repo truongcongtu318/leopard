@@ -61,7 +61,7 @@ export function AssignedDetailView({
   inFlightStopCommand,
 }: AssignedDetailViewProps) {
   const [isMapOffCenter, setIsMapOffCenter] = useState(false);
-  const [navMode, setNavMode] = useState<'overview' | 'turn-by-turn'>('turn-by-turn');
+  const [navMode, setNavMode] = useState<'overview' | 'turn-by-turn'>('overview');
 
   const isPickupLeg = view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
   const isReturning = view.order.status === 'RETURNING';
@@ -172,7 +172,7 @@ export function AssignedDetailView({
           : 'TIẾN ĐỘ CHUYẾN ĐI';
 
   return (
-    <View style={styles.root} testID="assigned-detail-view">
+    <View pointerEvents="box-none" style={styles.root} testID="assigned-detail-view">
       <MissionMapCanvas
         cargoSummary={view.order.cargoSummary}
         cargoWeightKg={view.order.cargoWeightKg}
@@ -383,15 +383,19 @@ export function AssignedDetailView({
 
         <DriverMissionActionBar
           customerContact={view.order.customerContact}
+          destination={mapDestination}
           isMissionActive={isMissionActive}
           isTerminal={isTerminal}
           legTitle={legTitle}
           navigationTarget={activeNavigationTarget}
           onBack={onBack}
           onOpenIncidentModal={onOpenIncidentModal}
+          origin={mapOrigin}
           taskButtonComponent={
             !isTerminal && taskButtonComponent ? taskButtonComponent : undefined
           }
+          truckLocation={truckLocation ?? undefined}
+          vehicleType={view.order.vehicleType}
         />
       </View>
     </View>

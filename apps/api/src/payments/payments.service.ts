@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PaymentsRepository } from './payments.repository.js';
 import { PaymentProvider } from './payment.provider.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { DomainError } from '../common/domain-error.js';
 import type { AuthenticatedActor } from '../auth/decorators/current-user.js';
 import { OrdersRepository } from '../orders/orders.repository.js';
+import { OrderEventsPublisher } from '../orders/order-events.publisher.js';
 import { AuditService } from '../audit/audit.service.js';
 import { NotificationTriggers } from '../notifications/notification-triggers.service.js';
 import { InvoiceIssuancePort } from '../invoices/invoice-issuance.port.js';
@@ -21,6 +22,7 @@ export class PaymentsService {
     private readonly auditService: AuditService,
     private readonly notificationTriggers: NotificationTriggers,
     private readonly invoiceIssuancePort: InvoiceIssuancePort,
+    @Optional() private readonly eventsPublisher?: OrderEventsPublisher,
   ) {}
 
   async createPaymentIntent(actor: AuthenticatedActor, orderId: string, clientRequestId: string): Promise<PaymentIntent> {
@@ -41,22 +43,29 @@ export class PaymentsService {
 
     // Active intent check
     const active = await this.paymentsRepo.findActiveIntent(orderId);
-    if (active && active.clientRequestId !== clientRequestId) {
-      throw new DomainError('PAYMENT_ACTIVE_INTENT_CONFLICT', 409, 'Đơn hàng đã có thanh toán đang hoạt động');
+    if (active) {
+      if (active.status === 'QR_CREATED' && active.qrPayload && (!active.expiresAt || active.expiresAt > new Date())) {
+        return active;
+      }
+      if (active.clientRequestId && active.clientRequestId !== clientRequestId && active.status === 'QR_CREATED') {
+        throw new DomainError('PAYMENT_ACTIVE_INTENT_CONFLICT', 409, 'Đơn hàng đã có thanh toán đang hoạt động');
+      }
     }
 
     let intent: PaymentIntent | null = null;
 
     try {
-      const createdIntent = await this.prisma.$transaction(async (tx) => {
-        return this.paymentsRepo.create({
-          orderId,
-          amountVnd: order.priceVnd ?? 0,
-          status: 'UNPAID',
-          clientRequestId,
-        }, tx);
-      });
-      intent = createdIntent;
+      const targetIntent = (active && active.status === 'UNPAID')
+        ? active
+        : await this.prisma.$transaction(async (tx) => {
+            return this.paymentsRepo.create({
+              orderId,
+              amountVnd: order.priceVnd ?? 0,
+              status: 'UNPAID',
+              clientRequestId,
+            }, tx);
+          });
+      intent = targetIntent;
 
       const qrResult = await Promise.race([
         this.paymentProvider.createQr({
@@ -64,12 +73,13 @@ export class PaymentsService {
           orderId,
           idempotencyKey: clientRequestId,
         }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Provider timeout')), 5000)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Provider timeout')), 8000)),
       ]);
 
       const finalizedIntent = await this.prisma.$transaction(async (tx) => {
-        return this.paymentsRepo.updateStatus(createdIntent.id, {
+        return this.paymentsRepo.updateStatus(targetIntent.id, {
           status: 'QR_CREATED',
+          clientRequestId,
           provider: qrResult.provider,
           providerReference: qrResult.providerReference,
           qrPayload: qrResult.qrPayload,
@@ -77,6 +87,10 @@ export class PaymentsService {
           ...(qrResult.payosOrderCode !== undefined
             ? { payosOrderCode: qrResult.payosOrderCode }
             : {}),
+          providerSnapshot: {
+            accountNumber: qrResult.accountNumber,
+            accountName: qrResult.accountName,
+          },
         }, tx);
       });
       return finalizedIntent;
@@ -152,6 +166,7 @@ export class PaymentsService {
     // creates a second PAYMENT notification.
     await this.dispatchPaymentConfirmedNotification(updated);
     await this.dispatchInvoiceIssuance(updated);
+    await this.dispatchPaidOrderIfPending(updated.orderId);
 
     return updated;
   }
@@ -268,5 +283,35 @@ export class PaymentsService {
     }
 
     return this.paymentsRepo.findByOrderId(orderId);
+  }
+
+  async dispatchPaidOrderIfPending(orderId: string): Promise<void> {
+    if (!this.eventsPublisher) return;
+    try {
+      const order = await this.ordersRepo.findById(orderId);
+      if (!order || order.status !== 'REQUESTED' || order.driverId) {
+        return;
+      }
+      const stops = order.stops ?? [];
+      const pickup = stops.find((s) => s.type === 'PICKUP') ?? stops[0];
+      const dropoff = stops.find((s) => s.type === 'DROPOFF') ?? stops[stops.length - 1];
+      if (!pickup || !dropoff) {
+        return;
+      }
+      this.eventsPublisher.publishRequested({
+        orderId: order.id,
+        pickup: { lat: pickup.lat, lng: pickup.lng },
+        pickupAddress: pickup.address,
+        dropoffAddress: dropoff.address,
+        vehicleType: order.vehicleType,
+        priceVnd: order.priceVnd ?? 0,
+        distanceMeters: order.distanceMeters ?? 0,
+        durationSeconds: order.durationSeconds ?? 0,
+        cargoNote: order.cargoNote ?? null,
+        occurredAt: new Date().toISOString(),
+      });
+    } catch {
+      // Swallowed: dispatch error post-payment must not break payment response
+    }
   }
 }

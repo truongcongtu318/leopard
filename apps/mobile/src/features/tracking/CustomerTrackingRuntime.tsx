@@ -12,6 +12,7 @@ import {
   type TrackingPoint,
   type TripBookingDetails,
 } from './RealtimeTrackingScreen';
+import { tabBarVisibilityStore } from '../../navigation/tabBarVisibilityStore';
 
 const ACTIVE_TRACKING_STATUSES = [
   'ACCEPTED',
@@ -92,6 +93,13 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
   const [order, setOrder] = useState<CustomerOrderDetailDataView | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [truckPoint, setTruckPoint] = useState<TrackingPoint | null>(null);
+
+  useEffect(() => {
+    tabBarVisibilityStore.setHidden(true);
+    return () => {
+      tabBarVisibilityStore.setHidden(false);
+    };
+  }, []);
 
   // No order was named explicitly (opened from the Home "active order" shortcut) —
   // find the customer's own in-progress order instead of hardcoding one.

@@ -185,4 +185,32 @@ describe("admin API BFF proxy", () => {
       }
     }
   });
+
+  it("bypasses CSRF for webhook mutations", async () => {
+    const { POST } = await import("./route");
+    const webhookContext = {
+      params: Promise.resolve({ path: ["payments", "webhook", "payos"] }),
+    };
+    fetchMock().mockResolvedValueOnce(
+      createMockResponse(200, { received: true }),
+    );
+
+    const response = await POST(
+      request("/api/v1/payments/webhook/payos", {
+        method: "POST",
+        body: { code: "00", desc: "success" },
+        origin: "https://api.payos.vn",
+      }),
+      webhookContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ received: true });
+    expect(fetchMock()).toHaveBeenCalledWith(
+      "http://api.test/api/v1/payments/webhook/payos",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+  });
 });

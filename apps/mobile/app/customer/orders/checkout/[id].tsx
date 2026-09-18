@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Clipboard,
@@ -138,69 +138,64 @@ export default function OrderCheckoutScreen({
   const [orderReference, setOrderReference] = useState<string>(formatOrderRef(id));
   const [amount, setAmount] = useState<number>(initialAmount);
   const [isLoadingPayment, setIsLoadingPayment] = useState<boolean>(true);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeClient = propClient ?? getDefaultHttpClient();
 
-  // Step 1: Create payment intent on mount
-  useEffect(() => {
-    let isMounted = true;
-    const clientRequestId = generateClientRequestId();
+  // Step 1: Create or fetch payment intent
+  const fetchPayment = useCallback(async () => {
+    try {
+      setIsLoadingPayment(true);
+      setPaymentError(null);
+      const clientRequestId = generateClientRequestId();
+      const res = await activeClient.post<PaymentApiResponse>(
+        `/orders/${id}/payments`,
+        { clientRequestId },
+      );
 
-    async function createPayment() {
-      try {
-        setIsLoadingPayment(true);
-        const res = await activeClient.post<PaymentApiResponse>(
-          `/orders/${id}/payments`,
-          { clientRequestId },
-        );
-
-        if (!isMounted) return;
-
-        if (res) {
-          if (res.qrPayload) setQrPayload(res.qrPayload);
-          if (typeof res.amountVnd === 'number' && Number.isFinite(res.amountVnd)) {
-            setAmount(res.amountVnd);
-          }
-          if (res.bankName) {
-            setBankName(res.bankName);
-            setBankTitle(res.bankName.split(' ')[0].toUpperCase());
-          } else if (res.provider) {
-            setBankName(res.provider === 'DEMO' ? 'Ngân hàng Demo' : 'VietQR payOS (Napas 24/7)');
-            setBankTitle(`${res.provider} BANK`);
-          }
-          if (res.accountNumber) {
-            setAccountNumber(res.accountNumber);
-          } else if (res.providerReference) {
-            setAccountNumber(res.providerReference);
-          }
-          if (res.accountName) {
-            setAccountName(res.accountName);
-          }
-          if (res.memo) {
-            setOrderReference(res.memo);
-          } else if (res.referenceLabel) {
-            setOrderReference(res.referenceLabel);
-          }
+      if (res) {
+        if (res.qrPayload) setQrPayload(res.qrPayload);
+        if (typeof res.amountVnd === 'number' && Number.isFinite(res.amountVnd)) {
+          setAmount(res.amountVnd);
         }
-      } catch {
-        // Fallback gracefully on network / auth error
-      } finally {
-        if (isMounted) {
-          setIsLoadingPayment(false);
+        if (res.bankName) {
+          setBankName(res.bankName);
+          setBankTitle(res.bankName.split(' ')[0].toUpperCase());
+        } else if (res.provider) {
+          setBankName(res.provider === 'DEMO' ? 'Ngân hàng Demo' : 'VietQR payOS (Napas 24/7)');
+          setBankTitle(`${res.provider} BANK`);
+        }
+        if (res.accountNumber) {
+          setAccountNumber(res.accountNumber);
+        } else if (res.providerReference) {
+          setAccountNumber(res.providerReference);
+        }
+        if (res.accountName) {
+          setAccountName(res.accountName);
+        }
+        if (res.memo) {
+          setOrderReference(res.memo);
+        } else if (res.referenceLabel) {
+          setOrderReference(res.referenceLabel);
         }
       }
+    } catch (err: any) {
+      setPaymentError(err?.message || 'Không thể tạo mã VietQR');
+    } finally {
+      setIsLoadingPayment(false);
     }
+  }, [id, activeClient]);
 
-    createPayment();
+  useEffect(() => {
+    fetchPayment();
 
     return () => {
-      isMounted = false;
       if (copyTimeoutRef.current) {
         clearTimeout(copyTimeoutRef.current);
       }
     };
-  }, [id, activeClient]);
+  }, [fetchPayment]);
 
   // Step 1.5: 10-minute order expiry countdown + auto-cancel
   useEffect(() => {
@@ -227,9 +222,9 @@ export default function OrderCheckoutScreen({
     return () => clearInterval(timer);
   }, [id, isExpired, activeClient]);
 
-  // Step 2: Poll GET /orders/:id/payments during reconciliation (max 60s)
+  // Step 2: Poll GET /orders/:id/payments (both background auto-detection & manual reconciliation)
   useEffect(() => {
-    if (!isReconciling) return undefined;
+    if (isExpired) return undefined;
     let isMounted = true;
     let ticks = 0;
 
@@ -253,6 +248,7 @@ export default function OrderCheckoutScreen({
 
         if (isPaid) {
           setIsReconciling(false);
+          haptic.success();
           if (onSuccess) {
             onSuccess();
           } else {
@@ -280,29 +276,36 @@ export default function OrderCheckoutScreen({
           return;
         }
 
-        ticks += 1;
-        if (ticks >= RECONCILE_MAX_TICKS) {
-          setIsReconciling(false);
-          setShowTimeoutBanner(true);
+        if (isReconciling) {
+          ticks += 1;
+          if (ticks >= RECONCILE_MAX_TICKS) {
+            setIsReconciling(false);
+            setShowTimeoutBanner(true);
+          }
         }
       } catch {
         // Safe retry on next poll tick
-        ticks += 1;
-        if (ticks >= RECONCILE_MAX_TICKS && isMounted) {
-          setIsReconciling(false);
-          setShowTimeoutBanner(true);
+        if (isReconciling) {
+          ticks += 1;
+          if (ticks >= RECONCILE_MAX_TICKS && isMounted) {
+            setIsReconciling(false);
+            setShowTimeoutBanner(true);
+          }
         }
       }
     }
 
-    checkStatus();
-    const interval = setInterval(checkStatus, RECONCILE_POLL_MS);
+    if (isReconciling) {
+      checkStatus();
+    }
+    const pollIntervalMs = isReconciling ? RECONCILE_POLL_MS : 3000;
+    const interval = setInterval(checkStatus, pollIntervalMs);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [isReconciling, id, onSuccess, router, activeClient]);
+  }, [isReconciling, isExpired, id, onSuccess, router, activeClient]);
 
   function handleRetryReconcile() {
     haptic.selection();
@@ -353,9 +356,6 @@ export default function OrderCheckoutScreen({
     haptic.medium();
     setIsReconciling(true);
   };
-
-  // Fallback dummy string avoids react-native-qrcode-svg crash before dynamic API response arrives
-  const qrDisplayValue = qrPayload || `LEOPARD-ORDER-${id}`;
 
   // Calculated breakdown amounts
   const baseShippingFee = Math.round(amount * 0.85);
@@ -623,18 +623,40 @@ export default function OrderCheckoutScreen({
             {/* QR Code Container */}
             <View style={styles.qrCodeWrapper}>
               {isLoadingPayment ? (
-                <ActivityIndicator color={customerPalette.primary} size="large" />
-              ) : (
+                <View style={styles.qrLoadingContainer}>
+                  <ActivityIndicator color={customerPalette.primary} size="large" />
+                  <AppText style={styles.qrLoadingText} variant="caption1">
+                    Đang tạo mã VietQR...
+                  </AppText>
+                </View>
+              ) : qrPayload ? (
                 <QRCode
                   size={190}
                   testID="vietqr-code"
-                  value={qrDisplayValue}
+                  value={qrPayload}
                 />
+              ) : (
+                <View style={styles.qrErrorContainer}>
+                  <AppText style={styles.qrErrorText} variant="footnote">
+                    {paymentError || 'Chưa tải được mã VietQR'}
+                  </AppText>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={fetchPayment}
+                    style={styles.retryButton}
+                  >
+                    <AppText style={styles.retryButtonText} variant="subheadline">
+                      Thử lại
+                    </AppText>
+                  </Pressable>
+                </View>
               )}
             </View>
 
             <AppText style={styles.qrInstruction} variant="caption1">
-              Sử dụng ứng dụng ngân hàng bất kỳ để quét mã thanh toán tức thì
+              {qrPayload
+                ? 'Sử dụng ứng dụng ngân hàng bất kỳ để quét mã thanh toán tức thì'
+                : 'Vui lòng kiểm tra kết nối để tạo mã thanh toán VietQR'}
             </AppText>
           </View>
 
@@ -1042,6 +1064,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xs,
     lineHeight: 16,
+  },
+  qrLoadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  qrLoadingText: {
+    color: customerPalette.textSubtle,
+    marginTop: spacing.sm,
+  },
+  qrErrorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  qrErrorText: {
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  retryButton: {
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: customerPalette.primary,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+  },
+  retryButtonText: {
+    color: customerPalette.surfaceWhite,
+    fontWeight: '600',
   },
   bankDetailsTable: {
     marginTop: spacing.md,

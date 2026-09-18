@@ -3,6 +3,7 @@ import { AuditService } from '../audit/audit.service.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { PayOsPaymentProvider } from './payment.provider.js';
 import { PaymentsRepository } from './payments.repository.js';
+import { PaymentsService } from './payments.service.js';
 
 @Injectable()
 export class PaymentWebhookService {
@@ -13,6 +14,7 @@ export class PaymentWebhookService {
     private readonly paymentsRepo: PaymentsRepository,
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    @Optional() private readonly paymentsService?: PaymentsService,
   ) {}
 
   async handlePayosWebhook(rawBody: unknown): Promise<void> {
@@ -118,5 +120,7 @@ export class PaymentWebhookService {
         tx,
       );
     });
+
+    await this.paymentsService?.dispatchPaidOrderIfPending(intent.orderId);
   }
 }

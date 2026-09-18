@@ -135,6 +135,14 @@ describe('DriverLoginRoute', () => {
     });
     await screen.unmount();
   });
+
+  it('ẩn khu vực tài khoản demo khi allowDemo=false', async () => {
+    process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH = 'false';
+    const screen = await render(<DriverLoginRoute />);
+    expect(screen.queryByText('Tài khoản demo')).toBeNull();
+    expect(screen.queryByText('Demo Driver')).toBeNull();
+    await screen.unmount();
+  });
 });
 
 import { DriverOtpModal } from './DriverOtpModal';

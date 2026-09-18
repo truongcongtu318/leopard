@@ -36,6 +36,7 @@
     "react-test-renderer": "19.2.7"
   },
   "dependencies": {
+    "@turf/turf": "^7.4.0",
     "maplibre-gl": "^6.10.0"
   }
 }

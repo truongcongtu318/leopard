@@ -38,7 +38,7 @@ function BarChartIcon({ size = iconSize.md, color = colors.brand.primary }: { si
   );
 }
 
-// Local avatar asset extracted from Grab driver reference
+// Default driver fallback avatar asset
 const DRIVER_AVATAR_IMG = require('../../../../assets/brand/driver-avatar.png');
 
 export function DriverQuickNavOverlay({

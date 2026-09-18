@@ -9,6 +9,7 @@ const nextConfig = {
     // Type-checking is handled by the `typecheck` script separately.
     ignoreBuildErrors: true,
   },
+  poweredByHeader: false,
 };
 
 export default nextConfig;

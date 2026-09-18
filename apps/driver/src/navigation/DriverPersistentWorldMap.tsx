@@ -1,24 +1,16 @@
-import React, { memo, useEffect, useRef } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import React, { memo } from 'react';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   LeopardMapView,
   VietmapNavigationView,
-  LeopardNavigationController,
   calculateDynamicVisibleCenterOffset,
 } from '@leopard/mobile-core';
 import { useDriverMapState } from './DriverMapDirectorContext';
 
 export const DriverPersistentWorldMap = memo(function DriverPersistentWorldMap() {
-  const { activeConfig, recenterNonce } = useDriverMapState();
+  const { activeConfig } = useDriverMapState();
   const { height: windowHeight } = useWindowDimensions();
 
-  const prevNonce = useRef(recenterNonce);
-  useEffect(() => {
-    if (recenterNonce > prevNonce.current) {
-      prevNonce.current = recenterNonce;
-      LeopardNavigationController.recenter();
-    }
-  }, [recenterNonce]);
 
   if (!activeConfig || activeConfig.mode === 'hidden') {
     return null;
@@ -51,6 +43,8 @@ export const DriverPersistentWorldMap = memo(function DriverPersistentWorldMap()
       activeConfig.destination?.coords?.lng != null,
     );
 
+  const shouldUseNativeNav = Platform.OS !== 'web' && hasTurnByTurnPoints;
+
   return (
     <View
       pointerEvents={activeConfig.interactive === false ? 'none' : 'auto'}
@@ -65,7 +59,7 @@ export const DriverPersistentWorldMap = memo(function DriverPersistentWorldMap()
       ]}
       testID="persistent-world-map"
     >
-      {hasTurnByTurnPoints ? (
+      {shouldUseNativeNav ? (
         <VietmapNavigationView
           destination={{
             label: activeConfig.destination!.label,
@@ -86,19 +80,20 @@ export const DriverPersistentWorldMap = memo(function DriverPersistentWorldMap()
         />
       ) : (
         <LeopardMapView
-          bearing={activeConfig.bearing}
+          bearing={Platform.OS === 'web' ? 0 : activeConfig.bearing}
           destination={activeConfig.destination}
           followTruckLocation={activeConfig.followTruckLocation ?? isTurnByTurn}
           height="100%"
           interactive={activeConfig.interactive ?? true}
           mode={mapMode}
           origin={activeConfig.origin}
-          pitch={activeConfig.pitch ?? (isTurnByTurn ? 55 : 0)}
+          pitch={activeConfig.pitch ?? (isTurnByTurn ? 50 : 0)}
           routeCoords={activeConfig.routeCoords}
           routeSegments={activeConfig.routeSegments}
           stops={activeConfig.stops}
           style={StyleSheet.absoluteFill}
           truckEtaLabel={activeConfig.truckEtaLabel}
+          truckHeading={activeConfig.truckHeading ?? activeConfig.bearing}
           truckLocation={activeConfig.truckLocation}
           zoom={activeConfig.zoom ?? (isTurnByTurn ? 17 : 14)}
           isPickupLeg={activeConfig.isPickupLeg}

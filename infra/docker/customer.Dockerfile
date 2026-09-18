@@ -12,7 +12,8 @@ COPY apps/mobile/src/ apps/mobile/src/
 COPY apps/mobile/assets/ apps/mobile/assets/
 COPY apps/mobile/public/ apps/mobile/public/
 
-ENV CI=true
+ENV CI=true \
+    NODE_OPTIONS="--max-old-space-size=1024"
 # Relative REST base. It must NOT be empty: the client falls back to
 # http://localhost:3000/api/v1 when the value is falsy, which makes the deployed
 # app call the visitor's own machine and fail every request. A leading-slash path
@@ -24,6 +25,8 @@ ENV EXPO_PUBLIC_API_URL=/api/v1
 # demo OTP, which the gateway portal lists. Note this is inlined into the bundle
 # at build time by Expo — it cannot be changed by an env file on the server.
 ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=false
+ARG EXPO_PUBLIC_VIETMAP_API_KEY=""
+ENV EXPO_PUBLIC_VIETMAP_API_KEY=${EXPO_PUBLIC_VIETMAP_API_KEY}
 
 # --clear is required, not optional. Metro caches each module's transformed
 # output, and Expo inlines the EXPO_PUBLIC_* values during that transform — but

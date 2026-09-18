@@ -124,6 +124,8 @@ describe('LoginRoute (Mobile)', () => {
     expect(mockPush).not.toHaveBeenCalledWith(
       expect.objectContaining({ pathname: '/(public)/verify-otp' }),
     );
+    expect(screen.queryByText('Tài khoản demo')).toBeNull();
+    expect(screen.queryByText('Demo Customer')).toBeNull();
     await screen.unmount();
   });
 

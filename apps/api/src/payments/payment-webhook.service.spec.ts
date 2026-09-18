@@ -8,6 +8,7 @@ describe('PaymentWebhookService', () => {
   let repo: any;
   let prisma: any;
   let auditService: any;
+  let paymentsService: any;
 
   const webhookPayload = { code: '00', desc: 'success', success: true, data: {}, signature: 'sig' };
   const verifiedData = {
@@ -37,7 +38,8 @@ describe('PaymentWebhookService', () => {
       },
     };
     auditService = { append: jest.fn() };
-    service = new PaymentWebhookService(payOsProvider, repo, prisma, auditService);
+    paymentsService = { dispatchPaidOrderIfPending: jest.fn().mockResolvedValue(undefined) };
+    service = new PaymentWebhookService(payOsProvider, repo, prisma, auditService, paymentsService);
   });
 
   test('ignores webhook when payOS provider is not configured', async () => {
@@ -86,12 +88,15 @@ describe('PaymentWebhookService', () => {
     payOsProvider.verifyWebhook.mockResolvedValue(verifiedData);
     repo.findByPayosOrderCode.mockResolvedValue({
       id: 'intent1',
+      orderId: 'order123',
       status: 'QR_CREATED',
       amountVnd: 286000,
     });
     repo.updateStatus.mockResolvedValue({ id: 'intent1', status: 'PAID_MANUAL' });
 
     await service.handlePayosWebhook(webhookPayload);
+
+    expect(paymentsService.dispatchPaidOrderIfPending).toHaveBeenCalledWith('order123');
 
     expect(repo.updateStatus).toHaveBeenCalledWith(
       'intent1',

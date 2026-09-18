@@ -6,27 +6,32 @@
 ARG DEPS_IMAGE=leopard-deps:dev
 FROM ${DEPS_IMAGE} AS builder
 
-COPY packages/shared/src/ packages/shared/src/
-COPY packages/validators/src/ packages/validators/src/
-COPY apps/api/src/ apps/api/src/
-COPY apps/api/scripts/ apps/api/scripts/
+# Limit Node.js heap during build to 1024MB to avoid OOM on 4GB VPS
+ENV CI=true \
+    NODE_OPTIONS="--max-old-space-size=1024"
+
+# 1. Prisma schema & config first (changes rarely):
+# prisma generate only depends on schema and config, so copying them first ensures
+# that changes to application code in apps/api/src/ do not invalidate prisma generate!
 COPY apps/api/prisma/ apps/api/prisma/
 COPY apps/api/prisma.config.ts apps/api/
-# apps/api/prisma/seed.ts resolves the manifest relative to its own file
-# (../../../infra/seed/demo-manifest.json), so keep this layout in the builder.
 COPY infra/seed/ infra/seed/
-
-ENV CI=true
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm --filter api exec prisma generate
 
-# @leopard/shared and @leopard/validators resolve through their `dist/` exports,
-# so they must be compiled before the api build can type-resolve them. Chained in
-# one RUN so the three compiles share a single layer.
-RUN pnpm --filter @leopard/shared build \
- && pnpm --filter @leopard/validators build \
- && pnpm --filter api run build
+# 2. Shared packages (change less frequently than api source code):
+COPY packages/shared/src/ packages/shared/src/
+RUN pnpm --filter @leopard/shared build
+
+COPY packages/validators/src/ packages/validators/src/
+RUN pnpm --filter @leopard/validators build
+
+# 3. API application source (changes frequently on routine commits):
+COPY apps/api/src/ apps/api/src/
+COPY apps/api/scripts/ apps/api/scripts/
+
+RUN pnpm --filter api run build
 
 # ---- production deps stage ----
 FROM builder AS deps
@@ -57,6 +62,10 @@ RUN set -eux; \
 FROM node:24.21.0-alpine3.24 AS runner
 RUN addgroup -g 1001 leopard && adduser -u 1001 -G leopard -D leopard
 WORKDIR /app
+
+# Safe production heap limit for 4GB VPS (leaves headroom for Postgres/Next.js/OS)
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=768"
 
 # Only the compiled output and production node_modules are needed at runtime: the
 # compiled dist/ never reads prisma/schema.prisma or prisma.config.ts (those are

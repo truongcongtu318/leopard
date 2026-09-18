@@ -15,6 +15,10 @@ import type {
   RoutePolylineSegment,
   ViewportInsets,
 } from '@leopard/mobile-core';
+import {
+  LeopardNavigationController,
+  postMapMessageToFrames,
+} from '@leopard/mobile-core';
 
 export type DriverMapCameraMode =
   | 'idle'
@@ -39,6 +43,7 @@ export type DriverMapDirectorConfig = Readonly<{
   pitch?: number;
   zoom?: number;
   bearing?: number;
+  truckHeading?: number;
   priority?: number;
   isPickupLeg?: boolean;
   vehicleType?: string;
@@ -59,13 +64,11 @@ export type DriverMapDispatchContextValue = Readonly<{
 
 export type DriverMapStateContextValue = Readonly<{
   activeConfig: DriverMapDirectorConfig | null;
-  recenterNonce: number;
 }>;
 
 export const DriverMapDispatchContext = createContext<DriverMapDispatchContextValue | null>(null);
 export const DriverMapStateContext = createContext<DriverMapStateContextValue>({
   activeConfig: null,
-  recenterNonce: 0,
 });
 
 export function useDriverMapState(): DriverMapStateContextValue {
@@ -96,6 +99,7 @@ function isShallowEqualConfig(
     a.zoom === b.zoom &&
     a.pitch === b.pitch &&
     a.bearing === b.bearing &&
+    a.truckHeading === b.truckHeading &&
     a.followTruckLocation === b.followTruckLocation &&
     a.truckEtaLabel === b.truckEtaLabel &&
     a.truckLocation?.lat === b.truckLocation?.lat &&
@@ -108,14 +112,18 @@ function isShallowEqualConfig(
     a.viewportInsets?.bottom === b.viewportInsets?.bottom &&
     a.interactive === b.interactive &&
     a.vehicleType === b.vehicleType &&
-    a.isSimulating === b.isSimulating
+    a.isSimulating === b.isSimulating &&
+    a.isPickupLeg === b.isPickupLeg &&
+    a.routeCoords === b.routeCoords &&
+    a.routeCoords?.length === b.routeCoords?.length &&
+    a.routeSegments === b.routeSegments &&
+    a.routeSegments?.length === b.routeSegments?.length
   );
 }
 
 export function DriverMapDirectorProvider({ children }: PropsWithChildren) {
   const directorsRef = useRef<Map<string, DirectorEntry>>(new Map());
   const [activeConfig, setActiveConfig] = useState<DriverMapDirectorConfig | null>(null);
-  const [recenterNonce, setRecenterNonce] = useState(0);
 
   const syncActiveConfig = useCallback(() => {
     const list = Array.from(directorsRef.current.values()).sort(
@@ -145,8 +153,16 @@ export function DriverMapDirectorProvider({ children }: PropsWithChildren) {
     [syncActiveConfig],
   );
 
+  /**
+   * Trigger map recenter with ZERO setState/re-render.
+   * Broadcasts LEOPARD_MAP_RECENTER directly to all iframes (web)
+   * and calls the native VietMap navigation controller (iOS/Android).
+   */
   const triggerRecenter = useCallback(() => {
-    setRecenterNonce((n) => n + 1);
+    // Web: postMessage directly into the iframe — no React re-render needed
+    postMapMessageToFrames({ type: 'LEOPARD_MAP_RECENTER' });
+    // Native: recenter the VietMap turn-by-turn camera
+    LeopardNavigationController.recenter();
   }, []);
 
   const dispatchValue = useMemo<DriverMapDispatchContextValue>(
@@ -161,9 +177,8 @@ export function DriverMapDirectorProvider({ children }: PropsWithChildren) {
   const stateValue = useMemo<DriverMapStateContextValue>(
     () => ({
       activeConfig,
-      recenterNonce,
     }),
-    [activeConfig, recenterNonce],
+    [activeConfig],
   );
 
   return (

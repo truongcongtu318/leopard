@@ -46,6 +46,7 @@ export function LeopardMapView({
   pitch = 0,
   followTruckLocation = false,
   isPickupLeg = false,
+  recenterNonce,
 }: LeopardMapViewProps) {
   const cameraRef = useRef<any>(null);
   const defaultMinZoom = mode === 'tracking' ? 8.5 : 7.5;
@@ -70,6 +71,18 @@ export function LeopardMapView({
       VietmapGL.setApiKey(resolvedApiKey);
     }
   }, [resolvedApiKey]);
+
+  // Imperative recenter: when recenterNonce increments, fly camera back to truck location
+  useEffect(() => {
+    if (!recenterNonce || recenterNonce === 0) return;
+    const target = truckLocation ?? (routeCoords.length > 0 ? routeCoords[0] : null);
+    if (!target || !cameraRef.current) return;
+    try {
+      cameraRef.current.flyTo([target.lng, target.lat], 800);
+    } catch {
+      // Ignore camera errors
+    }
+  }, [recenterNonce]);
 
   const centerCoords = useMemo<[number, number]>(() => {
     if (initialPinCoords) return [initialPinCoords.lng, initialPinCoords.lat];

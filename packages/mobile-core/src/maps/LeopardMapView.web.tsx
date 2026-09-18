@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { LeopardMapMode, LeopardMapViewProps, MapCoordinate, MapStop, NearbyDriver } from './types';
@@ -21,6 +21,7 @@ export interface BuildVietmapHtmlParams {
   zoom?: number;
   bearing?: number;
   pitch?: number;
+  truckHeading?: number;
   interactive?: boolean;
   followTruck?: boolean;
   routeGeoJSON?: any;
@@ -47,11 +48,18 @@ export function buildVietmapHtml({
   maxBounds,
   bearing = 0,
   pitch = 0,
+  truckHeading,
   interactive = true,
   followTruck = false,
   routeGeoJSON,
   isPickupLeg = false,
 }: BuildVietmapHtmlParams): string {
+  const effectiveTruckHeading =
+    typeof truckHeading === 'number'
+      ? truckHeading
+      : typeof bearing === 'number'
+      ? bearing
+      : 0;
   const styleUrl = `${VIETMAP_DEFAULT_STYLE}${resolvedApiKey}`;
   const defaultMinZoom = mode === 'tracking' ? 8.5 : 7.5;
   const effectiveMinZoom = typeof minZoom === 'number' ? minZoom : defaultMinZoom;
@@ -90,6 +98,32 @@ export function buildVietmapHtml({
       height: 100%;
     }
     
+    :root {
+      --marker-zoom-scale: 1;
+    }
+
+    /* Scalable marker inner elements to prevent MapLibre outer translate3d clobbering zoom scale */
+    .marker-zoom-pin {
+      transform-origin: bottom center;
+      transform: scale(var(--marker-zoom-scale, 1));
+      transition: transform 0.08s ease-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      pointer-events: auto;
+    }
+    .marker-zoom-inner {
+      transform-origin: center center;
+      transform: scale(var(--marker-zoom-scale, 1));
+      transition: transform 0.08s ease-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
     /* Google Maps Destination and Origin Pin Marker Styles */
     .gmap-pin-wrap {
       position: relative;
@@ -235,6 +269,9 @@ export function buildVietmapHtml({
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      transform-origin: center center;
+      transform: scale(var(--marker-zoom-scale, 1));
+      transition: transform 0.08s ease-out;
     }
     .nearby-pulse {
       position: absolute;
@@ -254,6 +291,9 @@ export function buildVietmapHtml({
       align-items: center;
       cursor: grab;
       margin-bottom: 24px;
+      transform-origin: bottom center;
+      transform: scale(var(--marker-zoom-scale, 1));
+      transition: transform 0.08s ease-out;
     }
     .pin-picker-head {
       width: 36px;
@@ -334,33 +374,48 @@ export function buildVietmapHtml({
       } else {
         var oWrap = document.createElement('div');
         oWrap.className = 'gmap-pin-wrap';
-        oWrap.innerHTML = '<div class="gmap-pin-pulse origin-pulse"></div>' +
+        oWrap.innerHTML = '<div class="marker-zoom-pin">' +
+          '<div class="gmap-pin-pulse origin-pulse"></div>' +
           '<svg class="gmap-pin-svg" width="32" height="42" viewBox="0 0 32 42" fill="none">' +
           '<path d="M16 0C7.163 0 0 7.163 0 16c0 11.25 14.25 24.75 15.1 25.55a1.2 1.2 0 0 0 1.8 0C17.75 40.75 32 27.25 32 16c0-8.837-7.163-16-16-16z" fill="#10B981"/>' +
           '<circle cx="16" cy="16" r="6" fill="#FFFFFF"/>' +
           '<circle cx="16" cy="16" r="2.8" fill="#10B981"/>' +
-          '</svg>';
+          '</svg>' +
+          '</div>';
         originMarker = new maplibregl.Marker({ element: oWrap, anchor: 'bottom' })
           .setLngLat([lng, lat])
           .addTo(map);
       }
     }
 
+    var driverMarkerMap = {};
     function renderDrivers(list) {
-      driverMarkers.forEach(function(m) { m.remove(); });
-      driverMarkers = [];
-      if (!map || !list || !list.length) return;
-      list.forEach(function(d) {
-        if (!d.lat || !d.lng) return;
-        var dEl = document.createElement('div');
-        dEl.className = 'nearby-driver-badge';
-        var emo = d.vehicleType === 'VAN' ? '🚐' : d.vehicleType === 'MOTORBIKE' ? '🛵' : '🚛';
-        dEl.innerHTML = '<div class="nearby-pulse"></div><span class="nearby-emoji">' + emo + '</span>';
-        var mkr = new maplibregl.Marker({ element: dEl, anchor: 'center' })
-          .setLngLat([d.lng, d.lat])
-          .addTo(map);
-        driverMarkers.push(mkr);
-      });
+      if (!map) return;
+      var nextIds = {};
+      if (Array.isArray(list)) {
+        list.forEach(function(d) {
+          if (!d || !d.lat || !d.lng) return;
+          nextIds[d.id] = true;
+          if (driverMarkerMap[d.id]) {
+            driverMarkerMap[d.id].setLngLat([d.lng, d.lat]);
+          } else {
+            var dEl = document.createElement('div');
+            dEl.className = 'nearby-driver-badge';
+            var emo = d.vehicleType === 'VAN' ? '🚐' : d.vehicleType === 'MOTORBIKE' ? '🛵' : '🚛';
+            dEl.innerHTML = '<div class="nearby-pulse"></div><span class="nearby-emoji">' + emo + '</span>';
+            var mkr = new maplibregl.Marker({ element: dEl, anchor: 'center' })
+              .setLngLat([d.lng, d.lat])
+              .addTo(map);
+            driverMarkerMap[d.id] = mkr;
+          }
+        });
+      }
+      for (var id in driverMarkerMap) {
+        if (!nextIds[id]) {
+          driverMarkerMap[id].remove();
+          delete driverMarkerMap[id];
+        }
+      }
     }
 
     // Resilient MapLibre GL Basemap Style (High availability, Vietnamese labels)
@@ -390,6 +445,8 @@ export function buildVietmapHtml({
     };
 
     function updateSvgRoute() {
+      var svgOverlay = document.getElementById('svg-route-overlay');
+      if (svgOverlay && svgOverlay.style.display === 'none') return;
       if (!map || !currentRouteCoords || currentRouteCoords.length < 2) {
         var h = document.getElementById('svg-route-halo');
         var c = document.getElementById('svg-route-core');
@@ -415,7 +472,15 @@ export function buildVietmapHtml({
       } catch(e) {}
     }
 
+    var vietmapStyleUrl = '${styleUrl}';
+    var hasValidVietmapKey = Boolean(
+      vietmapStyleUrl &&
+      !vietmapStyleUrl.includes('test-api-key') &&
+      '${resolvedApiKey || ''}'.trim().length > 10
+    );
+
     try {
+      // 1. ALWAYS initialize with local in-memory basemap so map NEVER renders white on 401/423
       map = new maplibregl.Map({
         container: 'map',
         style: defaultStyle,
@@ -430,28 +495,46 @@ export function buildVietmapHtml({
         attributionControl: false
       });
 
+      map.on('error', function(e) {
+        if (e && e.error) {
+          console.warn('[LeopardMapView] Map error caught:', e.error.message || e.error);
+        }
+      });
+
+      // 2. Upgrade to Vietmap vector style seamlessly in background if endpoint returns 200 OK
+      if (hasValidVietmapKey) {
+        fetch(vietmapStyleUrl)
+          .then(function(res) {
+            if (!res.ok) throw new Error('Vietmap style HTTP ' + res.status);
+            return res.json();
+          })
+          .then(function(styleJson) {
+            if (map && styleJson && styleJson.version) {
+              map.setStyle(styleJson);
+              map.once('style.load', function() {
+                if (lastRenderedRouteGeo) {
+                  renderRouteLine(lastRenderedRouteGeo);
+                }
+              });
+            }
+          })
+          .catch(function(err) {
+            console.warn('[LeopardMapView] Vietmap vector style unavailable, running on resilient basemap:', err.message);
+          });
+      }
+
+      function updateMarkerZoomScale() {
+        if (!map) return;
+        var z = map.getZoom();
+        var s = Math.max(0.38, Math.min(1.18, 0.42 + (z - 8) * 0.076));
+        document.documentElement.style.setProperty('--marker-zoom-scale', s.toFixed(3));
+      }
+      map.on('zoom', updateMarkerZoomScale);
+      updateMarkerZoomScale();
+
       map.on('move', updateSvgRoute);
       map.on('zoom', updateSvgRoute);
       map.on('resize', updateSvgRoute);
-      map.on('render', updateSvgRoute);
-
-      // Background upgrade to Vietmap vector style when available and valid
-      var vietmapStyleUrl = '${styleUrl}';
-      if (vietmapStyleUrl && !vietmapStyleUrl.includes('test-api-key')) {
-        fetch(vietmapStyleUrl)
-          .then(function(res) {
-            if (res.ok) return res.json();
-            throw new Error('Vietmap style unavailable');
-          })
-          .then(function(vStyle) {
-            if (vStyle && vStyle.layers) {
-              map.setStyle(vStyle);
-            }
-          })
-          .catch(function() {
-            // Graceful fallback to default high-speed basemap
-          });
-      }
 
       var lastRenderedRouteGeo = null;
 
@@ -512,6 +595,9 @@ export function buildVietmapHtml({
               });
             }
 
+            var firstSymbol = map.getStyle().layers ? map.getStyle().layers.find(function(l) { return l.type === 'symbol'; }) : null;
+            var firstSymbolId = firstSymbol ? firstSymbol.id : undefined;
+
             if (!map.getLayer('vietmap-route-halo')) {
               map.addLayer({
                 id: 'vietmap-route-halo',
@@ -519,11 +605,11 @@ export function buildVietmapHtml({
                 source: 'vietmap-route',
                 layout: { 'line-join': 'round', 'line-cap': 'round' },
                 paint: {
-                  'line-color': '#FFFFFF',
-                  'line-width': 8,
+                  'line-color': '#0B3D91',
+                  'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 10, 2.7, 18, 19.8],
                   'line-opacity': 0.95
                 }
-              });
+              }, firstSymbolId);
             }
 
             if (!map.getLayer('vietmap-route-core')) {
@@ -533,25 +619,11 @@ export function buildVietmapHtml({
                 source: 'vietmap-route',
                 layout: { 'line-join': 'round', 'line-cap': 'round' },
                 paint: {
-                  'line-color': '#2563EB',
-                  'line-width': 6,
+                  'line-color': ['coalesce', ['get', 'color'], '#2F7BFF'],
+                  'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 10, 1.8, 18, 13.2],
                   'line-opacity': 1.0
                 }
-              });
-            }
-
-            if (!map.getLayer('vietmap-route-dash')) {
-              map.addLayer({
-                id: 'vietmap-route-dash',
-                type: 'line',
-                source: 'vietmap-route',
-                layout: { 'line-join': 'round', 'line-cap': 'round' },
-                paint: {
-                  'line-color': '#BFDBFE',
-                  'line-width': 2.5,
-                  'line-dasharray': [1.5, 3]
-                }
-              });
+              }, firstSymbolId);
             }
             if (svgOverlay) svgOverlay.style.display = 'none';
           } catch(err) {
@@ -669,6 +741,8 @@ export function buildVietmapHtml({
               padding: { top: 90, bottom: bottomPad, left: 40, right: 40 },
               minZoom: ${effectiveMinZoom},
               maxZoom: 16,
+              bearing: 0,
+              pitch: 0,
               duration: typeof duration === 'number' ? duration : 500
             });
           }
@@ -703,19 +777,56 @@ export function buildVietmapHtml({
         }
       }
 
-      function followTruck(duration) {
+      // ── Unified recenter: ALL recenter paths call this single function ────────
+      // easeInOutCubic gives the smooth decelerate-at-end feel of iOS Maps.
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      var RECENTER_DURATION = 650; // ms — consistent across every trigger path
+      var lastTruckBearing = ${effectiveTruckHeading};
+      var isUserInteracting = false;
+      var userInteractTimeout = null;
+
+      function pauseAutoFollow() {
+        isUserInteracting = true;
+        if (userInteractTimeout) clearTimeout(userInteractTimeout);
+        userInteractTimeout = setTimeout(function() {
+          isUserInteracting = false;
+        }, 6000);
+      }
+
+      map.on('dragstart', pauseAutoFollow);
+      map.on('zoomstart', pauseAutoFollow);
+      map.on('rotatestart', pauseAutoFollow);
+      map.on('pitchstart', pauseAutoFollow);
+
+      function recenterMap(opts) {
         if (!map) return;
-        var target = lastTruckLngLat || (currentRouteCoords && currentRouteCoords.length > 0 ? currentRouteCoords[0] : null);
+        isUserInteracting = false;
+        if (userInteractTimeout) clearTimeout(userInteractTimeout);
+        opts = opts || {};
+        var target = opts.center
+          || (lastTruckLngLat ? (computeAheadCenter() || lastTruckLngLat) : null)
+          || (currentRouteCoords && currentRouteCoords.length > 0 ? currentRouteCoords[0] : null);
         if (!target) return;
         try {
           map.easeTo({
             center: computeAheadCenter() || target,
-            zoom: Math.max(map.getZoom(), 16.5),
-            pitch: 55,
-            bearing: map.getBearing(),
-            duration: typeof duration === 'number' ? duration : 700
+            zoom: typeof opts.zoom === 'number' ? opts.zoom : Math.max(map.getZoom(), 15.5),
+            pitch: typeof opts.pitch === 'number' ? opts.pitch : (drivingMode === 'driving' ? 50 : 0),
+            bearing: typeof opts.bearing === 'number' ? opts.bearing : 0,
+            duration: RECENTER_DURATION,
+            easing: easeInOutCubic
           });
         } catch(e) {}
+      }
+
+      // Smooth vehicle follow tracking
+      function followTruck(duration) {
+        if (!isUserInteracting) {
+          recenterMap();
+        }
       }
 
       function initLayers() {
@@ -725,9 +836,12 @@ export function buildVietmapHtml({
         // 1. Initial Route GeoJSON calculation
         var routeGeo = ${JSON.stringify(routeGeoJSON)};
         ${
-          isPickupLeg && truckLocation && originCoords
+          isPickupLeg
             ? `
         if (!routeGeo || !routeGeo.features || routeGeo.features.length === 0) {
+          ${
+            truckLocation && originCoords
+              ? `
           routeGeo = {
             type: 'FeatureCollection',
             features: [{
@@ -743,9 +857,30 @@ export function buildVietmapHtml({
               }
             }]
           };
+          `
+              : originCoords && destCoords
+              ? `
+          routeGeo = {
+            type: 'FeatureCollection',
+            features: [{
+              type: 'Feature',
+              id: 'route-main',
+              properties: { kind: 'active', color: '#2563EB' },
+              geometry: {
+                type: 'LineString',
+                coordinates: [
+                  [${originCoords.lng}, ${originCoords.lat}],
+                  [${destCoords.lng}, ${destCoords.lat}]
+                ]
+              }
+            }]
+          };
+          `
+              : ''
+          }
         }
         `
-            : !isPickupLeg && originCoords && destCoords
+            : originCoords && destCoords
             ? `
         if (!routeGeo || !routeGeo.features || routeGeo.features.length === 0) {
           routeGeo = {
@@ -773,6 +908,83 @@ export function buildVietmapHtml({
           renderRouteLine(routeGeo);
         }
 
+        // Auto-resolve real street route for pickup leg (truck → origin, or origin → destination fallback) via OSRM when no polyline provided
+        ${
+          isPickupLeg
+            ? `
+        if (!${JSON.stringify(routeGeoJSON)} || !${JSON.stringify(routeGeoJSON)}?.features?.length) {
+          ${
+            truckLocation && originCoords
+              ? `
+          var osrmPickupUrl = 'https://router.project-osrm.org/route/v1/driving/${truckLocation.lng},${truckLocation.lat};${originCoords.lng},${originCoords.lat}?overview=full&geometries=geojson';
+          fetch(osrmPickupUrl)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              var coords = d && d.routes && d.routes[0] && d.routes[0].geometry && d.routes[0].geometry.coordinates;
+              if (coords && coords.length >= 2) {
+                var streetGeo = {
+                  type: 'FeatureCollection',
+                  features: [{ type: 'Feature', id: 'route-main', properties: { kind: 'active', color: '#2563EB' }, geometry: { type: 'LineString', coordinates: coords } }]
+                };
+                renderRouteLine(streetGeo);
+              }
+            })
+            .catch(function() {});
+          `
+              : originCoords && destCoords
+              ? `
+          var osrmPickupFallbackUrl = 'https://router.project-osrm.org/route/v1/driving/${originCoords.lng},${originCoords.lat};${destCoords.lng},${destCoords.lat}?overview=full&geometries=geojson';
+          fetch(osrmPickupFallbackUrl)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              var coords = d && d.routes && d.routes[0] && d.routes[0].geometry && d.routes[0].geometry.coordinates;
+              if (coords && coords.length >= 2) {
+                var streetGeo = {
+                  type: 'FeatureCollection',
+                  features: [{ type: 'Feature', id: 'route-main', properties: { kind: 'active', color: '#2563EB' }, geometry: { type: 'LineString', coordinates: coords } }]
+                };
+                renderRouteLine(streetGeo);
+              }
+            })
+            .catch(function() {});
+          `
+              : ''
+          }
+        }
+        `
+            : originCoords && destCoords
+            ? `
+        if (!${JSON.stringify(routeGeoJSON)} || !${JSON.stringify(routeGeoJSON)}?.features?.length) {
+          var vmKey = '${resolvedApiKey}';
+          var hasVmKey = vmKey && !vmKey.includes('test-api-key');
+          var osrmDeliveryUrl = 'https://router.project-osrm.org/route/v1/driving/${originCoords.lng},${originCoords.lat};${destCoords.lng},${destCoords.lat}?overview=full&geometries=geojson';
+          var fetchFn = hasVmKey
+            ? fetch('https://maps.vietmap.vn/api/route/v3?apikey=' + vmKey + '&point=${originCoords.lat},${originCoords.lng}&point=${destCoords.lat},${destCoords.lng}&vehicle=truck&points_encoded=false')
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                  var c = d && d.paths && d.paths[0] && d.paths[0].points && d.paths[0].points.coordinates;
+                  if (c && c.length >= 2) return c;
+                  throw new Error('no vm route');
+                })
+            : Promise.reject('no key');
+          fetchFn.catch(function() {
+            return fetch(osrmDeliveryUrl).then(function(r) { return r.json(); }).then(function(d) {
+              var c = d && d.routes && d.routes[0] && d.routes[0].geometry && d.routes[0].geometry.coordinates;
+              if (c && c.length >= 2) return c;
+              throw new Error('no osrm route');
+            });
+          }).then(function(coords) {
+            var streetGeo = {
+              type: 'FeatureCollection',
+              features: [{ type: 'Feature', id: 'route-main', properties: { kind: 'active', color: '#2563EB' }, geometry: { type: 'LineString', coordinates: coords } }]
+            };
+            renderRouteLine(streetGeo);
+          }).catch(function() {});
+        }
+        `
+            : ''
+        }
+
         // 2. Render Origin Pin (Green Pin with needle anchored at bottom)
         ${
           originCoords
@@ -788,12 +1000,14 @@ export function buildVietmapHtml({
             ? `
         var dWrap = document.createElement('div');
         dWrap.className = 'gmap-pin-wrap';
-        dWrap.innerHTML = '<div class="gmap-pin-pulse dest-pulse"></div>' +
+        dWrap.innerHTML = '<div class="marker-zoom-pin">' +
+          '<div class="gmap-pin-pulse dest-pulse"></div>' +
           '<svg class="gmap-pin-svg" width="34" height="44" viewBox="0 0 32 42" fill="none">' +
           '<path d="M16 0C7.163 0 0 7.163 0 16c0 11.25 14.25 24.75 15.1 25.55a1.2 1.2 0 0 0 1.8 0C17.75 40.75 32 27.25 32 16c0-8.837-7.163-16-16-16z" fill="#EA4335"/>' +
           '<circle cx="16" cy="16" r="6.5" fill="#FFFFFF"/>' +
           '<circle cx="16" cy="16" r="3" fill="#EA4335"/>' +
-          '</svg>';
+          '</svg>' +
+          '</div>';
         new maplibregl.Marker({ element: dWrap, anchor: 'bottom' })
           .setLngLat([${destCoords.lng}, ${destCoords.lat}])
           .addTo(map);
@@ -811,7 +1025,7 @@ export function buildVietmapHtml({
           var sWrap = document.createElement('div');
           sWrap.className = 'gmap-pin-wrap';
           var progressClass = st.progress ? st.progress.toLowerCase() : 'pending';
-          sWrap.innerHTML = '<div class="stop-core ' + progressClass + '">' + (st.sequence || (i + 1)) + '</div>';
+          sWrap.innerHTML = '<div class="marker-zoom-inner"><div class="stop-core ' + progressClass + '">' + (st.sequence || (i + 1)) + '</div></div>';
           new maplibregl.Marker({ element: sWrap, anchor: 'center' })
             .setLngLat([st.coords.lng, st.coords.lat])
             .addTo(map);
@@ -827,18 +1041,23 @@ export function buildVietmapHtml({
         var tWrap = document.createElement('div');
         tWrap.className = 'truck-wrap';
         var etaText = ${JSON.stringify(displayEta)};
-        tWrap.innerHTML = '<div class="truck-radar-wave wave-1"></div>' +
+        tWrap.innerHTML = '<div class="marker-zoom-inner">' +
+          '<div class="truck-radar-wave wave-1"></div>' +
           '<div class="truck-radar-wave wave-2"></div>' +
           '<div class="truck-radar-wave wave-3"></div>' +
-          '<div class="truck-badge" style="transform: rotate(' + (${bearing || 0}) + 'deg); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);">' +
+          '<div class="truck-badge" style="transform: rotate(' + (${effectiveTruckHeading}) + 'deg); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);">' +
           '<svg width="22" height="22" viewBox="0 0 24 24" fill="none">' +
           '<path d="M12 2L20.5 20.5L12 16.5L3.5 20.5L12 2Z" fill="#2563EB" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>' +
           '</svg>' +
           '</div>' +
-          (etaText ? '<div class="truck-eta">' + etaText + '</div>' : '');
-        truckMarker = new maplibregl.Marker({ element: tWrap, anchor: 'center' })
+          (etaText ? '<div class="truck-eta">' + etaText + '</div>' : '') +
+          '</div>';
+        truckMarker = new maplibregl.Marker({ element: tWrap, anchor: 'center', rotationAlignment: 'map' })
           .setLngLat([${truckLocation.lng}, ${truckLocation.lat}])
           .addTo(map);
+        if (typeof truckMarker.setRotation === 'function') {
+          truckMarker.setRotation(${effectiveTruckHeading});
+        }
         `
             : ''
         }
@@ -908,12 +1127,12 @@ export function buildVietmapHtml({
       try {
         var msg = evt.data;
         if (!msg || typeof msg !== 'object') return;
-        if (msg.type === 'LEOPARD_UPDATE_ROUTE' && msg.mapInstanceId === '${mapInstanceId}') {
+        if (msg.type === 'LEOPARD_UPDATE_ROUTE' && (!msg.mapInstanceId || msg.mapInstanceId === '${mapInstanceId}')) {
           if (msg.routeGeo) {
             renderRouteLine(msg.routeGeo);
           }
         }
-        if (msg.type === 'LEOPARD_UPDATE_TRUCK_LOCATION' && msg.mapInstanceId === '${mapInstanceId}') {
+        if (msg.type === 'LEOPARD_UPDATE_TRUCK_LOCATION' && (!msg.mapInstanceId || msg.mapInstanceId === '${mapInstanceId}')) {
           if (typeof msg.lng === 'number' && typeof msg.lat === 'number') {
             lastTruckLngLat = [msg.lng, msg.lat];
             if (truckMarker) {
@@ -923,6 +1142,10 @@ export function buildVietmapHtml({
                 if (etaBadge) etaBadge.textContent = msg.eta;
               }
               if (typeof msg.bearing === 'number') {
+                lastTruckBearing = msg.bearing;
+                if (typeof truckMarker.setRotation === 'function') {
+                  truckMarker.setRotation(msg.bearing);
+                }
                 var badgeEl = truckMarker.getElement().querySelector('.truck-badge');
                 if (badgeEl) badgeEl.style.transform = 'rotate(' + msg.bearing + 'deg)';
               }
@@ -930,7 +1153,8 @@ export function buildVietmapHtml({
               var tWrap = document.createElement('div');
               tWrap.className = 'truck-wrap';
               var bVal = typeof msg.bearing === 'number' ? msg.bearing : 0;
-              tWrap.innerHTML = '<div class="truck-radar-wave wave-1"></div>' +
+              tWrap.innerHTML = '<div class="marker-zoom-inner">' +
+                '<div class="truck-radar-wave wave-1"></div>' +
                 '<div class="truck-radar-wave wave-2"></div>' +
                 '<div class="truck-radar-wave wave-3"></div>' +
                 '<div class="truck-badge" style="transform: rotate(' + bVal + 'deg); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);">' +
@@ -938,57 +1162,41 @@ export function buildVietmapHtml({
                 '<path d="M12 2L20.5 20.5L12 16.5L3.5 20.5L12 2Z" fill="#2563EB" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>' +
                 '</svg>' +
                 '</div>' +
-                (msg.eta ? '<div class="truck-eta">' + msg.eta + '</div>' : '');
-              truckMarker = new maplibregl.Marker({ element: tWrap, anchor: 'center' })
+                (msg.eta ? '<div class="truck-eta">' + msg.eta + '</div>' : '') +
+                '</div>';
+              truckMarker = new maplibregl.Marker({ element: tWrap, anchor: 'center', rotationAlignment: 'map' })
                 .setLngLat(lastTruckLngLat)
                 .addTo(map);
+              if (typeof truckMarker.setRotation === 'function') {
+                truckMarker.setRotation(bVal);
+              }
             }
             if ('${mode}' === 'tracking' && currentRouteCoords && currentRouteCoords.length >= 2) {
               currentRouteCoords[0] = lastTruckLngLat;
               updateSvgRoute();
             }
-            if (drivingMode === 'driving') {
+            if (drivingMode === 'driving' || ${followTruck ? 'true' : 'false'} || '${mode}' === 'tracking') {
               followTruck(700);
             }
           }
         }
         // Recenter on the user location or vehicle without changing overview / turn-by-turn mode.
         if (msg.type === 'LEOPARD_MAP_RECENTER' && (!msg.mapInstanceId || msg.mapInstanceId === '${mapInstanceId}')) {
-          var targetLngLat = null;
-          if (typeof msg.lat === 'number' && typeof msg.lng === 'number') {
-            targetLngLat = [msg.lng, msg.lat];
-            ensureOriginMarker(msg.lng, msg.lat);
+          if (drivingMode === 'driving') {
+            recenterMap();
+          } else if (typeof msg.lat === 'number' && typeof msg.lng === 'number') {
+            recenterMap({ center: [msg.lng, msg.lat] });
           } else if (msg.center && Array.isArray(msg.center)) {
-            targetLngLat = msg.center;
-          } else if (drivingMode === 'driving') {
-            followTruck(800);
-            return;
-          } else if (lastTruckLngLat) {
-            targetLngLat = lastTruckLngLat;
-          } else if (originMarker) {
-            var mPos = originMarker.getLngLat();
-            targetLngLat = mPos ? [mPos.lng, mPos.lat] : null;
-          } else if (typeof startPt !== 'undefined' && startPt) {
-            targetLngLat = startPt;
-          }
-
-          if (targetLngLat && map) {
-            map.easeTo({
-              center: targetLngLat,
-              zoom: typeof msg.zoom === 'number' ? msg.zoom : Math.max(map.getZoom(), 15),
-              duration: 800
-            });
+            recenterMap({ center: msg.center });
+          } else {
+            recenterMap();
           }
         }
         if (msg.type === 'LEOPARD_UPDATE_ORIGIN' && (!msg.mapInstanceId || msg.mapInstanceId === '${mapInstanceId}')) {
           if (typeof msg.lat === 'number' && typeof msg.lng === 'number') {
             ensureOriginMarker(msg.lng, msg.lat);
             if (msg.recenter !== false && map) {
-              map.easeTo({
-                center: [msg.lng, msg.lat],
-                zoom: typeof msg.zoom === 'number' ? msg.zoom : Math.max(map.getZoom(), 15),
-                duration: 800
-              });
+              recenterMap({ center: [msg.lng, msg.lat] });
             }
           }
         }
@@ -996,9 +1204,9 @@ export function buildVietmapHtml({
         if (msg.type === 'LEOPARD_MAP_SET_VIEW_MODE' && (!msg.mapInstanceId || msg.mapInstanceId === '${mapInstanceId}')) {
           drivingMode = msg.mode === 'driving' ? 'driving' : 'overview';
           if (drivingMode === 'driving') {
-            followTruck(800);
+            recenterMap();
           } else {
-            fitRouteBounds(800);
+            fitRouteBounds(RECENTER_DURATION);
           }
         }
         if (msg.type === 'LEOPARD_UPDATE_NEARBY_DRIVERS' && (!msg.mapInstanceId || msg.mapInstanceId === '${mapInstanceId}')) {
@@ -1037,8 +1245,10 @@ export function LeopardMapView({
   maxBounds,
   bearing = 0,
   pitch = 0,
+  truckHeading,
   followTruckLocation = false,
   isPickupLeg = false,
+  recenterNonce,
 }: LeopardMapViewProps) {
   const mapInstanceId = useId().replace(/:/g, '_');
   const iframeRef = useRef<any>(null);
@@ -1142,7 +1352,23 @@ export function LeopardMapView({
             ],
           };
         }
-        return null;
+        return {
+          type: 'FeatureCollection' as const,
+          features: [
+            {
+              type: 'Feature' as const,
+              id: 'route-main',
+              properties: { kind: 'active', color: '#2563EB' },
+              geometry: {
+                type: 'LineString' as const,
+                coordinates: [
+                  [origin.coords.lng, origin.coords.lat],
+                  [destination.coords.lng, destination.coords.lat],
+                ],
+              },
+            },
+          ],
+        };
       }
 
       const validStops: [number, number][] = stops
@@ -1243,6 +1469,12 @@ export function LeopardMapView({
   // Push realtime truck location update into iframe when truckLocation or bearing updates
   useEffect(() => {
     if (!truckLocation || isTestEnv) return;
+    const effectiveHeading =
+      typeof truckHeading === 'number'
+        ? truckHeading
+        : typeof bearing === 'number'
+        ? bearing
+        : 0;
     try {
       iframeRef.current?.contentWindow?.postMessage(
         {
@@ -1250,7 +1482,7 @@ export function LeopardMapView({
           mapInstanceId,
           lat: truckLocation.lat,
           lng: truckLocation.lng,
-          bearing: typeof bearing === 'number' ? bearing : 0,
+          bearing: effectiveHeading,
           eta: displayEta,
         },
         '*',
@@ -1258,7 +1490,7 @@ export function LeopardMapView({
     } catch {
       // Ignore cross-frame communication errors
     }
-  }, [truckLocation?.lat, truckLocation?.lng, bearing, displayEta, mapInstanceId, isTestEnv]);
+  }, [truckLocation?.lat, truckLocation?.lng, truckHeading, bearing, displayEta, mapInstanceId, isTestEnv]);
 
   // Push realtime origin location update into iframe when origin coords update
   useEffect(() => {
@@ -1296,6 +1528,41 @@ export function LeopardMapView({
     }
   }, [nearbyDrivers, mapInstanceId, isTestEnv]);
 
+  // Trigger recenter animation inside iframe whenever recenterNonce increments
+  useEffect(() => {
+    if (recenterNonce == null || recenterNonce === 0 || isTestEnv) return;
+    try {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          type: 'LEOPARD_MAP_RECENTER',
+          mapInstanceId,
+          lat: truckLocation?.lat,
+          lng: truckLocation?.lng,
+        },
+        '*',
+      );
+    } catch {
+      // Ignore cross-frame communication errors
+    }
+  }, [recenterNonce, mapInstanceId, isTestEnv]);
+
+  // Push driving mode (turn-by-turn vs overview) into iframe when followTruckLocation or mode changes
+  useEffect(() => {
+    if (isTestEnv) return;
+    try {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          type: 'LEOPARD_MAP_SET_VIEW_MODE',
+          mapInstanceId,
+          mode: followTruckLocation || mode === 'tracking' ? 'driving' : 'overview',
+        },
+        '*',
+      );
+    } catch {
+      // Ignore cross-frame communication errors
+    }
+  }, [followTruckLocation, mode, mapInstanceId, isTestEnv]);
+
   const vietmapHtml = useMemo(() => {
     return buildVietmapHtml({
       resolvedApiKey,
@@ -1312,8 +1579,9 @@ export function LeopardMapView({
       minZoom,
       maxZoom,
       maxBounds,
-      bearing,
+      bearing: 0,
       pitch,
+      truckHeading: typeof truckHeading === 'number' ? truckHeading : bearing,
       interactive,
       followTruck: followTruckLocation,
       routeGeoJSON,
@@ -1321,12 +1589,13 @@ export function LeopardMapView({
     });
   }, [
     resolvedApiKey,
-    origin,
-    destination,
-    stops,
-    truckLocation,
+    origin?.coords?.lat,
+    origin?.coords?.lng,
+    destination?.coords?.lat,
+    destination?.coords?.lng,
+    truckLocation?.lat,
+    truckLocation?.lng,
     displayEta,
-    nearbyDrivers,
     mode,
     mapInstanceId,
     centerCoords,
@@ -1336,6 +1605,7 @@ export function LeopardMapView({
     maxBounds,
     bearing,
     pitch,
+    truckHeading,
     interactive,
     followTruckLocation,
     routeGeoJSON,

@@ -358,4 +358,66 @@ describe('MissionMapCanvas (Task 18)', () => {
     expect(flatStyle.borderRadius).toBe(0);
     await screen.unmount();
   });
+
+  it('does not render Google Maps button on the turn-by-turn banner HUD', async () => {
+    const screen = await render(
+      <MissionMapCanvas
+        destination={{ label: 'Điểm giao', coords: { lat: 10.76, lng: 106.8 } }}
+        navMode="turn-by-turn"
+        origin={{ label: 'Điểm lấy', coords: { lat: 10.79, lng: 106.65 } }}
+        tracking={defaultTracking}
+      />,
+    );
+
+    expect(screen.getByTestId('turn-by-turn-hud')).toBeTruthy();
+    expect(screen.queryByTestId('btn-turn-by-turn-google-maps')).toBeNull();
+    expect(screen.getAllByLabelText('Tắt âm thanh').length).toBeGreaterThan(0);
+    await screen.unmount();
+  });
+
+  describe('openExternalNavigation URL format', () => {
+    it('generates URL with both origin and destination when both are distinct', () => {
+      const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true as any);
+
+      openExternalNavigation({
+        origin: { lat: 10.79, lng: 106.65 },
+        destination: { lat: 10.76, lng: 106.8 },
+      });
+
+      expect(openURLSpy).toHaveBeenCalledWith(
+        'https://www.google.com/maps/dir/?api=1&origin=10.79%2C106.65&destination=10.76%2C106.8&travelmode=driving&dir_action=navigate',
+      );
+
+      openURLSpy.mockRestore();
+    });
+
+    it('generates URL with destination only when origin is omitted', () => {
+      const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true as any);
+
+      openExternalNavigation({
+        destination: { lat: 10.76, lng: 106.8 },
+      });
+
+      expect(openURLSpy).toHaveBeenCalledWith(
+        'https://www.google.com/maps/dir/?api=1&destination=10.76%2C106.8&travelmode=driving&dir_action=navigate',
+      );
+
+      openURLSpy.mockRestore();
+    });
+
+    it('generates URL with destination only when origin is identical to destination', () => {
+      const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true as any);
+
+      openExternalNavigation({
+        origin: { lat: 10.76, lng: 106.8 },
+        target: { lat: 10.76, lng: 106.8 },
+      });
+
+      expect(openURLSpy).toHaveBeenCalledWith(
+        'https://www.google.com/maps/dir/?api=1&destination=10.76%2C106.8&travelmode=driving&dir_action=navigate',
+      );
+
+      openURLSpy.mockRestore();
+    });
+  });
 });

@@ -54,28 +54,30 @@ export default function CustomerLayout() {
 
   if (decision.kind === 'denied') return null;
 
+  const normalizedPath = (pathname || '').toLowerCase();
+
   const getActiveTab = (): TabKey => {
     if (
-      pathname.includes('/customer/orders/checkout') ||
-      pathname.includes('/customer/orders/searching')
+      normalizedPath.includes('orders/checkout') ||
+      normalizedPath.includes('orders/searching')
     ) {
       return 'home';
     }
     if (
-      pathname.includes('/customer/orders') ||
-      pathname.includes('/customer/deliveries') ||
-      pathname.includes('/customer/tracking')
+      normalizedPath.includes('orders') ||
+      normalizedPath.includes('deliveries') ||
+      normalizedPath.includes('tracking')
     ) {
       return 'orders';
     }
-    if (pathname.includes('/customer/wallet')) {
+    if (normalizedPath.includes('wallet')) {
       return 'wallet';
     }
     if (
-      pathname.includes('/customer/profile') ||
-      pathname.includes('/customer/settings') ||
-      pathname.includes('/customer/addresses') ||
-      pathname.includes('/customer/promotions')
+      normalizedPath.includes('profile') ||
+      normalizedPath.includes('settings') ||
+      normalizedPath.includes('addresses') ||
+      normalizedPath.includes('promotions')
     ) {
       return 'account';
     }
@@ -100,16 +102,16 @@ export default function CustomerLayout() {
   };
 
   const isSubScreenWithoutNav =
-    pathname.includes('/customer/booking') ||
-    pathname.includes('/customer/orders/checkout') ||
-    pathname.includes('/customer/orders/searching') ||
-    pathname.match(/\/customer\/orders\/[^/]+$/) !== null ||
-    pathname.includes('/customer/profile-edit') ||
-    pathname.includes('/customer/chat') ||
-    pathname.includes('/customer/report') ||
-    pathname.includes('/customer/review') ||
-    pathname.includes('/customer/tracking') ||
-    pathname.includes('/customer/invoice-preview');
+    normalizedPath.includes('booking') ||
+    normalizedPath.includes('orders/checkout') ||
+    normalizedPath.includes('orders/searching') ||
+    /\/(?:customer\/)?orders\/[^/]+$/.test(normalizedPath) ||
+    normalizedPath.includes('profile-edit') ||
+    normalizedPath.includes('chat') ||
+    normalizedPath.includes('report') ||
+    normalizedPath.includes('review') ||
+    normalizedPath.includes('tracking') ||
+    normalizedPath.includes('invoice-preview');
 
   return (
     <View style={styles.flex}>

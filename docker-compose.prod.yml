@@ -20,7 +20,25 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "2"
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - max_connections=50
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-leopard}
       POSTGRES_USER: ${POSTGRES_USER:-leopard}
@@ -51,7 +69,13 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 384M
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,6 +87,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-leopard}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-leopard}?schema=public
       PORT: "3000"
       NODE_ENV: production
+      NODE_OPTIONS: "--max-old-space-size=768"
     volumes:
       - leopard-demo-uploads:/app/uploads
     healthcheck:
@@ -90,6 +115,10 @@ services:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
       target: builder
     profiles: ["tools"]
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     depends_on:
       postgres:
         condition: service_healthy
@@ -114,6 +143,10 @@ services:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
       target: builder
     profiles: ["tools"]
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     depends_on:
       postgres:
         condition: service_healthy
@@ -145,7 +178,13 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
     depends_on:
       api:
         condition: service_healthy
@@ -154,6 +193,7 @@ services:
     environment:
       API_URL: http://api:3000/api/v1
       NEXT_PUBLIC_ALLOW_DEMO_AUTH: "true"
+      NODE_OPTIONS: "--max-old-space-size=512"
 
   # ── Customer App (Expo Web + Nginx) ──
   customer:
@@ -163,6 +203,7 @@ services:
       dockerfile: infra/docker/customer.Dockerfile
       args:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+        EXPO_PUBLIC_VIETMAP_API_KEY: ${VIETMAP_API_KEY:-}
     restart: unless-stopped
     # Docker's json-file log driver has no size limit by default, so a chatty
     # container can fill the disk and take the database down with it. Cap it per
@@ -172,7 +213,13 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
     depends_on:
       api:
         condition: service_healthy
@@ -188,6 +235,7 @@ services:
       dockerfile: infra/docker/driver.Dockerfile
       args:
         DEPS_IMAGE: ${DEPS_IMAGE:-leopard-deps:dev}
+        EXPO_PUBLIC_VIETMAP_API_KEY: ${VIETMAP_API_KEY:-}
     restart: unless-stopped
     # Docker's json-file log driver has no size limit by default, so a chatty
     # container can fill the disk and take the database down with it. Cap it per
@@ -197,7 +245,13 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
     depends_on:
       api:
         condition: service_healthy
@@ -219,7 +273,13 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
     depends_on:
       - api
       - admin

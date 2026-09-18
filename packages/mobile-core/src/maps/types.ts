@@ -55,6 +55,7 @@ export interface LeopardMapViewProps {
   maxBounds?: [[number, number], [number, number]];
   bearing?: number;
   pitch?: number;
+  truckHeading?: number;
   /**
    * Turn-by-turn driving mode: the camera locks onto `truckLocation` (3D pitch)
    * instead of fitting the whole route into view.
@@ -64,6 +65,11 @@ export interface LeopardMapViewProps {
    * True if approaching pickup point, false if in-transit to delivery/stops.
    */
   isPickupLeg?: boolean;
+  /**
+   * Increment this value to imperatively trigger a map recenter animation
+   * back to the truck/vehicle location. Works on both web (postMessage) and native (Camera ref).
+   */
+  recenterNonce?: number;
 }
 
 export interface VietmapNavigationProps {

@@ -14,6 +14,8 @@ export interface PaymentQr {
   qrPayload: string;
   expiresAt: Date;
   payosOrderCode?: bigint;
+  accountNumber?: string;
+  accountName?: string;
 }
 
 export abstract class PaymentProvider {
@@ -108,6 +110,8 @@ export class PayOsPaymentProvider extends PaymentProvider {
       qrPayload: response.qrCode,
       expiresAt,
       payosOrderCode: BigInt(orderCode),
+      accountNumber: response.accountNumber,
+      accountName: response.accountName,
     };
   }
 

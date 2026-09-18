@@ -85,4 +85,44 @@ describe('Customer layout', () => {
     expect(view.getByText('2')).toBeTruthy();
     await view.unmount();
   });
+
+  it('hides FloatingNavBar when route is tracking', async () => {
+    const expoRouter = require('expo-router');
+    const originalUsePathname = expoRouter.usePathname;
+    expoRouter.usePathname = () => '/customer/tracking';
+
+    const { default: CustomerLayout } = require('../../app/customer/_layout');
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = await render(
+      <QueryClientProvider client={queryClient}>
+        <CustomerLayout />
+      </QueryClientProvider>,
+    );
+
+    expect(view.queryByRole('tab', { name: 'Trang chủ' })).toBeNull();
+    expect(view.queryByRole('tab', { name: 'Đơn hàng' })).toBeNull();
+    await view.unmount();
+
+    expoRouter.usePathname = originalUsePathname;
+  });
+
+  it('hides FloatingNavBar when route is tracking without /customer prefix', async () => {
+    const expoRouter = require('expo-router');
+    const originalUsePathname = expoRouter.usePathname;
+    expoRouter.usePathname = () => '/tracking';
+
+    const { default: CustomerLayout } = require('../../app/customer/_layout');
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = await render(
+      <QueryClientProvider client={queryClient}>
+        <CustomerLayout />
+      </QueryClientProvider>,
+    );
+
+    expect(view.queryByRole('tab', { name: 'Trang chủ' })).toBeNull();
+    expect(view.queryByRole('tab', { name: 'Đơn hàng' })).toBeNull();
+    await view.unmount();
+
+    expoRouter.usePathname = originalUsePathname;
+  });
 });

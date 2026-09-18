@@ -5,8 +5,12 @@ FROM ${DEPS_IMAGE} AS builder
 
 COPY packages/ui/src/ packages/ui/src/
 COPY apps/admin/src/ apps/admin/src/
+COPY apps/admin/public/ apps/admin/public/
 
-ENV CI=true
+# Restrict Node heap during Next.js compile to 1536MB to prevent OOM on 4GB VPS
+ENV CI=true \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS="--max-old-space-size=1536"
 
 # Next's compile cache lives in .next/cache. Without a persistent mount it is
 # discarded whenever a source COPY above invalidates the layer, so every rebuild
@@ -28,11 +32,14 @@ WORKDIR /app
 # and the container dies with MODULE_NOT_FOUND from /app/server.js.
 COPY --from=builder --chown=leopard:leopard /app/apps/admin/.next/standalone/ ./
 COPY --from=builder --chown=leopard:leopard /app/apps/admin/.next/static/ ./apps/admin/.next/static/
+COPY --from=builder --chown=leopard:leopard /app/apps/admin/public/ ./apps/admin/public/
 
 USER leopard
 EXPOSE 3002
-ENV PORT=3002
-ENV HOSTNAME=0.0.0.0
+ENV PORT=3002 \
+    HOSTNAME=0.0.0.0 \
+    NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=512"
 HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3002/login',(r)=>{process.exit([200,302,307,308].includes(r.statusCode)?0:1)})"
 ENTRYPOINT ["node", "apps/admin/server.js"]

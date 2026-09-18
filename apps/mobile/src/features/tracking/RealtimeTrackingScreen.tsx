@@ -313,6 +313,8 @@ const TrackingMapLayer = React.memo(function TrackingMapLayer({
     snapPoint === 'FULL' ? screenHeight * 0.85 : snapPoint === 'HALF' ? 420 : 210;
   const offsetY = calculateDynamicVisibleCenterOffset(screenHeight, sheetHeight, 90);
 
+  const [recenterNonce, setRecenterNonce] = useState(0);
+
   return (
     <View pointerEvents="box-none" style={styles.mapArea} testID="realtime-map-area">
       <View
@@ -327,13 +329,13 @@ const TrackingMapLayer = React.memo(function TrackingMapLayer({
         ]}
       >
         <LeopardMapView
-          bearing={bearing}
           destination={memoizedDestination}
           followTruckLocation={true}
           height="100%"
           isPickupLeg={isPickupLeg}
           mode="tracking"
           origin={memoizedOrigin}
+          recenterNonce={recenterNonce}
           routeCoords={effectiveRouteCoords}
           stops={stops}
           truckEtaLabel={truckEtaLabel}
@@ -341,6 +343,15 @@ const TrackingMapLayer = React.memo(function TrackingMapLayer({
           truckLocation={effectiveTruckLocation}
         />
       </View>
+      {/* Recenter button — bottom-right of map */}
+      <Pressable
+        accessibilityLabel="Về vị trí xe"
+        onPress={() => setRecenterNonce((n) => n + 1)}
+        style={styles.recenterBtn}
+        testID="customer-map-recenter"
+      >
+        <Text style={styles.recenterBtnIcon}>⊕</Text>
+      </Pressable>
     </View>
   );
 });
@@ -1213,6 +1224,29 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: customerPalette.textSlateDark,
     overflow: 'hidden',
+  },
+  recenterBtn: {
+    position: 'absolute',
+    bottom: 120,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+  },
+  recenterBtnIcon: {
+    fontSize: 22,
+    color: '#0B2545',
   },
 
   // ── LAYER 1: Top Bar & Fixed Status ───────────────

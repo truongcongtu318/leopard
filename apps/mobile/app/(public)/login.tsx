@@ -35,7 +35,7 @@ export default function LoginRoute() {
 
   return (
     <LoginScreen
-      allowDemo={true}
+      allowDemo={allowDemo}
       onLoginSuccess={handleLoginSuccess}
       {...(allowDemo
         ? {

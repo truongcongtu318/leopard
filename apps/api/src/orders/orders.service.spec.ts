@@ -99,4 +99,11 @@ describe('OrdersService.createOrder', () => {
       expect.objectContaining({ vehicleType: 'VAN' }),
     );
   });
+
+  test('does not dispatch immediately when paymentMethod is VIETQR', async () => {
+    await service.createOrder(actor, { ...dto, paymentMethod: 'VIETQR' });
+
+    expect(ordersRepository.createOrder).toHaveBeenCalledTimes(1);
+    expect(eventsPublisher.publishRequested).not.toHaveBeenCalled();
+  });
 });

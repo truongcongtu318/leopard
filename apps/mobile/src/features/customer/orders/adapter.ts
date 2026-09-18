@@ -1272,6 +1272,7 @@ export function createCustomerHttpAdapter(
             form.vehicleType === 'TRUCK' && form.cargoWeight ? Number(form.cargoWeight) : undefined,
           hasLoadingSupport: Boolean(form.hasLoadingSupport || form.requiresLoadingSupport),
           hasVatInvoice: Boolean(form.hasVatInvoice),
+          paymentMethod: form.paymentMethod || undefined,
           estimateToken,
         };
 

@@ -221,11 +221,13 @@ export function BookingScreen({
     };
   }, []);
 
+  const prevInitialVehicleIdRef = useRef(initialVehicleId);
   useEffect(() => {
-    if (initialVehicleId && initialVehicleId !== draft.vehicleId) {
+    if (initialVehicleId && initialVehicleId !== prevInitialVehicleIdRef.current) {
+      prevInitialVehicleIdRef.current = initialVehicleId;
       bookingDraftStore.updateDraft({ vehicleId: initialVehicleId });
     }
-  }, [initialVehicleId, draft.vehicleId]);
+  }, [initialVehicleId]);
 
   // Fetch real street routing via backend estimate API
   useEffect(() => {
@@ -280,8 +282,8 @@ export function BookingScreen({
             lat: dropoffCoords.lat,
             lng: dropoffCoords.lng,
           },
-          vehicleType: resolveVehicleOrderType(draft.vehicleId).vehicleType,
-          cargoWeightKg: parseInt(resolveVehicleOrderType(draft.vehicleId).cargoWeight, 10) || 1250,
+          vehicleType: 'TRUCK',
+          cargoWeightKg: 1250,
         };
 
         const response = await httpClient.post<{
@@ -347,7 +349,6 @@ export function BookingScreen({
     draft.dropoffLat,
     draft.dropoffLng,
     draft.stops,
-    draft.vehicleId,
   ]);
 
   // Keyboard show/hide detection

@@ -48,12 +48,13 @@ async function proxyRequest(
   request: Request,
   context: RouteContext,
 ): Promise<Response> {
-  if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) {
+  const { path } = await context.params;
+  const isWebhook = path.length >= 2 && path[0] === "payments" && path[1] === "webhook";
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method) && !isWebhook) {
     const csrfError = csrfErrorResponse(request);
     if (csrfError) return csrfError;
   }
 
-  const { path } = await context.params;
   const body = await readRequestBody(request);
   const accessToken = readCookie(request, ADMIN_ACCESS_COOKIE);
 

@@ -103,6 +103,10 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
   @IsNotEmpty()
   @Matches(/\S/)
   @MaxLength(128)

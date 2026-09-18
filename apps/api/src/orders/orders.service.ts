@@ -153,22 +153,26 @@ export class OrdersService {
         driverPayoutVnd: verifiedEstimate.quote?.driverPayoutVnd,
         hasLoadingSupport: Boolean(dto.hasLoadingSupport),
         hasVatInvoice: Boolean(dto.hasVatInvoice),
+        paymentMethod: dto.paymentMethod ?? 'CASH',
       },
       stops: stopsToCreate,
     });
 
-      this.eventsPublisher.publishRequested({
-        orderId: order.id,
-        pickup: { lat: pickupLat, lng: pickupLng },
-        pickupAddress: dto.pickup.address,
-        dropoffAddress: dto.dropoff.address,
-        vehicleType: dto.vehicleType,
-        priceVnd: verifiedEstimate.estimatedPriceVnd,
-        distanceMeters: verifiedEstimate.distanceM,
-        durationSeconds: verifiedEstimate.durationS,
-        cargoNote: dto.cargoNote ?? null,
-        occurredAt: new Date().toISOString(),
-      });
+      const isUpfrontPayment = dto.paymentMethod === 'VIETQR';
+      if (!isUpfrontPayment) {
+        this.eventsPublisher.publishRequested({
+          orderId: order.id,
+          pickup: { lat: pickupLat, lng: pickupLng },
+          pickupAddress: dto.pickup.address,
+          dropoffAddress: dto.dropoff.address,
+          vehicleType: dto.vehicleType,
+          priceVnd: verifiedEstimate.estimatedPriceVnd,
+          distanceMeters: verifiedEstimate.distanceM,
+          durationSeconds: verifiedEstimate.durationS,
+          cargoNote: dto.cargoNote ?? null,
+          occurredAt: new Date().toISOString(),
+        });
+      }
 
     return mapOrderResponse(order);
   } catch (error: any) {

@@ -1,10 +1,9 @@
-import React from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { DriverMapDispatchContext, useDriverMapDirector } from '../../../../navigation/DriverMapDirectorContext';
 import {
   IconClock,
-  IconExternalLink,
   IconLocationPin,
   IconRoute,
   LeopardMapView,
@@ -109,7 +108,10 @@ function ManeuverIcon({ type, size = 26 }: { type?: string; size?: number }) {
 }
 
 export type OpenExternalNavigationOptions = {
+  origin?: { lat?: number; lng?: number; label?: string } | null;
+  destination?: { lat?: number; lng?: number; label?: string } | null;
   target?: { lat?: number; lng?: number; label?: string } | string | null;
+  truckLocation?: { lat: number; lng: number } | null;
   vehicleType?: VehicleType | string | null;
   onWarning?: (proceed: () => void) => void;
 };
@@ -120,17 +122,27 @@ export function openExternalNavigation(
     | { lat?: number; lng?: number; label?: string }
     | string,
 ): boolean {
+  let origin: { lat?: number; lng?: number; label?: string } | null | undefined;
+  let destination: { lat?: number; lng?: number; label?: string } | null | undefined;
   let target: { lat?: number; lng?: number; label?: string } | string | null | undefined;
+  let truckLocation: { lat: number; lng: number } | null | undefined;
   let vehicleType: VehicleType | string | null | undefined;
   let onWarning: ((proceed: () => void) => void) | undefined;
 
   if (
     optionsOrTarget &&
     typeof optionsOrTarget === 'object' &&
-    ('target' in optionsOrTarget || 'vehicleType' in optionsOrTarget)
+    ('target' in optionsOrTarget ||
+      'origin' in optionsOrTarget ||
+      'destination' in optionsOrTarget ||
+      'truckLocation' in optionsOrTarget ||
+      'vehicleType' in optionsOrTarget)
   ) {
     const opts = optionsOrTarget as OpenExternalNavigationOptions;
+    origin = opts.origin;
+    destination = opts.destination;
     target = opts.target;
+    truckLocation = opts.truckLocation;
     vehicleType = opts.vehicleType;
     onWarning = opts.onWarning;
   } else {
@@ -139,33 +151,80 @@ export function openExternalNavigation(
       | string;
   }
 
-  let lat: number | undefined;
-  let lng: number | undefined;
+  // Resolve destination coordinates: prioritized from target (active leg destination), then destination prop
+  let destLat: number | undefined;
+  let destLng: number | undefined;
 
-  if (typeof target === 'object' && target !== null) {
-    if (
-      typeof target.lat === 'number' &&
-      typeof target.lng === 'number' &&
-      !isNaN(target.lat) &&
-      !isNaN(target.lng)
-    ) {
-      lat = target.lat;
-      lng = target.lng;
-    }
+  const targetCandidate =
+    typeof target === 'object' &&
+    target !== null &&
+    typeof target.lat === 'number' &&
+    typeof target.lng === 'number' &&
+    !isNaN(target.lat) &&
+    !isNaN(target.lng)
+      ? target
+      : null;
+
+  const destCandidate =
+    destination &&
+    typeof destination.lat === 'number' &&
+    typeof destination.lng === 'number' &&
+    !isNaN(destination.lat) &&
+    !isNaN(destination.lng)
+      ? destination
+      : null;
+
+  const candidateDest = targetCandidate || destCandidate;
+  if (candidateDest) {
+    destLat = candidateDest.lat;
+    destLng = candidateDest.lng;
   }
 
-  if (lat == null || lng == null) {
+  if (destLat == null || destLng == null) {
     Alert.alert(
       'Không có tọa độ dẫn đường',
-      'Điểm đến tiếp theo chưa có tọa độ GPS hợp lệ để mở bản đồ dẫn đường.',
+      'Điểm đến chưa có tọa độ GPS hợp lệ để mở bản đồ dẫn đường.',
     );
     return false;
   }
 
+  // Resolve origin coordinates: prioritized from truck GPS fix, then origin prop
+  let originLat: number | undefined;
+  let originLng: number | undefined;
+
+  if (
+    truckLocation &&
+    typeof truckLocation.lat === 'number' &&
+    typeof truckLocation.lng === 'number' &&
+    !isNaN(truckLocation.lat) &&
+    !isNaN(truckLocation.lng)
+  ) {
+    originLat = truckLocation.lat;
+    originLng = truckLocation.lng;
+  } else if (
+    origin &&
+    typeof origin.lat === 'number' &&
+    typeof origin.lng === 'number' &&
+    !isNaN(origin.lat) &&
+    !isNaN(origin.lng)
+  ) {
+    originLat = origin.lat;
+    originLng = origin.lng;
+  }
+
+  // Check whether origin is distinct from destination (to avoid navigating to the exact same point)
+  const hasDistinctOrigin =
+    originLat != null &&
+    originLng != null &&
+    (Math.abs(originLat - destLat) > 0.00001 || Math.abs(originLng - destLng) > 0.00001);
+
   const proceed = () => {
-    const coords = `${lat},${lng}`;
-    const encoded = encodeURIComponent(coords);
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+    let url = 'https://www.google.com/maps/dir/?api=1';
+    if (hasDistinctOrigin) {
+      url += `&origin=${encodeURIComponent(`${originLat},${originLng}`)}`;
+    }
+    url += `&destination=${encodeURIComponent(`${destLat},${destLng}`)}`;
+    url += '&travelmode=driving&dir_action=navigate';
     void Linking.openURL(url).catch(() => {});
   };
 
@@ -337,8 +396,20 @@ export function MissionMapCanvas({
   React.useEffect(() => {
     let isMounted = true;
     const from = truckLocation ?? resolvedOrigin.coords;
+
+    const isTruckAtPickup =
+      isPickupLeg &&
+      resolvedOrigin.coords &&
+      Boolean(
+        !truckLocation ||
+        (Math.abs(truckLocation.lat - resolvedOrigin.coords.lat) < 0.0006 &&
+         Math.abs(truckLocation.lng - resolvedOrigin.coords.lng) < 0.0006)
+      );
+
     const rawTo = isPickupLeg
-      ? (resolvedOrigin.coords ?? (resolvedTarget && typeof resolvedTarget.lat === 'number' && typeof resolvedTarget.lng === 'number' ? { lat: resolvedTarget.lat, lng: resolvedTarget.lng } : resolvedDestination.coords))
+      ? (isTruckAtPickup
+          ? (resolvedDestination.coords ?? resolvedOrigin.coords)
+          : (resolvedOrigin.coords ?? resolvedDestination.coords))
       : (resolvedTarget && typeof resolvedTarget.lat === 'number' && typeof resolvedTarget.lng === 'number'
           ? { lat: resolvedTarget.lat, lng: resolvedTarget.lng }
           : resolvedDestination.coords);
@@ -383,8 +454,20 @@ export function MissionMapCanvas({
 
   const fallbackRouteCoords = React.useMemo(() => {
     if (isPickupLeg) {
+      if (truckLocation && resolvedOrigin.coords && resolvedDestination.coords) {
+        const isNearPickup =
+          Math.abs(truckLocation.lat - resolvedOrigin.coords.lat) < 0.0006 &&
+          Math.abs(truckLocation.lng - resolvedOrigin.coords.lng) < 0.0006;
+        if (isNearPickup) {
+          return [resolvedOrigin.coords, resolvedDestination.coords];
+        }
+        return [truckLocation, resolvedOrigin.coords, resolvedDestination.coords];
+      }
       if (truckLocation && resolvedOrigin.coords) {
         return [truckLocation, resolvedOrigin.coords];
+      }
+      if (resolvedOrigin.coords && resolvedDestination.coords) {
+        return [resolvedOrigin.coords, resolvedDestination.coords];
       }
       return null;
     }
@@ -398,7 +481,16 @@ export function MissionMapCanvas({
   const effectiveRouteCoords = React.useMemo(() => {
     if (isPickupLeg) {
       if (streetRoute && streetRoute.coordinates.length >= 2) {
-        return streetRoute.coordinates;
+        const firstPt = streetRoute.coordinates[0];
+        const lastPt = streetRoute.coordinates[streetRoute.coordinates.length - 1];
+        const isTrivial =
+          firstPt &&
+          lastPt &&
+          Math.abs(firstPt.lat - lastPt.lat) < 0.0002 &&
+          Math.abs(firstPt.lng - lastPt.lng) < 0.0002;
+        if (!isTrivial) {
+          return streetRoute.coordinates;
+        }
       }
       return fallbackRouteCoords ?? [];
     }
@@ -456,7 +548,7 @@ export function MissionMapCanvas({
   }, [distanceLabel, eta, etaLabel]);
 
   const isDemo = eta?.source === 'DEMO' || isRoutePreview;
-  const isTripEnded = tracking.kind === 'unavailable' || tracking.kind === 'not-started';
+  const isTripEnded = tracking.kind === 'unavailable';
   const showLiveOverlays = !isTripEnded;
 
   // Only real cargo is worth a header line; an empty order shows nothing rather
@@ -524,6 +616,8 @@ export function MissionMapCanvas({
     : etaLabel ?? (eta?.durationSeconds != null ? `${Math.round(eta.durationSeconds / 60)} phút` : '');
   const tripMetricsText = liveDistanceKm && liveDurationMin ? `${liveDistanceKm} · ${liveDurationMin}` : liveDistanceKm || liveDurationMin;
 
+  const [recenterNonce, setRecenterNonce] = useState(0);
+
   const directorConfig = React.useMemo(() => {
     if (isTripEnded) {
       return {
@@ -544,8 +638,9 @@ export function MissionMapCanvas({
       destination: resolvedDestination,
       stops: mapStops,
       truckLocation,
-      bearing: followBearing,
-      pitch: isTurnByTurn ? 55 : 0,
+      bearing: Platform.OS === 'web' ? 0 : followBearing,
+      pitch: isTurnByTurn ? 50 : 0,
+      truckHeading: followBearing,
       zoom: isTurnByTurn ? 17 : 13.5,
       followTruckLocation: isTurnByTurn,
       routeCoords: effectiveRouteCoords,
@@ -585,6 +680,7 @@ export function MissionMapCanvas({
     >
       {/* Dual-resolution Vietmap Vector GL / Turn-by-Turn engine */}
       {!hasDirectorHost ? (
+        Platform.OS !== 'web' &&
         showLiveOverlays &&
         isTurnByTurn &&
         resolvedOrigin.coords &&
@@ -607,7 +703,7 @@ export function MissionMapCanvas({
           />
         ) : (
           <LeopardMapView
-            bearing={followBearing}
+            bearing={Platform.OS === 'web' ? 0 : followBearing}
             destination={resolvedDestination}
             followTruckLocation={showLiveOverlays && isTurnByTurn}
             height="100%"
@@ -615,16 +711,30 @@ export function MissionMapCanvas({
             isPickupLeg={isPickupLeg}
             mode={isTripEnded || !isTurnByTurn ? 'route' : 'tracking'}
             origin={resolvedOrigin}
-            pitch={showLiveOverlays && isTurnByTurn ? 55 : 0}
+            pitch={showLiveOverlays && isTurnByTurn ? 50 : 0}
+            recenterNonce={recenterNonce}
             routeCoords={effectiveRouteCoords}
             routeResolutionPolicy="PROVIDED_ONLY"
             routeSegments={effectiveRouteSegments}
             stops={mapStops}
             truckEtaLabel=""
+            truckHeading={followBearing}
             truckLocation={truckLocation}
             zoom={showLiveOverlays && isTurnByTurn ? 17 : 13.5}
           />
         )
+      ) : null}
+
+      {/* Recenter button — only shown in non-hosted mode (direct MissionMapCanvas) */}
+      {!hasDirectorHost && !isTurnByTurn && !isTripEnded ? (
+        <Pressable
+          accessibilityLabel="Về vị trí xe"
+          onPress={() => setRecenterNonce((n) => n + 1)}
+          style={styles.recenterFab}
+          testID="driver-canvas-recenter"
+        >
+          <Text style={styles.recenterFabIcon}>⊕</Text>
+        </Pressable>
       ) : null}
 
       {/* Cargo at a glance, pinned to the map header. Sits above the mode card
@@ -675,20 +785,6 @@ export function MissionMapCanvas({
                 style={({ pressed }) => [styles.turnByTurnMuteBtn, pressed ? styles.pressed : null]}
               >
                 <Text style={styles.turnByTurnMuteIcon}>{isAudioMuted ? '🔇' : '🔊'}</Text>
-              </Pressable>
-
-              <Pressable
-                accessibilityHint="Mở Google Maps để dẫn đường turn-by-turn bằng giọng nói"
-                accessibilityLabel="Mở Google Maps chỉ đường turn-by-turn"
-                accessibilityRole="button"
-                onPress={() =>
-                  openExternalNavigation({ target: resolvedTarget, vehicleType, onWarning: onNavigationWarning })
-                }
-                style={({ pressed }) => [styles.turnByTurnCta, pressed ? styles.pressed : null]}
-                testID="btn-turn-by-turn-google-maps"
-              >
-                <IconExternalLink color={leopardPalette.primary} size={14} />
-                <Text style={styles.turnByTurnCtaText}>Google Maps</Text>
               </Pressable>
             </View>
           </View>
@@ -749,7 +845,9 @@ export function MissionMapCanvas({
                 return;
               }
               openExternalNavigation({
+                origin: resolvedOrigin.coords ? { lat: resolvedOrigin.coords.lat, lng: resolvedOrigin.coords.lng } : undefined,
                 target: resolvedTarget,
+                truckLocation: truckLocation ?? undefined,
                 vehicleType,
                 onWarning: onNavigationWarning,
               });
@@ -793,6 +891,29 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
+  },
+  recenterFab: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+  },
+  recenterFabIcon: {
+    fontSize: 20,
+    color: '#0B2545',
   },
   mapFloatingTopLeftGroup: {
     flexDirection: 'row',
@@ -1040,9 +1161,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   turnByTurnActions: {
-    alignItems: 'flex-end',
-    flexDirection: 'column',
-    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   turnByTurnMuteBtn: {
     alignItems: 'center',
@@ -1054,20 +1174,6 @@ const styles = StyleSheet.create({
   },
   turnByTurnMuteIcon: {
     fontSize: 13,
-  },
-  turnByTurnCta: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.control,
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  turnByTurnCtaText: {
-    ...typeScale.caption2,
-    color: leopardPalette.primary,
-    fontWeight: '700',
   },
   srOnly: {
     height: 1,

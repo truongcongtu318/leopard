@@ -22,8 +22,11 @@ describe('DriverMissionActionBar', () => {
     );
 
     expect(screen.getByLabelText('Gọi cho người nhận')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('btn-open-google-maps-dual'));
+    expect(openURLSpy).toHaveBeenCalledTimes(1);
+
     await fireEvent.press(screen.getByTestId('btn-navigate-active-leg'));
-    expect(openURLSpy).toHaveBeenCalled();
+    expect(openURLSpy).toHaveBeenCalledTimes(2);
 
     await fireEvent.press(screen.getByTestId('btn-open-incident-modal'));
     await fireEvent.press(screen.getByTestId('btn-report-incident'));
