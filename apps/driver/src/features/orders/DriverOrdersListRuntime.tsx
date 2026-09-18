@@ -1,19 +1,13 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
-
-import { createDriverProfileHttpAdapter } from '../profile/adapter';
-import { createDriverWalletHttpAdapter } from '../wallet/adapter';
-import { createDriverHistoryHttpAdapter, sumTodayEarnings } from '../history/adapter';
-import { createDriverPerformanceHttpAdapter } from '../performance/adapter';
-import { createDriverHttpAdapter } from './adapter';
 import { DriverOrdersScreen } from './DriverOrdersScreen';
 import { useDispatchOffer } from './useDispatchOffer';
+import { useDriverOrdersList } from './hooks/useDriverOrdersList';
 
 export type DriverOrdersListRuntimeProps = Readonly<{
-  onOpenOrder: (orderId: string) => void;
-  onNavigate?: (route: string) => void;
   focusKey?: number;
+  onNavigate?: (route: string) => void;
+  onOpenOrder: (orderId: string) => void;
 }>;
 
 export function DriverOrdersListRuntime({
@@ -21,57 +15,16 @@ export function DriverOrdersListRuntime({
   onNavigate,
   onOpenOrder,
 }: DriverOrdersListRuntimeProps) {
-  const port = useMemo(() => createDriverHttpAdapter(), []);
-  const profilePort = useMemo(() => createDriverProfileHttpAdapter(), []);
-  const walletPort = useMemo(() => createDriverWalletHttpAdapter(), []);
-  const historyPort = useMemo(() => createDriverHistoryHttpAdapter(), []);
-  const performancePort = useMemo(() => createDriverPerformanceHttpAdapter(), []);
-  const queryClient = useQueryClient();
-  const queryKey = ['driver', 'orders'];
-
-  const query = useQuery({
-    queryKey,
-    queryFn: () => port.getOrdersView(),
-  });
-
-  const profileQuery = useQuery({
-    queryKey: ['driver', 'profile'],
-    queryFn: () => profilePort.getProfileView(),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const walletQuery = useQuery({
-    queryKey: ['driver', 'wallet', 'summary'],
-    queryFn: () => walletPort.getWalletSummary(),
-    staleTime: 60 * 1000,
-  });
-  const historyQuery = useQuery({
-    queryKey: ['driver', 'order-history'],
-    queryFn: () => historyPort.getHistory(),
-    staleTime: 60 * 1000,
-  });
-  const performanceQuery = useQuery({
-    queryKey: ['driver', 'performance'],
-    queryFn: () => performancePort.getPerformanceSummary(),
-    staleTime: 5 * 60 * 1000,
-  });
-  const todayEarnings = sumTodayEarnings(historyQuery.data?.items ?? []);
-
-  const prevFocusKeyRef = useRef(focusKey);
-  useEffect(() => {
-    if (
-      prevFocusKeyRef.current !== undefined &&
-      focusKey !== undefined &&
-      focusKey > prevFocusKeyRef.current
-    ) {
-      void query.refetch();
-      void profileQuery.refetch();
-      void walletQuery.refetch();
-      void historyQuery.refetch();
-      void performanceQuery.refetch();
-    }
-    prevFocusKeyRef.current = focusKey;
-  }, [focusKey, query, profileQuery, walletQuery, historyQuery, performanceQuery]);
+  const {
+    port,
+    queryClient,
+    ordersQueryKey,
+    query,
+    profileQuery,
+    walletQuery,
+    performanceQuery,
+    todayEarnings,
+  } = useDriverOrdersList(focusKey);
 
   // If driver has an active trip, automatically route to the active order detail screen
   useEffect(() => {
@@ -147,7 +100,7 @@ export function DriverOrdersListRuntime({
 
   async function handleSetAvailability(commandId: string) {
     await port.setAvailability(commandId);
-    void queryClient.invalidateQueries({ queryKey });
+    void queryClient.invalidateQueries({ queryKey: ordersQueryKey });
   }
 
   async function handleAcceptOffer(orderId: string) {
@@ -155,7 +108,7 @@ export function DriverOrdersListRuntime({
     setIsAcceptingOffer(true);
     try {
       const result = await port.acceptOrder(orderId);
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: ordersQueryKey });
       declineOffer();
       if (result.kind === 'content') {
         onOpenOrder(orderId);

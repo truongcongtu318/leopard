@@ -1,229 +1,50 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Linking } from 'react-native';
-
-import { createSocketFactory } from '@leopard/mobile-core';
-import { pickDeviceImage, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  createSocketFactory,
+  driverQueryKeys,
+  ScreenScaffold,
+  ScreenState,
+} from '@leopard/mobile-core';
 import { DriverIncidentModal, type DriverIncidentSubmitPayload } from './DriverIncidentModal';
 import { createDriverHttpAdapter, createDriverProofAdapter } from './adapter';
-import {
-  DriverOrderDetailScreen,
-  type DriverProofFileInput,
-  type DriverProofUploadResult,
-} from './DriverOrderDetailScreen';
-import type { DriverDetailView, DriverTrackingView } from './model';
-import { createDriverTrackingSender, isTrackingEligibleStatus } from './tracking-sender';
-import { useRouteEtaChannel } from './useRouteEtaChannel';
-import { stopProgressCommandStore } from './stop-progress-command-store';
-import {
-  createInitialRouteEtaChannelState,
-  reduceRouteEtaByRevision,
-  type RouteEtaChannelState,
-} from './route-eta-adapter';
+import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';
+import { createDriverTrackingSender } from './tracking-sender';
+import { useDriverOrderDetail } from './hooks/useDriverOrderDetail';
+import { useDriverOrderMutations } from './hooks/useDriverOrderMutations';
+import { useDriverOrderTracking } from './hooks/useDriverOrderTracking';
 
 export type DriverOrderDetailRuntimeProps = Readonly<{
   orderId: string;
 }>;
 
-const DRIVER_TERMINAL_STATUSES = new Set(['DELIVERED', 'RETURNED']);
-
 export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimeProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const queryKey = driverQueryKeys.orderDetail(orderId);
+
   const port = useMemo(() => createDriverHttpAdapter(), []);
-  // The screen captures the photo itself and hands the resulting file to the
-  // upload, so the adapter must never open a picker of its own: doing so made
-  // the driver choose a second, different image after already taking one.
   const proofPort = useMemo(() => createDriverProofAdapter(undefined, {}), []);
   const sender = useMemo(
     () => createDriverTrackingSender({ socketFactory: createSocketFactory }),
     [],
   );
-  const queryClient = useQueryClient();
-  const queryKey = useMemo(() => ['driver', 'order', orderId], [orderId]);
 
-  const router = useRouter();
-  const query = useQuery({
-    queryKey,
-    queryFn: () => port.getOrderDetailView(orderId),
-    // Poll while the driver has an active leg so an unexpected
-    // customer/admin cancellation is caught within a bounded time even if
-    // the driver never manually refreshes (see the effect below that reacts
-    // to it with an alert).
-    refetchInterval: (q) => {
-      const data = q.state.data;
-      const currentStatus =
-        data && data.kind === 'content' && 'status' in data.order ? data.order.status : null;
-      return currentStatus === 'ACCEPTED' ||
-        currentStatus === 'PICKING_UP' ||
-        currentStatus === 'IN_TRANSIT'
-        ? 8000
-        : false;
-    },
-  });
-
-  const [liveTracking, setLiveTracking] = useState<DriverTrackingView | null>(null);
   const [incidentModalVisible, setIncidentModalVisible] = useState(false);
   const [isReportingIncident, setIsReportingIncident] = useState(false);
   const [isConfirmingCash, setIsConfirmingCash] = useState(false);
-  const executingRef = useRef(false);
 
-  const status =
-    query.data && query.data.kind === 'content' ? query.data.order.status : null;
-  const [inFlightStopCommand, setInFlightStopCommand] = useState<{
-    stopId: string;
-    step: string;
-  } | null>(null);
+  const { query, view, status } = useDriverOrderDetail({ orderId, port, sender });
+  useDriverOrderTracking({ orderId, status, sender });
 
-  const routeEtaResult = useRouteEtaChannel({
-    orderId,
-    status: status as any,
-    port,
-    sender,
-  });
-
-  const startedOrderRef = useRef<string | null>(null);
-  const previousStatusRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!status) return;
-    const previousStatus = previousStatusRef.current;
-    previousStatusRef.current = status;
-
-    const wasDriverActive =
-      previousStatus === 'ACCEPTED' ||
-      previousStatus === 'PICKING_UP' ||
-      previousStatus === 'IN_TRANSIT';
-
-    // Only react to a CANCELLED transition seen while this screen was open —
-    // that means the customer/admin cancelled it (a driver-initiated
-    // incident report transitions to INCIDENT_CANCELLED/RETURNING instead,
-    // never CANCELLED), so the driver would otherwise keep navigating to a
-    // stop that no longer needs them.
-    if (wasDriverActive && status === 'CANCELLED') {
-      Alert.alert(
-        'Đơn đã bị hủy',
-        'Khách hàng hoặc quản trị viên đã hủy đơn hàng này. Bạn đã được giải phóng khỏi chuyến.',
-        [{ text: 'Đã hiểu', onPress: () => router.back() }],
-      );
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    const subscription = sender.observeHealth(orderId, setLiveTracking);
-    return () => subscription.unsubscribe();
-  }, [sender, orderId]);
-
-  useEffect(() => {
-    if (typeof sender.observeOrderStatus !== 'function') return undefined;
-    const subscription = sender.observeOrderStatus(orderId, (event) => {
-      if (event.currentStatus === 'CANCELLED') {
-        void queryClient.invalidateQueries({ queryKey });
-        Alert.alert(
-          'Đơn đã bị hủy',
-          'Khách hàng hoặc quản trị viên đã hủy đơn hàng này. Bạn đã được giải phóng khỏi chuyến.',
-          [{ text: 'Đã hiểu', onPress: () => router.back() }],
-        );
-      } else {
-        void queryClient.invalidateQueries({ queryKey });
-      }
-    });
-    return () => subscription?.unsubscribe();
-  }, [sender, orderId, queryClient, queryKey, router]);
-
-  useEffect(() => {
-    if (!status) return;
-    if (startedOrderRef.current !== orderId) {
-      startedOrderRef.current = orderId;
-      void sender.start(orderId, status);
-    } else {
-      sender.handleOrderStatusChange(status);
-    }
-  }, [sender, orderId, status]);
-
-  useEffect(() => {
-    return () => sender.destroy();
-  }, [sender]);
-
-  useEffect(() => {
-    if (!isTrackingEligibleStatus(status)) return undefined;
-
-    let subscription: Location.LocationSubscription | null = null;
-    let cancelled = false;
-
-    async function startWatching() {
-      const { status: permissionStatus } = await Location.requestForegroundPermissionsAsync();
-      if (cancelled) return;
-
-      if (permissionStatus !== 'granted') {
-        sender.setPermissionDenied(true);
-        return;
-      }
-
-      sender.setPermissionDenied(false);
-      subscription = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 15 },
-        (position) => {
-          void sender.sendPoint({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracyM: position.coords.accuracy ?? undefined,
-            heading: position.coords.heading,
-            speed: position.coords.speed,
-            capturedAt: new Date(position.timestamp).toISOString(),
-          });
-        },
-      );
-      if (cancelled && subscription) {
-        subscription.remove();
-      }
-    }
-
-    void startWatching();
-
-    return () => {
-      cancelled = true;
-      subscription?.remove();
-    };
-  }, [sender, status]);
-
-  const view: DriverDetailView | undefined = useMemo(() => {
-    if (!query.data || query.data.kind !== 'content') {
-      return query.data;
-    }
-
-    let nextContent = query.data;
-    if (liveTracking) {
-      nextContent = { ...nextContent, tracking: liveTracking };
-    }
-
-    if (nextContent.accessScope === 'ASSIGNED_FULL' && routeEtaResult.kind === 'content') {
-      const etaView = routeEtaResult.view;
-      const effectiveRouteCoords =
-        etaView.polylineCoords && etaView.polylineCoords.length > 0
-          ? etaView.polylineCoords
-          : nextContent.order.route.routeCoords;
-      const effectiveRouteSegments =
-        etaView.polylineSegments && etaView.polylineSegments.length > 0
-          ? etaView.polylineSegments
-          : nextContent.order.route.routeSegments;
-
-      nextContent = {
-        ...nextContent,
-        order: {
-          ...nextContent.order,
-          route: {
-            ...nextContent.order.route,
-            eta: etaView,
-            routeCoords: effectiveRouteCoords,
-            routeSegments: effectiveRouteSegments,
-          },
-        },
-      };
-    }
-
-    return nextContent;
-  }, [query.data, liveTracking, routeEtaResult]);
+  const {
+    executeTask,
+    recordStopProgress,
+    inFlightStopCommand,
+    selectProof,
+  } = useDriverOrderMutations({ orderId, port, proofPort });
 
   if (query.isPending) {
     return (
@@ -249,130 +70,6 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
         <ScreenState actionLabel="Thử lại" onAction={() => query.refetch()} state="error" />
       </ScreenScaffold>
     );
-  }
-
-  async function handleRecordStopProgress(
-    stopId: string,
-    step: 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED',
-  ) {
-    if (!port.recordStopProgress) return;
-    if (!stopProgressCommandStore.acquireLock(orderId, stopId, step)) {
-      return;
-    }
-
-    setInFlightStopCommand({ stopId, step });
-
-    try {
-      const clientRequestId = await stopProgressCommandStore.getOrCreateCommandId(
-        orderId,
-        stopId,
-        step,
-      );
-
-      const response = await port.recordStopProgress(orderId, stopId, {
-        step,
-        clientRequestId,
-        occurredAt: new Date().toISOString(),
-      });
-
-      await stopProgressCommandStore.clearCommandId(orderId, stopId, step);
-
-      if (response.currentRouteEta) {
-        queryClient.setQueryData<RouteEtaChannelState>(
-          ['driver', 'order', orderId, 'route-eta'],
-          (current) => {
-            const base = current ?? createInitialRouteEtaChannelState(orderId);
-            return reduceRouteEtaByRevision(base, {
-              kind: 'STOP_PROGRESS_RESPONSE',
-              response: response.currentRouteEta,
-            });
-          },
-        );
-      }
-
-      await queryClient.invalidateQueries({ queryKey });
-    } catch (error: any) {
-      const statusCode = error?.status ?? error?.statusCode;
-      if (statusCode === 400 || statusCode === 403) {
-        await stopProgressCommandStore.clearCommandId(orderId, stopId, step);
-      }
-      Alert.alert(
-        'Lỗi ghi nhận tiến trình',
-        error instanceof Error ? error.message : 'Không thể ghi nhận tiến trình điểm dừng.',
-      );
-    } finally {
-      stopProgressCommandStore.releaseLock(orderId, stopId, step);
-      setInFlightStopCommand(null);
-    }
-  }
-
-  async function handleExecuteTask(commandId: string) {
-    if (executingRef.current) return;
-    executingRef.current = true;
-    try {
-      const next = await port.executeLifecycle(commandId);
-      queryClient.setQueryData(queryKey, next);
-      const nextStatus =
-        next.kind === 'content' && 'status' in next.order ? next.order.status : null;
-      if (nextStatus && DRIVER_TERMINAL_STATUSES.has(nextStatus)) {
-        void queryClient.invalidateQueries({ queryKey: ['driver', 'orders'] });
-      }
-    } finally {
-      executingRef.current = false;
-    }
-  }
-
-  async function handleSelectProof(file: DriverProofFileInput): Promise<DriverProofUploadResult> {
-    // Which evidence is being uploaded decides both the endpoint and the leg
-    // that opens next. Sending a pickup photo to the delivery endpoint would be
-    // rejected by the API, and advancing to DELIVERED from PICKING_UP is not a
-    // legal transition — so the two legs must never share one hardcoded path.
-    const currentView = queryClient.getQueryData<typeof query.data>(queryKey);
-    const isPickupLeg =
-      currentView?.kind === 'content' &&
-      currentView.accessScope === 'ASSIGNED_FULL' &&
-      currentView.order.status === 'PICKING_UP';
-
-    const commandId = isPickupLeg
-      ? `cmd-select-pickup-proof-${orderId}`
-      : `cmd-select-proof-${orderId}`;
-
-    const proof = await proofPort.uploadProof(commandId, file);
-
-    // Only a proof the server actually accepted may release the lifecycle
-    // transition; an upload-retry proof means the evidence did not land.
-    const ok = proof.kind === 'persisted' || proof.kind === 'uploading';
-
-    if (!ok) {
-      // Keep the current task untouched so the driver can retry the upload
-      // rather than being pushed into a transition the server will refuse.
-      return { ok: false, nextCommandId: null };
-    }
-
-    const nextCommandId = isPickupLeg
-      ? `cmd-transit-${orderId}`
-      : `cmd-deliver-${orderId}`;
-
-    queryClient.setQueryData(queryKey, (current: typeof query.data) => {
-      if (!current || current.kind !== 'content') return current;
-      return {
-        ...current,
-        proof,
-        primaryTask: {
-          kind: 'advance-lifecycle',
-          command: {
-            id: nextCommandId,
-            label: isPickupLeg
-              ? 'Đã lấy hàng — bắt đầu giao'
-              : 'Xác nhận hoàn tất giao hàng',
-            targetStatus: isPickupLeg ? 'IN_TRANSIT' : 'DELIVERED',
-            pendingLabel: 'Đang ghi nhận...',
-          },
-        },
-      };
-    });
-
-    return { ok, nextCommandId };
   }
 
   async function handleReportIncident(payload: DriverIncidentSubmitPayload) {
@@ -425,17 +122,17 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
         isConfirmingCash={isConfirmingCash}
         onBack={() => router.back()}
         onConfirmCashPayment={() => void handleConfirmCashPayment()}
-        onExecuteTask={(commandId) => void handleExecuteTask(commandId)}
+        onExecuteTask={(commandId) => void executeTask(commandId)}
         onOpenIncidentModal={() => setIncidentModalVisible(true)}
         onOpenLocationSettings={() => void Linking.openSettings()}
-        onRecordStopProgress={handleRecordStopProgress}
+        onRecordStopProgress={recordStopProgress}
         onResolveConflict={() => router.back()}
         onRetry={() => {
           void query.refetch();
           void sender.retryConnection(orderId);
         }}
-        onRetryProof={(commandId) => void handleExecuteTask(commandId)}
-        onSelectProof={(file) => handleSelectProof(file)}
+        onRetryProof={(commandId) => void executeTask(commandId)}
+        onSelectProof={(file) => selectProof(file)}
         view={view}
       />
       <DriverIncidentModal
