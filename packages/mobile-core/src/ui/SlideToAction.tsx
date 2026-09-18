@@ -88,6 +88,7 @@ export function SlideToAction({
 
   const effectiveWidth = trackWidth || DEFAULT_TRACK_WIDTH;
   const maxDrag = Math.max(0, effectiveWidth - THUMB_SIZE - PADDING * 2);
+  const lastHapticMilestone = useRef(0);
 
   // ponytail: dynamic track fill bar skipped; add when progressive gradient track requested
   const panResponder = useMemo(
@@ -97,26 +98,51 @@ export function SlideToAction({
         onMoveShouldSetPanResponder: (_, gesture) =>
           !disabled && !isCompletedRef.current && Math.abs(gesture.dx) > 3,
         onPanResponderGrant: () => {
+          lastHapticMilestone.current = 0;
           panX.stopAnimation();
         },
         onPanResponderMove: (_, gesture) => {
           const clampedX = Math.max(0, Math.min(maxDrag, gesture.dx));
           panX.setValue(clampedX);
+
+          // Emil Kowalski Haptic Micro-milestones
+          const ratio = maxDrag > 0 ? clampedX / maxDrag : 0;
+          if (ratio >= 0.5 && lastHapticMilestone.current < 2) {
+            lastHapticMilestone.current = 2;
+            haptic.selection();
+          } else if (ratio >= 0.25 && lastHapticMilestone.current < 1) {
+            lastHapticMilestone.current = 1;
+            haptic.selection();
+          }
         },
         onPanResponderRelease: (_, gesture) => {
           const threshold = maxDrag * 0.75;
           if (gesture.dx >= threshold) {
             isCompletedRef.current = true;
+            try {
+              haptic.heavy();
+            } catch {
+              // safe fallback
+            }
             Animated.spring(panX, {
               toValue: maxDrag,
               useNativeDriver: true,
               ...appleSpring.snappy,
             }).start(() => {
-              haptic.success();
+              try {
+                haptic.success();
+              } catch {
+                // safe fallback
+              }
               onActionCompleteRef.current();
             });
           } else {
-            haptic.light();
+            lastHapticMilestone.current = 0;
+            try {
+              haptic.light();
+            } catch {
+              // safe fallback
+            }
             Animated.spring(panX, {
               toValue: 0,
               useNativeDriver: true,

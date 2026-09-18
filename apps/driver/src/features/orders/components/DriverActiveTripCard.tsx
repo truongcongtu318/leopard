@@ -14,6 +14,7 @@ import {
   StatusBadge,
   VStack,
   colors,
+  haptic,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -37,6 +38,11 @@ export function DriverActiveTripCard({
   trip,
 }: DriverActiveTripCardProps) {
   const handleCall = () => {
+    try {
+      haptic.light();
+    } catch {
+      // safe fallback
+    }
     if (!trip.customerContact) {
       Alert.alert(
         'Chưa có số điện thoại',
@@ -48,9 +54,25 @@ export function DriverActiveTripCard({
   };
 
   const handleNavigateLeg = () => {
+    try {
+      haptic.light();
+    } catch {
+      // safe fallback
+    }
     const isPickupLeg = trip.status === 'ACCEPTED' || trip.status === 'PICKING_UP';
     const target = isPickupLeg ? trip.route.origin : trip.route.destination;
     openExternalNavigation(target);
+  };
+
+  const handleOpenActiveMission = () => {
+    try {
+      haptic.medium();
+    } catch {
+      // safe fallback
+    }
+    if (onOpenOrder) {
+      onOpenOrder(trip.id);
+    }
   };
 
   const isPickup = trip.status === 'ACCEPTED' || trip.status === 'PICKING_UP';
@@ -58,10 +80,11 @@ export function DriverActiveTripCard({
 
   return (
     <Card style={styles.outerContainer} testID="driver-active-trip-slab">
+      {/* Card Header */}
       <HStack style={styles.cardHeader}>
         <HStack space="xs" style={styles.headerLeft}>
           <Box style={styles.tripIconChip}>
-            <IconSpeedTruck color={leopardPalette.primary} size={16} />
+            <IconSpeedTruck color={leopardPalette.primary} size={18} />
           </Box>
           <Box>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
@@ -84,7 +107,7 @@ export function DriverActiveTripCard({
         <MissionStepper status={trip.status} />
       </Box>
 
-      {/* Route Spine: Point A -> Track -> Point B */}
+      {/* Inset Route Spine: Point A -> Track -> Point B */}
       <View style={styles.routeSpineBox}>
         <View style={styles.spineIndicatorCol}>
           <View style={styles.spinePointA}>
@@ -105,7 +128,7 @@ export function DriverActiveTripCard({
           </View>
 
           <View style={styles.etaRow}>
-            <IconClock color={leopardPalette.primary} size={12} />
+            <IconClock color={leopardPalette.primary} size={13} />
             <Text style={styles.etaText}>
               Lộ trình · ETA dự kiến: {trip.route.distanceLabel}
             </Text>
@@ -123,7 +146,7 @@ export function DriverActiveTripCard({
       {/* Proof warning banner */}
       {trip.proofLabel ? (
         <View style={styles.proofWarningBanner}>
-          <IconShieldAlert color="#D97706" size={14} />
+          <IconShieldAlert color="#D97706" size={15} />
           <Text style={styles.proofWarningText}>{trip.proofLabel}</Text>
         </View>
       ) : null}
@@ -138,7 +161,7 @@ export function DriverActiveTripCard({
         </View>
       ) : null}
 
-      {/* Customer Contact Bar (Call & Chat buttons) */}
+      {/* Customer Contact Bar (Call & Nav buttons) */}
       <View style={styles.contactBar}>
         <View style={styles.contactInfo}>
           <Text style={styles.contactTitle}>Khách hàng người nhận</Text>
@@ -151,17 +174,17 @@ export function DriverActiveTripCard({
             accessibilityRole="button"
             hitSlop={8}
             onPress={handleNavigateLeg}
-            style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
+            style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.iconBtnPressed : null]}
             testID="driver-nav-leg-btn"
           >
-            <IconRoute color="#0B1E42" size={18} />
+            <IconRoute color="#0B2545" size={18} />
           </Pressable>
           <Pressable
             accessibilityLabel="Gọi cho khách hàng"
             accessibilityRole="button"
             hitSlop={8}
             onPress={handleCall}
-            style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.pressed : null]}
+            style={({ pressed }) => [styles.contactIconBtn, pressed ? styles.iconBtnPressed : null]}
             testID="driver-call-btn"
           >
             <IconPhone color="#16A34A" size={18} />
@@ -169,13 +192,13 @@ export function DriverActiveTripCard({
         </View>
       </View>
 
-      {/* Primary CTA Button (52px height, High-Contrast Orange background with Navy Bold text) */}
+      {/* Primary CTA Button (52pt height, Apple Squircle, High-Contrast Navy CTA) */}
       <Pressable
         accessibilityHint="Mở chi tiết chuyến đang thực hiện"
         accessibilityLabel={`Mở chuyến ${trip.reference}, trạng thái ${trip.status}`}
         accessibilityRole="button"
-        onPress={onOpenOrder ? () => onOpenOrder(trip.id) : undefined}
-        style={({ pressed }) => [styles.primaryActionBtn, pressed ? styles.pressed : null]}
+        onPress={handleOpenActiveMission}
+        style={({ pressed }) => [styles.primaryActionBtn, pressed ? styles.primaryActionBtnPressed : null]}
       >
         <Text style={styles.primaryActionText}>Tiếp tục chuyến →</Text>
       </Pressable>
@@ -186,72 +209,74 @@ export function DriverActiveTripCard({
 const styles = StyleSheet.create({
   outerContainer: {
     backgroundColor: colors.neutral.surface,
-    borderColor: leopardPalette.primary,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    elevation: 3,
-    marginBottom: 16,
-    padding: 16,
-    shadowColor: leopardPalette.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
+    borderColor: '#E2E8F0',
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    elevation: 2,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
   },
   cardHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   headerLeft: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: spacing.xs,
   },
   tripIconChip: {
     alignItems: 'center',
-    backgroundColor: '#F0F4F9',
+    backgroundColor: '#F0F4FA',
     borderColor: leopardPalette.inputBorder,
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    height: 36,
+    height: 38,
     justifyContent: 'center',
-    width: 36,
+    width: 38,
   },
   sectionTitle: {
     ...typeScale.caption2,
     color: colors.neutral.subtleText,
     fontWeight: '600',
-    letterSpacing: 0.2,
+    letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   activeReference: {
     ...typeScale.subheadline,
     color: leopardPalette.primary,
     fontVariant: ['tabular-nums'],
-    fontWeight: '600',
+    fontWeight: '700',
   },
   headerRight: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: spacing.xxs,
   },
   missionProgressSection: {
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   liveBadge: {
     alignItems: 'center',
     backgroundColor: '#F0FDF4',
     borderColor: '#BBF7D0',
-    borderRadius: 12,
+    borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
   },
   livePulseDot: {
     backgroundColor: '#16A34A',
-    borderRadius: 3,
+    borderRadius: radius.pill,
     height: 6,
     width: 6,
   },
@@ -262,26 +287,27 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Route Spine
+  // Inset Route Spine
   routeSpineBox: {
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
-    marginBottom: 12,
-    padding: 12,
+    marginBottom: spacing.sm,
+    padding: spacing.sm,
   },
   spineIndicatorCol: {
     alignItems: 'center',
-    marginRight: 10,
-    paddingVertical: 2,
+    marginRight: spacing.sm - spacing.xxs,
+    paddingVertical: spacing.hairline,
     width: 22,
   },
   spinePointA: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.primary,
-    borderRadius: 10,
+    backgroundColor: '#16A34A', // Emerald Point A
+    borderRadius: radius.pill,
     height: 20,
     justifyContent: 'center',
     width: 20,
@@ -289,18 +315,18 @@ const styles = StyleSheet.create({
   spinePointTextA: {
     ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   spineTrack: {
-    backgroundColor: leopardPalette.inputBorder,
+    backgroundColor: '#CBD5E1',
     flex: 1,
-    marginVertical: 4,
+    marginVertical: spacing.xxs,
     width: 2,
   },
   spinePointB: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.primary,
-    borderRadius: 10,
+    backgroundColor: '#EA580C', // Amber Point B
+    borderRadius: 4,
     height: 20,
     justifyContent: 'center',
     width: 20,
@@ -308,42 +334,42 @@ const styles = StyleSheet.create({
   spinePointTextB: {
     ...typeScale.caption2,
     color: colors.neutral.surface,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   spineLabelsCol: {
     flex: 1,
-    gap: 6,
+    gap: spacing.xs,
   },
   locationGroup: {},
   pointTypeA: {
     ...typeScale.caption2,
-    color: colors.neutral.subtleText,
-    fontWeight: '600',
-    letterSpacing: 0.2,
+    color: '#16A34A',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   originAddress: {
     ...typeScale.footnote,
     color: colors.neutral.text,
     fontWeight: '600',
-    marginTop: 1,
+    marginTop: spacing.hairline,
   },
   pointTypeB: {
     ...typeScale.caption2,
-    color: '#C2410C',
-    fontWeight: '600',
-    letterSpacing: 0.2,
+    color: '#EA580C',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   destAddress: {
     ...typeScale.footnote,
     color: colors.neutral.text,
     fontWeight: '600',
-    marginTop: 1,
+    marginTop: spacing.hairline,
   },
   etaRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 4,
-    paddingVertical: 2,
+    gap: spacing.xxs,
+    paddingVertical: spacing.hairline,
   },
   etaText: {
     ...typeScale.caption1,
@@ -356,13 +382,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFBEB',
     borderColor: '#FDE68A',
-    borderRadius: 10,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   proofWarningText: {
     ...typeScale.caption1,
@@ -375,12 +402,12 @@ const styles = StyleSheet.create({
   trackingSignalRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 12,
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
   },
   livePulseDotGreen: {
     backgroundColor: '#16A34A',
-    borderRadius: 3.5,
+    borderRadius: radius.pill,
     height: 7,
     width: 7,
   },
@@ -392,15 +419,16 @@ const styles = StyleSheet.create({
   // Customer contact bar
   contactBar: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   contactInfo: {
     flex: 1,
@@ -414,33 +442,38 @@ const styles = StyleSheet.create({
     ...typeScale.footnote,
     color: colors.neutral.text,
     fontWeight: '600',
-    marginTop: 1,
+    marginTop: spacing.hairline,
   },
   contactButtons: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.xs,
   },
   contactIconBtn: {
     alignItems: 'center',
     backgroundColor: colors.neutral.surface,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: 10,
+    borderColor: '#CBD5E1',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
     borderWidth: 1,
-    height: 40,
+    height: 44,
     justifyContent: 'center',
-    width: 40,
-    shadowColor: leopardPalette.primary,
+    width: 44,
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
+  iconBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
 
-  // Primary CTA (52px height)
+  // Primary CTA (52pt height)
   primaryActionBtn: {
     alignItems: 'center',
     backgroundColor: leopardPalette.primary,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     height: 52,
     justifyContent: 'center',
@@ -452,10 +485,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.25)',
   },
+  primaryActionBtnPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
+  },
   primaryActionText: {
     color: colors.neutral.surface,
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   pressed: {

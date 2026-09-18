@@ -25,6 +25,7 @@ import type { IncomingDispatchOffer } from './IncomingDispatchModal';
 import type { DriverListView } from './model';
 
 import { DriverConnectionCapsule } from './components/DriverConnectionCapsule';
+import { DriverRadarScanner } from './components/DriverRadarScanner';
 import { DriverConnectionStatusRow } from './components/DriverConnectionStatusRow';
 import { DriverMapControlStack } from './components/DriverMapControlStack';
 import { DriverQuickActionGrid } from './components/DriverQuickActionGrid';
@@ -240,6 +241,11 @@ export function DriverOrdersScreen({
           truckLocation={truckCoords}
         />
       </View>
+
+      {/* ── Layer 0.5: Apple Minimal Luxury Radar Scanner (Active when online and idle) ── */}
+      {isContent && isOnline && !activeTrip ? (
+        <DriverRadarScanner isActive={isOnline} />
+      ) : null}
 
       {/* ── Layer 1: right-edge map control stack (Grab-style) ── */}
       <View pointerEvents="box-none" style={styles.mapControlLayer}>

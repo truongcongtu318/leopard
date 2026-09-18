@@ -28,6 +28,7 @@ import {
   VStack,
   colors,
   driverHapticMatrix,
+  haptic,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -344,6 +345,15 @@ const ActionControlsSection = memo(function ActionControlsSection({
   onDecline,
   targetOrderId,
 }: ActionControlsSectionProps) {
+  const handleDecline = () => {
+    try {
+      haptic.light();
+    } catch {
+      // safe fallback
+    }
+    onDecline(targetOrderId);
+  };
+
   return (
     <View style={styles.actionsContainer}>
       <SlideToAction
@@ -361,7 +371,7 @@ const ActionControlsSection = memo(function ActionControlsSection({
         accessibilityRole="button"
         disabled={isAccepting}
         hitSlop={spacing.xs}
-        onPress={() => onDecline(targetOrderId)}
+        onPress={handleDecline}
         style={({ pressed }) => [
           styles.declineButton,
           pressed && !isAccepting ? styles.declineButtonPressed : null,
@@ -544,6 +554,9 @@ export function IncomingDispatchModal({
           </View>
         ) : null}
         <View style={styles.sheetContainer}>
+          {/* Apple Modal Sheet Grabber Handle */}
+          <View style={styles.sheetGrabber} />
+
           {/* 1. Header Bar with Animated Radar Pulse, Title, Countdown, and Decline ("Từ chối") Button */}
           <View style={styles.modalHeader}>
             <View style={styles.radarPulseContainer}>
@@ -705,19 +718,39 @@ export function IncomingDispatchModal({
 // ponytail: Static styles adhere to Apple HIG 4pt spacing scale, radius tokens, and typeScale ramps.
 const styles = StyleSheet.create({
   scrimOverlay: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(11, 37, 69, 0.45)', // Apple dimming scrim
     flex: 1,
+    justifyContent: 'flex-end', // bottom-up sheet presentation
   },
   sheetContainer: {
     backgroundColor: '#F8FAFC',
+    borderTopLeftRadius: radius.modal,
+    borderTopRightRadius: radius.modal,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderBottomWidth: 0,
     flex: 1,
     height: '100%',
     width: '100%',
     gap: spacing.xs,
     paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xs,
     justifyContent: 'space-between',
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  sheetGrabber: {
+    width: 38,
+    height: 5,
+    borderRadius: radius.pill,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginBottom: spacing.xs,
   },
   centerScrollContent: {
     gap: spacing.xs,
@@ -775,17 +808,17 @@ const styles = StyleSheet.create({
   },
   radarPulseOuter: {
     alignItems: 'center',
-    backgroundColor: 'rgba(2, 132, 199, 0.2)',
+    backgroundColor: 'rgba(245, 158, 11, 0.22)', // Cheetah Golden Amber accent
     borderRadius: radius.pill,
     height: 22,
     justifyContent: 'center',
     width: 22,
   },
   radarPulseOuterUrgent: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    backgroundColor: 'rgba(239, 68, 68, 0.25)',
   },
   radarPulseCore: {
-    backgroundColor: leopardPalette.primary,
+    backgroundColor: '#F59E0B', // Amber pulse core
     borderRadius: radius.pill,
     height: 10,
     width: 10,
@@ -794,9 +827,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger.text,
   },
   modalBadgeText: {
-    color: leopardPalette.primaryDark,
+    color: leopardPalette.primary,
     ...typeScale.caption1,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.4,
   },
   modalBadgeTextUrgent: {
@@ -804,8 +837,8 @@ const styles = StyleSheet.create({
   },
   timerBadge: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.primaryBg,
-    borderColor: leopardPalette.primaryBorder,
+    backgroundColor: '#F0F4FA',
+    borderColor: '#CBD5E1',
     borderRadius: radius.pill,
     borderWidth: 1.5,
     flexDirection: 'row',
@@ -834,7 +867,7 @@ const styles = StyleSheet.create({
     color: colors.danger.text,
   },
   progressTrack: {
-    backgroundColor: colors.neutral.border,
+    backgroundColor: '#E2E8F0',
     borderRadius: radius.pill,
     height: 6,
     overflow: 'hidden',
@@ -1169,8 +1202,8 @@ const styles = StyleSheet.create({
   },
   declineButton: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: leopardPalette.inputBorder,
+    backgroundColor: colors.neutral.surface,
+    borderColor: '#CBD5E1',
     borderRadius: radius.pill,
     ...iosContinuousCurve,
     borderWidth: 1,
@@ -1181,7 +1214,7 @@ const styles = StyleSheet.create({
   },
   declineButtonPressed: {
     backgroundColor: colors.neutral.surfaceMuted,
-    opacity: 0.85,
+    opacity: 0.88,
     transform: [{ scale: 0.985 }],
   },
   declineButtonDisabled: {
@@ -1190,7 +1223,7 @@ const styles = StyleSheet.create({
   declineButtonText: {
     color: colors.neutral.subtleText,
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   previewBackdrop: {
     alignItems: 'center',
