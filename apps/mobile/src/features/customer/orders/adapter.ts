@@ -8,6 +8,7 @@ import type {
 import { ApiError, decodePolyline } from '@leopard/mobile-core';
 import type {
   AddressCandidate,
+  CustomerActionView,
   CustomerCancelView,
   CustomerCreateFormView,
   CustomerCreateView,
@@ -26,6 +27,7 @@ import type {
   CustomerRouteOptionView,
   InvoiceView,
   LatLng,
+  OrderReviewSummary,
   PriceBreakdown,
 } from './model';
 import type { CustomerOrdersPort } from './port';
@@ -240,6 +242,15 @@ export function mapInvoiceToView(invoice: MappedInvoiceResponse): InvoiceView {
     emailSentAt: invoice.emailSentAt,
     viewUrl: invoice.viewUrl,
   };
+}
+
+export interface MappedOrderReviewResponse {
+  id: string;
+  orderId: string;
+  rating: number;
+  comment?: string | null;
+  tipVnd?: number;
+  createdAt: string;
 }
 
 export interface PaymentQrApiResponse {
@@ -640,6 +651,7 @@ export function mapOrderToDetail(
     | null,
   paymentData?: MappedPaymentResponse | PaymentQrApiResponse | null,
   invoiceData?: MappedInvoiceResponse | null,
+  reviewData?: OrderReviewSummary | null,
 ): CustomerOrderDetailDataView {
   const pickupStop = order.stops?.find(
     (s) => s.type === 'PICKUP' || s.sequence === 0,
@@ -780,6 +792,7 @@ export function mapOrderToDetail(
           vehicleType: order.assignedDriver.vehicleType ?? null,
         }
       : null,
+    review: reviewData ?? null,
   };
 }
 
@@ -1341,13 +1354,54 @@ export function createCustomerHttpAdapter(
           invoiceData = null;
         }
 
+        let reviewData: OrderReviewSummary | null = null;
+        const actions: CustomerActionView[] = [];
+
+        if (response.status === 'DELIVERED') {
+          try {
+            const r = await activeClient.get<MappedOrderReviewResponse>(
+              `/orders/${validId}/reviews`,
+            );
+            if (r && typeof r === 'object' && r.id) {
+              reviewData = {
+                id: r.id,
+                orderId: r.orderId,
+                rating: r.rating,
+                comment: r.comment,
+                tipVnd: r.tipVnd,
+                createdAt: r.createdAt,
+              };
+            } else {
+              reviewData = null;
+              actions.push({
+                id: 'rate-order',
+                label: 'Đánh giá chuyến đi',
+                emphasis: 'primary',
+              });
+            }
+          } catch {
+            reviewData = null;
+            actions.push({
+              id: 'rate-order',
+              label: 'Đánh giá chuyến đi',
+              emphasis: 'primary',
+            });
+          }
+        }
+
         return deepFreeze<CustomerDetailContentView>({
           scenarioId: 'C-DETAIL-SUCCESS',
           kind: 'content',
           notice: null,
-          order: mapOrderToDetail(response, null, latestPayment, invoiceData),
+          order: mapOrderToDetail(
+            response,
+            null,
+            latestPayment,
+            invoiceData,
+            reviewData,
+          ),
           cancel: resolveCancelView(response),
-          actions: [],
+          actions,
         });
       } catch (error) {
         if (isForbiddenError(error)) {

@@ -22,6 +22,7 @@ import {
   type CustomerHttpClient,
   type MappedInvoiceResponse,
   type MappedOrderResponse,
+  type MappedOrderReviewResponse,
   type MappedPaymentResponse,
   type MappedTrackingHistoryResponse,
   type OrderEstimateApiResponse,
@@ -1038,6 +1039,94 @@ describe('createCustomerHttpAdapter', () => {
       if (view.kind === 'content') {
         expect(view.order.invoice).toBeNull();
       }
+    });
+
+    it('handles DELIVERED order with no review: maps rate-order action and leaves review null', async () => {
+      const client = createMockClient();
+      const deliveredOrder: MappedOrderResponse = {
+        ...mockOrderResponse,
+        status: 'DELIVERED',
+      };
+      client.get.mockImplementation((async (path: string) => {
+        if (path === `/orders/${deliveredOrder.id}`) {
+          return deliveredOrder;
+        }
+        if (path.endsWith('/payments')) {
+          return [];
+        }
+        if (path.startsWith('/invoices/order/')) {
+          return null;
+        }
+        if (path === `/orders/${deliveredOrder.id}/reviews`) {
+          throw new ApiError(404, 'RESOURCE_NOT_FOUND', 'Không tìm thấy đánh giá');
+        }
+        throw new Error(`Unexpected path: ${path}`);
+      }) as any);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.getOrderDetailView(deliveredOrder.id);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.review).toBeNull();
+        expect(view.actions).toEqual([
+          {
+            id: 'rate-order',
+            label: 'Đánh giá chuyến đi',
+            emphasis: 'primary',
+          },
+        ]);
+      }
+      expect(client.get).toHaveBeenCalledWith(`/orders/${deliveredOrder.id}/reviews`);
+    });
+
+    it('handles DELIVERED order with existing review: maps review and does not add rate-order action', async () => {
+      const client = createMockClient();
+      const deliveredOrder: MappedOrderResponse = {
+        ...mockOrderResponse,
+        status: 'DELIVERED',
+      };
+      const mockReview: MappedOrderReviewResponse = {
+        id: 'rev-1',
+        orderId: deliveredOrder.id,
+        rating: 5,
+        comment: 'Tài xế rất cẩn thận!',
+        tipVnd: 20000,
+        createdAt: '2026-08-15T15:00:00.000Z',
+      };
+      client.get.mockImplementation((async (path: string) => {
+        if (path === `/orders/${deliveredOrder.id}`) {
+          return deliveredOrder;
+        }
+        if (path.endsWith('/payments')) {
+          return [];
+        }
+        if (path.startsWith('/invoices/order/')) {
+          return null;
+        }
+        if (path === `/orders/${deliveredOrder.id}/reviews`) {
+          return mockReview;
+        }
+        throw new Error(`Unexpected path: ${path}`);
+      }) as any);
+
+      const adapter = createCustomerHttpAdapter(client);
+      const view = await adapter.getOrderDetailView(deliveredOrder.id);
+
+      expect(view.kind).toBe('content');
+      if (view.kind === 'content') {
+        expect(view.order.review).toEqual({
+          id: 'rev-1',
+          orderId: deliveredOrder.id,
+          rating: 5,
+          comment: 'Tài xế rất cẩn thận!',
+          tipVnd: 20000,
+          createdAt: '2026-08-15T15:00:00.000Z',
+        });
+        expect(view.actions).toEqual([]);
+        expect(view.actions.some((a) => a.id === 'rate-order')).toBe(false);
+      }
+      expect(client.get).toHaveBeenCalledWith(`/orders/${deliveredOrder.id}/reviews`);
     });
   });
 

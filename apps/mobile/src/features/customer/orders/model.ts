@@ -228,6 +228,15 @@ export type CustomerCancelView =
       action: CustomerActionView;
     }>;
 
+export type OrderReviewSummary = Readonly<{
+  id: string;
+  orderId: string;
+  rating: number; // 1 - 5
+  comment?: string | null;
+  tipVnd?: number;
+  createdAt: string;
+}>;
+
 export type CustomerOrderDetailDataView = Readonly<{
   id: string;
   reference: string;
@@ -266,6 +275,7 @@ export type CustomerOrderDetailDataView = Readonly<{
     licensePlate: string | null;
     vehicleType: string | null;
   }> | null;
+  review?: OrderReviewSummary | null;
 }>;
 
 type CustomerDetailBoundaryView = Readonly<{
