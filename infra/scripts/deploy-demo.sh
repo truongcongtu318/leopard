@@ -353,10 +353,11 @@ else
     if compose build "$service" >"/tmp/leopard-build-${service}.log" 2>&1; then
       elapsed=$(( $(date +%s) - started ))
       echo "     ✅ ${service} (${elapsed}s)"
+      return 0
     else
       elapsed=$(( $(date +%s) - started ))
       echo "     ❌ ${service} (${elapsed}s) — xem /tmp/leopard-build-${service}.log"
-      BUILD_FAILED=1
+      return 1
     fi
   }
 
@@ -367,7 +368,11 @@ else
     # Wait for the oldest build once the window is full.
     while [ "$(jobs -pr | wc -l)" -ge "$BUILD_CONCURRENCY" ]; do sleep 2; done
   done
-  wait
+  for service in "${SERVICES[@]}"; do
+    if ! wait "${BUILD_PID_OF[$service]}"; then
+      BUILD_FAILED=1
+    fi
+  done
 
   if [ "$BUILD_FAILED" != 0 ]; then
     echo "  ❌ At least one image failed to build"

@@ -1,5 +1,6 @@
 -- AlterEnum
 BEGIN;
+UPDATE "User" SET "role" = 'ADMIN' WHERE "role"::text = 'FLEET_OWNER';
 CREATE TYPE "Role_new" AS ENUM ('CUSTOMER', 'DRIVER', 'ADMIN');
 ALTER TABLE "User" ALTER COLUMN "role" TYPE "Role_new" USING ("role"::text::"Role_new");
 ALTER TYPE "Role" RENAME TO "Role_old";

@@ -6,9 +6,9 @@
 ARG DEPS_IMAGE=leopard-deps:dev
 FROM ${DEPS_IMAGE} AS builder
 
-# Limit Node.js heap during build to 1024MB to avoid OOM on 4GB VPS
+# Limit Node.js heap during build to 2048MB to avoid OOM on 4GB VPS
 ENV CI=true \
-    NODE_OPTIONS="--max-old-space-size=1024"
+    NODE_OPTIONS="--max-old-space-size=2048"
 
 # 1. Prisma schema & config first (changes rarely):
 # prisma generate only depends on schema and config, so copying them first ensures
