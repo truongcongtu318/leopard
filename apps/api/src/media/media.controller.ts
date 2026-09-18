@@ -32,6 +32,24 @@ export class MediaController {
     return this.mediaService.uploadMedia(actor, orderId, 'CARGO', file.buffer, clientRequestId);
   }
 
+  @Post('orders/:id/media/pickup-proof')
+  @RequireRoles('DRIVER')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadPickupProof(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Param('id') orderId: string,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string; size: number } | undefined,
+    @Body('clientRequestId') clientRequestId: string,
+  ) {
+    if (!file) {
+      throw new DomainError('VALIDATION_ERROR', 422, 'File là bắt buộc');
+    }
+    if (!clientRequestId) {
+      throw new DomainError('VALIDATION_ERROR', 422, 'clientRequestId là bắt buộc');
+    }
+    return this.mediaService.uploadMedia(actor, orderId, 'PICKUP_PROOF', file.buffer, clientRequestId);
+  }
+
   @Post('orders/:id/media/delivery-proof')
   @RequireRoles('DRIVER')
   @UseInterceptors(FileInterceptor('file'))

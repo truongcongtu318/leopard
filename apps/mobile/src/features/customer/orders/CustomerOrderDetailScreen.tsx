@@ -1,13 +1,139 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { typeScale, colors, customerPalette, iosContinuousCurve, layout, leopardPalette, radius, spacing, typography, Button, EtaIndicator, IconCheck, IconClock, IconCopy, IconExternalLink, IconLocationPin, IconMessage, IconPhone, IconShieldAlert, MapPanel, RouteSpine, RouteMapSchematic, ScreenScaffold, ScreenState, StatusBadge, StatusTimeline } from '@leopard/mobile-core';
+import {
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Card,
+  Divider,
+  EtaIndicator,
+  HStack,
+  IconCheck,
+  IconClock,
+  IconCopy,
+  IconExternalLink,
+  IconLocationPin,
+  IconMessage,
+  IconPhone,
+  IconShieldAlert,
+  MapPanel,
+  RouteMapSchematic,
+  RouteSpine,
+  ScreenScaffold,
+  ScreenState,
+  StatusBadge,
+  StatusTimeline,
+  VStack,
+  colors,
+  customerPalette,
+  iosContinuousCurve,
+  layout,
+  leopardPalette,
+  radius,
+  spacing,
+  typeScale,
+  typography,
+} from '@leopard/mobile-core';
 import { MediaImage } from '@leopard/mobile-core';
+import type { OrderStatus } from '@leopard/shared';
 import type {
   CustomerDetailContentView,
   CustomerDetailView,
   CustomerTrackingView,
 } from './model';
+
+/**
+ * What the driver is doing right now, in the customer's words. Driven by the
+ * order status the driver's cockpit writes, so the label flips the moment the
+ * driver taps the next mission step.
+ */
+export function describeDriverStage(status: OrderStatus): string {
+  switch (status) {
+    case 'ACCEPTED':
+      return 'Tài xế đã nhận đơn, đang chuẩn bị di chuyển';
+    case 'PICKING_UP':
+      return 'Tài xế đang đến điểm lấy hàng';
+    case 'IN_TRANSIT':
+      return 'Tài xế đang trên đường giao hàng';
+    case 'RETURNING':
+      return 'Tài xế đang hoàn trả hàng về điểm lấy';
+    case 'RETURNED':
+      return 'Hàng đã được hoàn trả về điểm lấy';
+    case 'INCIDENT_CANCELLED':
+      return 'Chuyến đã dừng do sự cố';
+    default:
+      return 'Đang điều phối tài xế';
+  }
+}
+
+/** Latest driver coordinate carried by a tracking view, when there is one. */
+export function resolveTruckLocation(
+  tracking: CustomerTrackingView,
+): { lat: number; lng: number } | undefined {
+  if ('coords' in tracking && tracking.coords) return tracking.coords;
+  if ('point' in tracking && tracking.point) {
+    return { lat: tracking.point.latitude, lng: tracking.point.longitude };
+  }
+  return undefined;
+}
+
+export type DriverRouteWaypoint = Readonly<{
+  id: string;
+  name: string;
+  label: string;
+  coords?: { lat: number; lng: number };
+}>;
+
+function haversineKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const earthRadiusKm = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * earthRadiusKm * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/**
+ * Names the route point the driver is nearest to right now.
+ *
+ * The customer payload carries no per-stop progress events, so this reads the
+ * live coordinate against the route the customer already has. It says "gần"
+ * (near) rather than claiming a stop was reached — arrival is the driver's
+ * statement to make, not ours to infer.
+ */
+export function describeDriverPosition(
+  coords: { lat: number; lng: number } | undefined,
+  waypoints: readonly DriverRouteWaypoint[],
+): Readonly<{ name: string; label: string; distanceLabel: string }> | null {
+  if (!coords) return null;
+
+  let nearest: DriverRouteWaypoint | null = null;
+  let nearestKm = Number.POSITIVE_INFINITY;
+
+  for (const waypoint of waypoints) {
+    if (!waypoint.coords) continue;
+    const km = haversineKm(coords, waypoint.coords);
+    if (km < nearestKm) {
+      nearestKm = km;
+      nearest = waypoint;
+    }
+  }
+
+  if (!nearest) return null;
+
+  const distanceLabel =
+    nearestKm < 1
+      ? `${Math.round(nearestKm * 1000)} m`
+      : `${nearestKm.toFixed(1)} km`;
+
+  return { name: nearest.name, label: nearest.label, distanceLabel };
+}
 
 export type CustomerOrderDetailScreenProps = Readonly<{
   view: CustomerDetailView;
@@ -52,7 +178,7 @@ function CancelOrderSheet({
   };
 
   return (
-    <View style={styles.cancelOverlay}>
+    <Box style={styles.cancelOverlay}>
       <Pressable
         accessibilityLabel="Đóng"
         accessibilityRole="button"
@@ -60,74 +186,76 @@ function CancelOrderSheet({
         onPress={onDismiss}
         style={styles.cancelBackdrop}
       />
-      <View style={styles.cancelSheet}>
+      <Card style={styles.cancelSheet}>
         <Text style={styles.cancelSheetTitle}>Hủy đơn hàng</Text>
         <Text style={styles.cancelSheetSubtitle}>
           Vui lòng cho biết lý do để hệ thống cải thiện chất lượng dịch vụ.
         </Text>
-        {CANCEL_REASONS.map((reasonOption) => {
-          const isSelected = selected === reasonOption;
-          return (
-            <Pressable
-              key={reasonOption}
-              accessibilityLabel={`Lý do: ${reasonOption}`}
-              accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              onPress={() => {
-                setSelected(reasonOption);
-                setError(null);
-              }}
-              style={({ pressed }) => [
-                styles.cancelOption,
-                isSelected ? styles.cancelOptionSelected : null,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <View style={[styles.cancelRadio, isSelected ? styles.cancelRadioSelected : null]}>
-                {isSelected ? <View style={styles.cancelRadioDot} /> : null}
-              </View>
-              <Text
-                style={[
-                  styles.cancelOptionText,
-                  isSelected ? styles.cancelOptionTextSelected : null,
+        <VStack space="xs">
+          {CANCEL_REASONS.map((reasonOption) => {
+            const isSelected = selected === reasonOption;
+            return (
+              <Pressable
+                key={reasonOption}
+                accessibilityLabel={`Lý do: ${reasonOption}`}
+                accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                onPress={() => {
+                  setSelected(reasonOption);
+                  setError(null);
+                }}
+                style={({ pressed }) => [
+                  styles.cancelOption,
+                  isSelected ? styles.cancelOptionSelected : null,
+                  pressed ? styles.pressed : null,
                 ]}
               >
-                {reasonOption}
-              </Text>
-            </Pressable>
-          );
-        })}
-        <Pressable
-          accessibilityLabel="Lý do: Khác"
-          accessibilityRole="button"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={() => {
-            setSelected('__OTHER__');
-            setError(null);
-          }}
-          style={({ pressed }) => [
-            styles.cancelOption,
-            selected === '__OTHER__' ? styles.cancelOptionSelected : null,
-            pressed ? styles.pressed : null,
-          ]}
-        >
-          <View
-            style={[
-              styles.cancelRadio,
-              selected === '__OTHER__' ? styles.cancelRadioSelected : null,
+                <Box style={[styles.cancelRadio, isSelected ? styles.cancelRadioSelected : null]}>
+                  {isSelected ? <Box style={styles.cancelRadioDot} /> : null}
+                </Box>
+                <Text
+                  style={[
+                    styles.cancelOptionText,
+                    isSelected ? styles.cancelOptionTextSelected : null,
+                  ]}
+                >
+                  {reasonOption}
+                </Text>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            accessibilityLabel="Lý do: Khác"
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => {
+              setSelected('__OTHER__');
+              setError(null);
+            }}
+            style={({ pressed }) => [
+              styles.cancelOption,
+              selected === '__OTHER__' ? styles.cancelOptionSelected : null,
+              pressed ? styles.pressed : null,
             ]}
           >
-            {selected === '__OTHER__' ? <View style={styles.cancelRadioDot} /> : null}
-          </View>
-          <Text
-            style={[
-              styles.cancelOptionText,
-              selected === '__OTHER__' ? styles.cancelOptionTextSelected : null,
-            ]}
-          >
-            Lý do khác
-          </Text>
-        </Pressable>
+            <Box
+              style={[
+                styles.cancelRadio,
+                selected === '__OTHER__' ? styles.cancelRadioSelected : null,
+              ]}
+            >
+              {selected === '__OTHER__' ? <Box style={styles.cancelRadioDot} /> : null}
+            </Box>
+            <Text
+              style={[
+                styles.cancelOptionText,
+                selected === '__OTHER__' ? styles.cancelOptionTextSelected : null,
+              ]}
+            >
+              Lý do khác
+            </Text>
+          </Pressable>
+        </VStack>
         {selected === '__OTHER__' ? (
           <TextInput
             accessibilityLabel="Nhập lý do hủy đơn"
@@ -143,16 +271,16 @@ function CancelOrderSheet({
           />
         ) : null}
         {error ? <Text style={styles.cancelErrorText}>{error}</Text> : null}
-        <View style={styles.cancelSheetActions}>
-          <View style={styles.cancelSheetActionFlex}>
+        <HStack space="sm" style={styles.cancelSheetActions}>
+          <Box style={styles.cancelSheetActionFlex}>
             <Button label="Quay lại" onPress={onDismiss} variant="secondary" />
-          </View>
-          <View style={styles.cancelSheetActionFlex}>
+          </Box>
+          <Box style={styles.cancelSheetActionFlex}>
             <Button label="Xác nhận hủy" onPress={handleConfirm} variant="destructive" />
-          </View>
-        </View>
-      </View>
-    </View>
+          </Box>
+        </HStack>
+      </Card>
+    </Box>
   );
 }
 
@@ -183,28 +311,28 @@ function InvoiceSection({
   };
 
   return (
-    <View style={styles.modernCard}>
-      <View style={styles.cardHeader}>
+    <Card style={styles.modernCard}>
+      <VStack style={styles.cardHeader}>
         <Text accessibilityRole="header" style={styles.cardTitle}>
           Hóa đơn
         </Text>
         <Text style={styles.cardSubtitle}>Hóa đơn tự phát hành cho đơn hàng này</Text>
-      </View>
+      </VStack>
 
-      <View style={styles.paymentDetailsBox}>
-        <View style={styles.paymentDetailRow}>
+      <VStack space="xs" style={styles.paymentDetailsBox}>
+        <HStack style={styles.paymentDetailRow}>
           <Text style={styles.paymentDetailLabel}>Số hóa đơn</Text>
           <Text style={styles.paymentDetailValue}>{invoice.invoiceNumber}</Text>
-        </View>
-        <View style={styles.paymentDetailRow}>
+        </HStack>
+        <HStack style={styles.paymentDetailRow}>
           <Text style={styles.paymentDetailLabel}>Tổng tiền</Text>
           <Text style={styles.paymentDetailValue}>{invoice.totalLabel}</Text>
-        </View>
-        <View style={styles.paymentDetailRow}>
+        </HStack>
+        <HStack style={styles.paymentDetailRow}>
           <Text style={styles.paymentDetailLabel}>Ngày phát hành</Text>
           <Text style={styles.paymentDetailValue}>{invoice.issuedAtLabel}</Text>
-        </View>
-      </View>
+        </HStack>
+      </VStack>
 
       <Button
         label="Xem hóa đơn"
@@ -213,7 +341,7 @@ function InvoiceSection({
       />
 
       {invoice.emailSentAt === null ? (
-        <View style={styles.invoiceEmailPrompt}>
+        <VStack space="xs" style={styles.invoiceEmailPrompt}>
           <Text style={styles.helper}>
             Chưa có email nhận hóa đơn. Nhập email để nhận liên kết xem/tải hóa đơn.
           </Text>
@@ -234,11 +362,11 @@ function InvoiceSection({
             <Text style={styles.paymentNoticeText}>Đã gửi yêu cầu gửi hóa đơn qua email.</Text>
           ) : null}
           <Button label="Gửi email hóa đơn" onPress={handleSend} variant="primary" />
-        </View>
+        </VStack>
       ) : (
         <Text style={styles.helper}>Đã gửi email hóa đơn.</Text>
       )}
-    </View>
+    </Card>
   );
 }
 
@@ -275,21 +403,21 @@ function DriverCard({
   };
 
   return (
-    <View style={styles.driverCard}>
-      <View style={styles.driverMainRow}>
-        <View style={styles.driverAvatar}>
-          <Text style={styles.driverAvatarText}>{initial}</Text>
-        </View>
-        <View style={styles.driverInfo}>
-          <View style={styles.driverNameRow}>
+    <Card style={styles.driverCard}>
+      <HStack style={styles.driverMainRow}>
+        <Avatar size="md" style={styles.driverAvatar}>
+          <Avatar.FallbackText style={styles.driverAvatarText}>{initial}</Avatar.FallbackText>
+        </Avatar>
+        <VStack style={styles.driverInfo}>
+          <HStack style={styles.driverNameRow}>
             <Text style={styles.driverName}>{driverLabel}</Text>
-            <View style={styles.driverRatingPill}>
-              <Text style={styles.driverRatingText}>★ 4.9</Text>
-            </View>
-          </View>
+            <Badge action="warning" size="sm" style={styles.driverRatingPill}>
+              <Badge.Text style={styles.driverRatingText}>★ 4.9</Badge.Text>
+            </Badge>
+          </HStack>
           <Text style={styles.driverVehicleText}>{vehicleLabel || 'Xe vận chuyển'} · {status}</Text>
-        </View>
-        <View style={styles.driverActions}>
+        </VStack>
+        <HStack style={styles.driverActions}>
           <Pressable
             accessibilityLabel="Gọi điện cho tài xế"
             accessibilityRole="button"
@@ -308,22 +436,22 @@ function DriverCard({
           >
             <IconMessage color={customerPalette.primary} size={17} />
           </Pressable>
-        </View>
-      </View>
+        </HStack>
+      </HStack>
 
       {/* Mini Progress / Live ETA Bar */}
       {typeof etaDurationSeconds === 'number' && !Number.isNaN(etaDurationSeconds) ? (
-        <View style={styles.driverEtaBar}>
-          <View style={styles.driverEtaLeft}>
+        <HStack style={styles.driverEtaBar}>
+          <HStack style={styles.driverEtaLeft}>
             <IconClock color={customerPalette.primary} size={17} />
-            <View>
+            <VStack>
               <Text style={styles.driverEtaSub}>Dự kiến giao hàng (ETA dự kiến)</Text>
               <Text style={styles.driverEtaMain}>
                 ~{Math.round(etaDurationSeconds / 60)} phút
                 {distanceMeters ? ` (Còn ${(distanceMeters / 1000).toFixed(1)} km)` : ''}
               </Text>
-            </View>
-          </View>
+            </VStack>
+          </HStack>
           {onOpenTracking && orderId ? (
             <Pressable
               accessibilityLabel="Xem GPS"
@@ -335,9 +463,9 @@ function DriverCard({
               <IconExternalLink color={customerPalette.primary} size={13} />
             </Pressable>
           ) : null}
-        </View>
+        </HStack>
       ) : null}
-    </View>
+    </Card>
   );
 }
 
@@ -350,6 +478,7 @@ function TrackingPanel({
   onOpenTracking,
   onRetry,
   orderId,
+  orderStatus,
   originLabel,
   originCoords,
   stops,
@@ -357,6 +486,7 @@ function TrackingPanel({
   vehicleLabel,
 }: Readonly<{
   tracking: CustomerTrackingView;
+  orderStatus: OrderStatus;
   onRetry?: () => void;
   originLabel: string;
   originCoords?: { lat: number; lng: number };
@@ -370,6 +500,34 @@ function TrackingPanel({
   driverPhone?: string | null;
   vehicleLabel?: string | null;
 }>) {
+  const truckLocation = resolveTruckLocation(tracking);
+  const stageLabel = describeDriverStage(orderStatus);
+  const waypoints: readonly DriverRouteWaypoint[] = [
+    { id: 'origin', name: 'Điểm lấy hàng (A)', label: originLabel, coords: originCoords },
+    ...(stops ?? []).map((stop, index) => ({
+      id: stop.id,
+      name: `Điểm dừng ${index + 1}`,
+      label: stop.label,
+      coords: stop.coords,
+    })),
+    {
+      id: 'destination',
+      name: 'Điểm giao hàng (B)',
+      label: destinationLabel,
+      coords: destinationCoords,
+    },
+  ];
+  const position = describeDriverPosition(truckLocation, waypoints);
+  const positionStrip = position ? (
+    <HStack space="xs" style={styles.driverPositionStrip} testID="driver-position-strip">
+      <IconLocationPin color={customerPalette.primary} size={14} />
+      <Text style={styles.driverPositionText}>
+        Tài xế đang ở gần <Text style={styles.driverPositionName}>{position.name}</Text> · cách{' '}
+        {position.distanceLabel}
+      </Text>
+    </HStack>
+  ) : null;
+
   if (tracking.kind === 'loading') {
     return <MapPanel state="loading" summary="Bản đồ lộ trình đang tải" />;
   }
@@ -414,7 +572,7 @@ function TrackingPanel({
           etaDurationSeconds={etaDurationSeconds}
           onOpenTracking={onOpenTracking}
           orderId={orderId}
-          status="Đang định vị"
+          status={stageLabel}
           vehicleLabel={vehicleLabel}
         />
         <View style={styles.infoBanner}>
@@ -436,10 +594,11 @@ function TrackingPanel({
     <RouteMapSchematic
       destinationCoords={destinationCoords}
       destinationLabel={destinationLabel}
-      markerLabel={`${tracking.driverLabel} (Đang di chuyển)`}
+      markerLabel={`${tracking.driverLabel} (${stageLabel})`}
       originCoords={originCoords}
       originLabel={originLabel}
       stops={stops}
+      truckLocation={truckLocation}
     />
   );
   if (tracking.kind === 'fresh') {
@@ -452,13 +611,14 @@ function TrackingPanel({
           etaDurationSeconds={etaDurationSeconds}
           onOpenTracking={onOpenTracking}
           orderId={orderId}
-          status="Đang di chuyển"
+          status={stageLabel}
           vehicleLabel={vehicleLabel}
         />
         <View style={styles.freshnessRow}>
           <View style={styles.pulseDotGreen} />
           <Text style={styles.helper}>Cập nhật lần cuối: {tracking.lastUpdatedLabel}</Text>
         </View>
+        {positionStrip}
         <MapPanel state="ready" summary={tracking.summary}>
           {mapContent}
         </MapPanel>
@@ -474,13 +634,14 @@ function TrackingPanel({
         etaDurationSeconds={etaDurationSeconds}
         onOpenTracking={onOpenTracking}
         orderId={orderId}
-        status="Vị trí chưa cập nhật"
+        status={stageLabel}
         vehicleLabel={vehicleLabel}
       />
       <View style={styles.warningBanner}>
         <Text style={styles.body}>{tracking.message}</Text>
       </View>
       <Text style={styles.helper}>Cập nhật lần cuối: {tracking.lastUpdatedLabel}</Text>
+      {positionStrip}
       <MapPanel
         lastUpdatedLabel={tracking.lastUpdatedLabel}
         onRetry={onRetry}
@@ -555,9 +716,9 @@ function CustomerDetailContent({
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Sticky-style Top Meta Bar (Mã đơn + nút copy 1-chạm + Badge trạng thái) */}
-        <View style={styles.topMetaBar}>
-          <View style={styles.topMetaLeft}>
-            <View style={styles.orderCodeRow}>
+        <HStack style={styles.topMetaBar}>
+          <VStack style={styles.topMetaLeft}>
+            <HStack style={styles.orderCodeRow}>
               <Text style={styles.orderCodeText}>{order.reference}</Text>
               <Pressable
                 accessibilityLabel="Sao chép mã đơn hàng"
@@ -567,61 +728,61 @@ function CustomerDetailContent({
                 style={({ pressed }) => [styles.copyBtn, pressed ? styles.pressed : null]}
               >
                 {copied ? (
-                  <View style={styles.copiedRow}>
+                  <HStack style={styles.copiedRow}>
                     <IconCheck color={colors.success.text} size={13} />
                     <Text style={styles.copiedText}>Đã chép</Text>
-                  </View>
+                  </HStack>
                 ) : (
-                  <View style={styles.copyBtnRow}>
+                  <HStack style={styles.copyBtnRow}>
                     <IconCopy color={customerPalette.primary} size={13} />
                     <Text style={styles.copyBtnText}>Sao chép</Text>
-                  </View>
+                  </HStack>
                 )}
               </Pressable>
-            </View>
+            </HStack>
             <Text style={styles.orderCreatedTime}>Tạo lúc {order.updatedAtLabel}</Text>
-          </View>
-          <View style={styles.topMetaRight}>
+          </VStack>
+          <Box style={styles.topMetaRight}>
             <StatusBadge domain="order" status={order.status} />
-          </View>
-        </View>
+          </Box>
+        </HStack>
 
         {/* 1b. Thẻ hiển thị lý do hủy khi đơn CANCELLED */}
         {order.status === 'CANCELLED' ? (
-          <View style={styles.cancelledReasonCard}>
-            <View style={styles.cancelledReasonHeader}>
-              <View style={styles.cancelledDot} />
+          <Card style={styles.cancelledReasonCard}>
+            <HStack style={styles.cancelledReasonHeader}>
+              <Box style={styles.cancelledDot} />
               <Text style={styles.cancelledReasonTitle}>Lý do hủy đơn</Text>
-            </View>
+            </HStack>
             <Text style={styles.cancelledReasonContent}>
               {order.cancelReason?.trim() || 'Khách hàng hủy đơn'}
             </Text>
             <Text style={styles.cancelledReasonTime}>Hủy vào lúc {order.updatedAtLabel}</Text>
-          </View>
+          </Card>
         ) : null}
 
         {/* 2. Thẻ Cảnh Báo Thanh Toán Cấp Bách (Urgent Payment Card) */}
         {isUnpaid ? (
-          <View style={styles.urgentPaymentCard}>
-            <View style={styles.urgentPaymentTop}>
-              <View style={styles.urgentPaymentTitleWrap}>
+          <Card style={styles.urgentPaymentCard}>
+            <HStack style={styles.urgentPaymentTop}>
+              <HStack style={styles.urgentPaymentTitleWrap}>
                 <IconShieldAlert color={colors.warning.text} size={20} />
-                <View style={styles.urgentPaymentTextWrap}>
+                <VStack style={styles.urgentPaymentTextWrap}>
                   <Text style={styles.urgentPaymentTitle}>Đơn hàng chưa thanh toán</Text>
                   <Text style={styles.urgentPaymentSub}>Thanh toán cước phí bằng VietQR Napas247</Text>
-                </View>
-              </View>
+                </VStack>
+              </HStack>
               <Text style={styles.urgentPaymentAmount}>{order.payment.amountLabel}</Text>
-            </View>
+            </HStack>
 
             {order.payment.notice ? (
-              <View style={styles.urgentNoticeBox}>
+              <Box style={styles.urgentNoticeBox}>
                 <Text style={styles.urgentNoticeText}>{order.payment.notice}</Text>
-              </View>
+              </Box>
             ) : null}
 
             {order.payment.action ? (
-              <View style={styles.urgentPaymentBtnWrap}>
+              <Box style={styles.urgentPaymentBtnWrap}>
                 <Button
                   disabled={order.payment.action.disabled}
                   isLoading={order.payment.action.isPending}
@@ -632,79 +793,79 @@ function CustomerDetailContent({
                   }
                   variant="primary"
                 />
-              </View>
+              </Box>
             ) : null}
-          </View>
+          </Card>
         ) : null}
 
         {/* 3. Live Journey Hero Card (Tổng quan tiến độ & Cước phí) */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroStatusWrap}>
+        <Card style={styles.heroCard}>
+          <HStack style={styles.heroTopRow}>
+            <HStack style={styles.heroStatusWrap}>
               <Text style={styles.heroSectionTitle}>Tổng quan đơn hàng</Text>
               {order.status === 'IN_TRANSIT' ? (
-                <View style={styles.liveTagBadge}>
-                  <View style={styles.pulseDotGreen} />
-                  <Text style={styles.liveTagText}>Đang giao</Text>
-                </View>
+                <Badge action="success" size="sm" style={styles.liveTagBadge}>
+                  <Box style={styles.pulseDotGreen} />
+                  <Badge.Text style={styles.liveTagText}>Đang giao</Badge.Text>
+                </Badge>
               ) : null}
-            </View>
+            </HStack>
             <Text style={styles.heroPrice}>{order.priceLabel}</Text>
-          </View>
+          </HStack>
 
-          <View style={styles.heroDivider} />
+          <Divider style={styles.heroDivider} />
 
-          <View style={styles.heroStatsRow}>
-            <View style={styles.heroStatItem}>
+          <HStack style={styles.heroStatsRow}>
+            <VStack style={styles.heroStatItem}>
               <Text style={styles.heroStatLabel}>Cập nhật</Text>
               <Text style={styles.heroStatValue}>{order.updatedAtLabel}</Text>
-            </View>
-            <View style={styles.heroStatItem}>
+            </VStack>
+            <VStack style={styles.heroStatItem}>
               <Text style={styles.heroStatLabel}>Loại xe</Text>
               <Text style={styles.heroStatValue}>{order.requestedVehicleLabel || 'Xe Tải'}</Text>
-            </View>
+            </VStack>
             {order.distanceMeters ? (
-              <View style={styles.heroStatItem}>
+              <VStack style={styles.heroStatItem}>
                 <Text style={styles.heroStatLabel}>Quãng đường</Text>
                 <Text style={styles.heroStatValue}>
                   {(order.distanceMeters / 1000).toFixed(1)} km
                 </Text>
-              </View>
+              </VStack>
             ) : null}
             {showEta ? (
-              <View style={styles.heroStatItem}>
+              <VStack style={styles.heroStatItem}>
                 <Text style={styles.heroStatLabel}>ETA dự kiến</Text>
                 <Text style={styles.heroStatValue}>
                   ~{Math.round(order.etaDurationSeconds as number / 60)} phút
                 </Text>
-              </View>
+              </VStack>
             ) : null}
-          </View>
+          </HStack>
 
           {showEta ? (
-            <View style={styles.etaIndicatorBox}>
+            <Box style={styles.etaIndicatorBox}>
               <EtaIndicator
                 durationSeconds={order.etaDurationSeconds as number}
                 source={order.etaSource}
               />
-            </View>
+            </Box>
           ) : null}
-        </View>
+        </Card>
 
         {view.notice ? (
-          <View style={styles.notice}>
+          <Box style={styles.notice}>
             <Text style={styles.warningText}>{view.notice}</Text>
-          </View>
+          </Box>
         ) : null}
 
         {/* 4. Visual Tracking Preview & Map Panel */}
-        <View style={styles.modernCard}>
-          <View style={styles.cardHeader}>
+        <Card style={styles.modernCard}>
+          <VStack style={styles.cardHeader}>
             <Text accessibilityRole="header" style={styles.cardTitle}>
               Bản đồ hành trình
             </Text>
             <Text style={styles.cardSubtitle}>Vị trí xe và lộ trình theo thời gian thực</Text>
-          </View>
+          </VStack>
 
           <TrackingPanel
             destinationCoords={order.route.destination.coords}
@@ -715,6 +876,7 @@ function CustomerDetailContent({
             onOpenTracking={onOpenTracking}
             onRetry={onRetry}
             orderId={order.id}
+            orderStatus={order.status}
             originCoords={order.route.origin.coords}
             originLabel={order.route.origin.label}
             stops={order.route.stops}
@@ -735,70 +897,70 @@ function CustomerDetailContent({
                 pressed ? styles.pressed : null,
               ]}
             >
-              <View style={styles.trackingLinkIconBox}>
+              <Box style={styles.trackingLinkIconBox}>
                 <IconLocationPin color={customerPalette.primary} size={18} />
-              </View>
-              <View style={styles.trackingLinkTextWrap}>
+              </Box>
+              <VStack style={styles.trackingLinkTextWrap}>
                 <Text style={styles.trackingLinkTitle}>Xem bản đồ theo dõi trực tiếp ➔</Text>
                 <Text style={styles.trackingLinkSubtitle}>
                   Giám sát lộ trình GPS thời gian thực toàn màn hình
                 </Text>
-              </View>
+              </VStack>
             </Pressable>
           ) : null}
-        </View>
+        </Card>
 
         {/* 5. Section: Route */}
-        <View style={styles.modernCard}>
-          <View style={styles.cardHeader}>
+        <Card style={styles.modernCard}>
+          <VStack style={styles.cardHeader}>
             <Text accessibilityRole="header" style={styles.cardTitle}>
               Lộ trình vận chuyển
             </Text>
             <Text style={styles.cardSubtitle}>Điểm lấy, các điểm dừng và điểm giao hàng</Text>
-          </View>
+          </VStack>
           <RouteSpine
             destination={order.route.destination}
             origin={order.route.origin}
             stops={order.route.stops}
           />
-        </View>
+        </Card>
 
         {/* 6. Section: Cargo Specs & Media */}
-        <View style={styles.modernCard}>
-          <View style={styles.cardHeader}>
+        <Card style={styles.modernCard}>
+          <VStack style={styles.cardHeader}>
             <Text accessibilityRole="header" style={styles.cardTitle}>
               Minh chứng hàng hóa
             </Text>
             <Text style={styles.cardSubtitle}>Quy cách hàng hóa và hình ảnh đính kèm</Text>
-          </View>
+          </VStack>
 
-          <View style={styles.cargoSpecsGrid}>
-            <View style={styles.cargoGridItem}>
+          <Box style={styles.cargoSpecsGrid}>
+            <VStack style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>Mặt hàng</Text>
               <Text style={styles.cargoGridValue}>{order.cargo.note || 'Hàng tổng hợp'}</Text>
-            </View>
-            <View style={styles.cargoGridItem}>
+            </VStack>
+            <VStack style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>Khối lượng</Text>
               <Text style={styles.cargoGridValue}>
                 {order.cargo.weightKg ? `${order.cargo.weightKg} kg` : '—'}
               </Text>
-            </View>
-            <View style={styles.cargoGridItem}>
+            </VStack>
+            <VStack style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>Dịch vụ đi kèm</Text>
               <Text style={[styles.cargoGridValue, { color: customerPalette.primary }]}>
                 {order.hasLoadingSupport ? 'Có bốc xếp 2 đầu' : 'Tự bốc xếp'}
               </Text>
-            </View>
-            <View style={styles.cargoGridItem}>
+            </VStack>
+            <VStack style={styles.cargoGridItem}>
               <Text style={styles.cargoGridLabel}>Người nhận</Text>
               <Text style={styles.cargoGridValue} numberOfLines={1}>
                 {order.route.destination.label.split(',')[0]}
               </Text>
-            </View>
-          </View>
+            </VStack>
+          </Box>
 
-          <View style={styles.mediaGrid}>
-            <View style={styles.mediaTile}>
+          <HStack style={styles.mediaGrid}>
+            <Card style={styles.mediaTile}>
               <Text style={styles.mediaIndex}>01</Text>
               <Text style={styles.mediaLabel}>Ảnh hàng hóa</Text>
               {order.media.mediaId ? (
@@ -808,33 +970,33 @@ function CustomerDetailContent({
               ) : (
                 <Text style={styles.helper}>Chưa có ảnh</Text>
               )}
-            </View>
-          </View>
-        </View>
+            </Card>
+          </HStack>
+        </Card>
 
         {/* 6b. Section: Chi tiết cước phí (Price Breakdown) */}
-        <View style={styles.modernCard}>
-          <View style={styles.cardHeader}>
+        <Card style={styles.modernCard}>
+          <VStack style={styles.cardHeader}>
             <Text accessibilityRole="header" style={styles.cardTitle}>
               Chi tiết cước phí
             </Text>
             <Text style={styles.cardSubtitle}>
               Cơ cấu tính giá: {order.requestedVehicleLabel || 'Xe vận chuyển'}
             </Text>
-          </View>
+          </VStack>
 
-          <View style={styles.paymentCardContent}>
-            <View style={styles.paymentDetailsBox}>
-              <View style={styles.paymentDetailRow}>
+          <VStack space="xs" style={styles.paymentCardContent}>
+            <VStack space="xs" style={styles.paymentDetailsBox}>
+              <HStack style={styles.paymentDetailRow}>
                 <Text style={styles.paymentDetailLabel}>
                   Cước mở cửa ({order.requestedVehicleLabel || 'Xe vận chuyển'})
                 </Text>
                 <Text style={styles.paymentDetailValue}>
                   {order.priceBreakdown?.baseFareVnd ? `${order.priceBreakdown.baseFareVnd.toLocaleString('vi-VN')} ₫` : '—'}
                 </Text>
-              </View>
+              </HStack>
 
-              <View style={styles.paymentDetailRow}>
+              <HStack style={styles.paymentDetailRow}>
                 <Text style={styles.paymentDetailLabel}>
                   Cước quãng đường {order.distanceMeters ? `(${(order.distanceMeters / 1000).toFixed(1)} km)` : ''}
                 </Text>
@@ -843,91 +1005,91 @@ function CustomerDetailContent({
                     ? `${order.priceBreakdown.distanceFareVnd.toLocaleString('vi-VN')} ₫`
                     : '—'}
                 </Text>
-              </View>
+              </HStack>
 
               {order.priceBreakdown?.stopSurchargeVnd ? (
-                <View style={styles.paymentDetailRow}>
+                <HStack style={styles.paymentDetailRow}>
                   <Text style={styles.paymentDetailLabel}>Phụ phí điểm dừng</Text>
                   <Text style={styles.paymentDetailValue}>
                     +{order.priceBreakdown.stopSurchargeVnd.toLocaleString('vi-VN')} ₫
                   </Text>
-                </View>
+                </HStack>
               ) : null}
 
               {order.priceBreakdown?.loadingFeeVnd ? (
-                <View style={styles.paymentDetailRow}>
+                <HStack style={styles.paymentDetailRow}>
                   <Text style={styles.paymentDetailLabel}>Phí bốc xếp 2 đầu</Text>
                   <Text style={styles.paymentDetailValue}>
                     +{order.priceBreakdown.loadingFeeVnd.toLocaleString('vi-VN')} ₫
                   </Text>
-                </View>
+                </HStack>
               ) : null}
 
               {order.priceBreakdown?.vatFeeVnd ? (
-                <View style={styles.paymentDetailRow}>
+                <HStack style={styles.paymentDetailRow}>
                   <Text style={styles.paymentDetailLabel}>Thuế GTGT (VAT 8%)</Text>
                   <Text style={styles.paymentDetailValue}>
                     +{order.priceBreakdown.vatFeeVnd.toLocaleString('vi-VN')} ₫
                   </Text>
-                </View>
+                </HStack>
               ) : null}
-            </View>
+            </VStack>
 
-            <View style={styles.heroDivider} />
+            <Divider style={styles.heroDivider} />
 
-            <View style={[styles.paymentTopRow, { marginTop: 10 }]}>
+            <HStack style={[styles.paymentTopRow, { marginTop: 10 }]}>
               <Text style={{ fontSize: typeScale.subheadline.fontSize, fontWeight: '600', color: customerPalette.primary }}>
                 Tổng cước vận chuyển
               </Text>
               <Text style={styles.paymentAmount}>{order.priceLabel}</Text>
-            </View>
-          </View>
-        </View>
+            </HStack>
+          </VStack>
+        </Card>
 
         {/* 7. Section: Payment & Financial Info */}
-        <View style={styles.modernCard}>
-          <View style={styles.cardHeader}>
+        <Card style={styles.modernCard}>
+          <VStack style={styles.cardHeader}>
             <Text accessibilityRole="header" style={styles.cardTitle}>
               Thanh toán
             </Text>
             <Text style={styles.cardSubtitle}>Trạng thái thanh toán và thông tin cước phí</Text>
-          </View>
+          </VStack>
 
-          <View style={styles.paymentCardContent}>
-            <View style={styles.paymentTopRow}>
+          <VStack space="xs" style={styles.paymentCardContent}>
+            <HStack style={styles.paymentTopRow}>
               <StatusBadge domain="payment" status={order.payment.status} />
               <Text style={styles.paymentAmount}>{order.payment.amountLabel}</Text>
-            </View>
+            </HStack>
 
-            <View style={styles.paymentDetailsBox}>
+            <VStack space="xs" style={styles.paymentDetailsBox}>
               {order.payment.referenceLabel ? (
-                <View style={styles.paymentDetailRow}>
+                <HStack style={styles.paymentDetailRow}>
                   <Text style={styles.paymentDetailLabel}>Mã tham chiếu</Text>
                   <Text style={styles.paymentDetailValue}>{order.payment.referenceLabel}</Text>
-                </View>
+                </HStack>
               ) : null}
               {order.payment.sourceLabel ? (
-                <View style={styles.paymentDetailRow}>
+                <HStack style={styles.paymentDetailRow}>
                   <Text style={styles.paymentDetailLabel}>Phương thức</Text>
                   <Text style={styles.paymentDetailValue}>{order.payment.sourceLabel}</Text>
-                </View>
+                </HStack>
               ) : null}
               {order.payment.expiresAtLabel ? (
-                <View style={styles.paymentDetailRow}>
+                <HStack style={styles.paymentDetailRow}>
                   <Text style={styles.paymentDetailLabel}>Hạn thanh toán</Text>
                   <Text style={styles.paymentDetailValue}>{order.payment.expiresAtLabel}</Text>
-                </View>
+                </HStack>
               ) : null}
-            </View>
+            </VStack>
 
             {!isUnpaid && order.payment.notice ? (
-              <View style={styles.paymentNoticeBox}>
+              <Box style={styles.paymentNoticeBox}>
                 <Text style={styles.paymentNoticeText}>{order.payment.notice}</Text>
-              </View>
+              </Box>
             ) : null}
 
             {!isUnpaid && order.payment.action ? (
-              <View style={styles.paymentActionWrap}>
+              <Box style={styles.paymentActionWrap}>
                 <Button
                   disabled={order.payment.action.disabled}
                   isLoading={order.payment.action.isPending}
@@ -938,10 +1100,10 @@ function CustomerDetailContent({
                   }
                   variant="secondary"
                 />
-              </View>
+              </Box>
             ) : null}
-          </View>
-        </View>
+          </VStack>
+        </Card>
 
         {/* 7b. Section: Invoice */}
         {order.invoice ? (
@@ -1478,6 +1640,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  driverPositionStrip: {
+    alignItems: 'center',
+    backgroundColor: customerPalette.primaryBg,
+    borderColor: customerPalette.primaryBorder,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+  },
+  driverPositionText: {
+    ...typeScale.footnote,
+    color: colors.neutral.mutedText,
+    flexShrink: 1,
+  },
+  driverPositionName: {
+    ...typeScale.footnote,
+    color: customerPalette.primary,
+    fontWeight: '600',
   },
   pulseDotGreen: {
     width: 7,

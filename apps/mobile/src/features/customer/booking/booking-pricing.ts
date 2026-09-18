@@ -6,7 +6,6 @@ export interface VehicleRateConfig {
   tag: string;
   capacityKg: number;
   dimensions: string;
-  etaMinutes: number;
   baseFareVnd: number;
   perKmVnd: number;
   loadingFeeVnd: number;
@@ -19,7 +18,6 @@ export const VEHICLE_RATES: Record<VehicleTypeId, VehicleRateConfig> = {
     tag: 'Tiết kiệm',
     capacityKg: 500,
     dimensions: '1.4×1.0×1.2m',
-    etaMinutes: 5,
     baseFareVnd: 70_000,
     perKmVnd: 10_000,
     loadingFeeVnd: 60_000,
@@ -30,7 +28,6 @@ export const VEHICLE_RATES: Record<VehicleTypeId, VehicleRateConfig> = {
     tag: 'Đô thị',
     capacityKg: 500,
     dimensions: '1.8×1.2×1.2m',
-    etaMinutes: 8,
     baseFareVnd: 130_000,
     perKmVnd: 14_000,
     loadingFeeVnd: 100_000,
@@ -41,7 +38,6 @@ export const VEHICLE_RATES: Record<VehicleTypeId, VehicleRateConfig> = {
     tag: 'Phổ biến',
     capacityKg: 1_250,
     dimensions: '3.2×1.6×1.7m',
-    etaMinutes: 12,
     baseFareVnd: 200_000,
     perKmVnd: 18_000,
     loadingFeeVnd: 150_000,
@@ -52,7 +48,6 @@ export const VEHICLE_RATES: Record<VehicleTypeId, VehicleRateConfig> = {
     tag: 'Tải lớn',
     capacityKg: 2_500,
     dimensions: '4.3×1.8×1.9m',
-    etaMinutes: 15,
     baseFareVnd: 320_000,
     perKmVnd: 22_000,
     loadingFeeVnd: 250_000,

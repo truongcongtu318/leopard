@@ -5,7 +5,7 @@ import type {
   VehicleType,
 } from '@leopard/shared';
 
-import { ApiError } from '@leopard/mobile-core';
+import { ApiError, decodePolyline } from '@leopard/mobile-core';
 import type {
   AddressCandidate,
   CustomerCancelView,
@@ -25,6 +25,7 @@ import type {
   CongestionLevel,
   CustomerRouteOptionView,
   InvoiceView,
+  LatLng,
   PriceBreakdown,
 } from './model';
 import type { CustomerOrdersPort } from './port';
@@ -627,6 +628,7 @@ export function mapTrackingToView(
     driverLabel,
     lastUpdatedLabel,
     summary: `Bản đồ lộ trình; vị trí tài xế cập nhật lúc ${updatedTime}.`,
+    coords: { lat: latestPoint.latitude, lng: latestPoint.longitude },
   };
 }
 
@@ -667,11 +669,32 @@ export function mapOrderToDetail(
   }));
 
   const distanceLabel = formatDistance(order.distanceMeters);
+
+  let polyline: string | undefined;
+  let routeCoords: readonly LatLng[] | undefined;
+  if (order.routeSnapshot && typeof order.routeSnapshot === 'object') {
+    const rawPolyline = (order.routeSnapshot as Record<string, unknown>).polyline;
+    if (typeof rawPolyline === 'string' && rawPolyline.trim().length > 0) {
+      polyline = rawPolyline.trim();
+      try {
+        routeCoords = decodePolyline(polyline, 'POLYLINE5');
+      } catch {
+        try {
+          routeCoords = decodePolyline(polyline, 'POLYLINE6');
+        } catch {
+          // ignore decode error
+        }
+      }
+    }
+  }
+
   const route: CustomerRouteView = {
     origin,
     stops,
     destination,
     distanceLabel,
+    ...(polyline ? { polyline } : {}),
+    ...(routeCoords ? { routeCoords } : {}),
   };
 
   const status = order.status as OrderStatus;
@@ -824,17 +847,17 @@ export function resolveVehicleDisplayLabel(
     const vType = typeof s.vehicleType === 'string' ? s.vehicleType.toUpperCase() : null;
     const baseFare = typeof s.baseFareVnd === 'number' ? s.baseFareVnd : null;
 
+    if (vType === 'MOTORBIKE' || baseFare === 70000) {
+      return 'Xe Ba Gác';
+    }
+    if (vType === 'VAN' || baseFare === 130000 || (cargoWeight && cargoWeight === 500)) {
+      return 'Xe Van 500kg';
+    }
     if ((cargoWeight && cargoWeight > 1250) || baseFare === 320000) {
       return 'Xe Tải 2.5T';
     }
     if (vType === 'TRUCK' || baseFare === 200000 || (cargoWeight && cargoWeight > 500)) {
       return 'Xe Tải 1.25T';
-    }
-    if (vType === 'VAN' || baseFare === 130000 || (cargoWeight && cargoWeight === 500)) {
-      return 'Xe Van 500kg';
-    }
-    if (vType === 'MOTORBIKE' || baseFare === 70000) {
-      return 'Xe Ba Gác';
     }
   }
   return 'Xe Tải';

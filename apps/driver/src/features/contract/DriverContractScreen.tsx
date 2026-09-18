@@ -3,6 +3,11 @@ import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconCheck,
   IconExternalLink,
   IconFileText,
@@ -11,6 +16,7 @@ import {
   IconWallet,
   ScreenScaffold,
   ScreenState,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -77,37 +83,37 @@ export function DriverContractScreen({ isError, isLoading, onRetry, status }: Dr
         ) : (
           <>
             {/* ── 1. Hero Contract Status Card (Apple Inset Grouped) ── */}
-            <View style={styles.heroCard}>
-              <View style={styles.overviewHeader}>
-                <View style={styles.overviewIconBadge}>
+            <Card style={styles.heroCard}>
+              <HStack style={styles.overviewHeader}>
+                <Box style={styles.overviewIconBadge}>
                   <IconFileText color={colors.brand.primary} size={22} />
-                </View>
-                <View style={styles.overviewTextCol}>
+                </Box>
+                <VStack style={styles.overviewTextCol}>
                   <Text style={styles.contractCodeLabel}>Phiên bản hợp đồng</Text>
                   <Text style={styles.contractCodeValue}>{status.version}</Text>
-                </View>
-                <View style={styles.statusPillActive} testID="contract-signed-badge">
+                </VStack>
+                <Badge action="success" size="sm" style={styles.statusPillActive} testID="contract-signed-badge">
                   <IconCheck color="#16A34A" size={12} strokeWidth={2.5} />
-                  <Text style={styles.statusPillText}>Đã ký điện tử</Text>
-                </View>
-              </View>
+                  <Badge.Text style={styles.statusPillText}>Đã ký điện tử</Badge.Text>
+                </Badge>
+              </HStack>
 
-              <View style={styles.divider} />
+              <Divider style={styles.divider} />
 
-              <View style={styles.metaRow}>
-                <View style={styles.metaItem}>
+              <VStack style={styles.metaRow}>
+                <VStack style={styles.metaItem}>
                   <Text style={styles.metaLabel}>Người ký xác nhận</Text>
                   <Text style={styles.metaValue}>{status.signedByName}</Text>
-                </View>
-                <View style={styles.metaItem}>
+                </VStack>
+                <VStack style={styles.metaItem}>
                   <Text style={styles.metaLabel}>Thời gian ký kết</Text>
                   <Text style={styles.metaValue}>{formatSignedAt(status.signedAt)}</Text>
-                </View>
-                <View style={styles.metaItem}>
+                </VStack>
+                <VStack style={styles.metaItem}>
                   <Text style={styles.metaLabel}>Tính pháp lý</Text>
                   <Text style={styles.metaValueHighlight}>Chứng thực điện tử hợp lệ</Text>
-                </View>
-              </View>
+                </VStack>
+              </VStack>
 
               <Pressable
                 accessibilityHint="Mở bản hợp đồng đã ký định dạng tệp PDF"
@@ -122,85 +128,87 @@ export function DriverContractScreen({ isError, isLoading, onRetry, status }: Dr
                 <Text style={styles.downloadPdfText}>Tải tệp hợp đồng đã ký (PDF)</Text>
                 <IconExternalLink color={colors.brand.primary} size={15} />
               </Pressable>
-            </View>
+            </Card>
 
             {/* ── 2. Key Terms Summary (Apple Inset Grouped) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionTitle}>Tóm tắt điều khoản chính</Text>
 
-              <View style={styles.termsCard}>
-                <View style={styles.termItem}>
-                  <View style={styles.termIconBox}>
+              <Card style={styles.termsCard}>
+                <HStack style={styles.termItem}>
+                  <Box style={styles.termIconBox}>
                     <IconSpeedTruck color={colors.brand.primary} size={18} />
-                  </View>
-                  <View style={styles.termContent}>
+                  </Box>
+                  <VStack style={styles.termContent}>
                     <Text style={styles.termTitle}>Tư cách & Phương tiện vận chuyển</Text>
                     <Text style={styles.termDesc}>
                       Tài xế là đối tác vận tải độc lập, chủ động phương tiện và thời gian hoạt động theo thỏa thuận dịch vụ.
                     </Text>
-                  </View>
-                </View>
+                  </VStack>
+                </HStack>
 
-                <View style={styles.termDivider} />
+                <Divider style={styles.termDivider} />
 
-                <View style={styles.termItem}>
-                  <View style={styles.termIconBox}>
+                <HStack style={styles.termItem}>
+                  <Box style={styles.termIconBox}>
                     <IconWallet color={colors.brand.primary} size={18} />
-                  </View>
-                  <View style={styles.termContent}>
+                  </Box>
+                  <VStack style={styles.termContent}>
                     <Text style={styles.termTitle}>Thu nhập & Phân chia cước phí</Text>
                     <Text style={styles.termDesc}>
                       Thu nhập được đối soát tự động theo từng cuốc xe hoàn tất và có thể rút về tài khoản ngân hàng bất kỳ lúc nào.
                     </Text>
-                  </View>
-                </View>
+                  </VStack>
+                </HStack>
 
-                <View style={styles.termDivider} />
+                <Divider style={styles.termDivider} />
 
-                <View style={styles.termItem}>
-                  <View style={styles.termIconBox}>
+                <HStack style={styles.termItem}>
+                  <Box style={styles.termIconBox}>
                     <IconSecurityShield color={colors.brand.primary} size={18} />
-                  </View>
-                  <View style={styles.termContent}>
+                  </Box>
+                  <VStack style={styles.termContent}>
                     <Text style={styles.termTitle}>Bảo vệ hàng hóa & Quy chuẩn e-POD</Text>
                     <Text style={styles.termDesc}>
                       Cam kết bảo quản nguyên vẹn hàng hóa, tuân thủ quy trình chụp ảnh xác nhận và lấy chữ ký người nhận.
                     </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
+                  </VStack>
+                </HStack>
+              </Card>
+            </VStack>
 
             {/* ── 3. Parties Info (Apple Inset Grouped) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionTitle}>Các bên tham gia ký kết</Text>
 
-              <View style={styles.partiesCard}>
-                <View style={styles.partyBox}>
+              <Card style={styles.partiesCard}>
+                <VStack style={styles.partyBox}>
                   <Text style={styles.partyRoleLabel}>Bên giao kết (Nền tảng)</Text>
                   <Text style={styles.partyName}>CÔNG TY CỔ PHẦN LEOPARD EXPRESS</Text>
                   <Text style={styles.partySub}>Đại diện: Ban Điều Hành Nền Tảng LEOPARD</Text>
                   <Text style={styles.partySub}>Tổng đài hỗ trợ đối tác: 1900 6868</Text>
-                </View>
+                </VStack>
 
-                <View style={styles.partyDivider} />
+                <Divider style={styles.partyDivider} />
 
-                <View style={styles.partyBox}>
+                <VStack style={styles.partyBox}>
                   <Text style={styles.partyRoleLabel}>Bên nhận giao kết (Đối tác tài xế)</Text>
                   <Text style={styles.partyName}>Tài xế đối tác ({status.signedByName})</Text>
                   <Text style={styles.partySub}>Tư cách: Tài xế đối tác vận tải công nghệ</Text>
                   <Text style={styles.partySub}>Trạng thái: Đã xác thực CCCD & GPLX chính chủ</Text>
-                </View>
-              </View>
-            </View>
+                </VStack>
+              </Card>
+            </VStack>
 
             {/* ── 4. Legal Security Note ── */}
-            <View style={styles.securityNoteBox}>
-              <IconSecurityShield color={driverPrimitives.colors.green700} size={18} />
-              <Text style={styles.securityNoteText}>
-                Bản hợp đồng điện tử được mã hóa và lưu trữ bảo mật trên hệ thống đám mây LEOPARD, có đầy đủ giá trị pháp lý theo Luật Giao dịch điện tử.
-              </Text>
-            </View>
+            <Card style={styles.securityNoteBox}>
+              <HStack style={{ alignItems: 'flex-start', gap: spacing.xs }}>
+                <IconSecurityShield color={driverPrimitives.colors.green700} size={18} />
+                <Text style={styles.securityNoteText}>
+                  Bản hợp đồng điện tử được mã hóa và lưu trữ bảo mật trên hệ thống đám mây LEOPARD, có đầy đủ giá trị pháp lý theo Luật Giao dịch điện tử.
+                </Text>
+              </HStack>
+            </Card>
           </>
         )}
       </ScrollView>

@@ -7,7 +7,7 @@ import {
   IconRadarPulse,
   IconRoute,
   IconSpeedTruck,
-  RealInteractiveMap,
+  LeopardMapView,
   ScreenScaffold,
   StatusBadge,
   colors,
@@ -49,7 +49,7 @@ export function PublicDetailView({
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Interactive Preview Map Canvas */}
         <View style={styles.mapCanvasContainer} testID="public-route-map-schematic">
-          <RealInteractiveMap
+          <LeopardMapView
             destination={{ label: dropoffLabel }}
             height="100%"
             mode="route"

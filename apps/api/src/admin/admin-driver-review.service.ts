@@ -104,7 +104,7 @@ export class AdminDriverReviewService {
 
       await tx.user.update({
         where: { id: userId },
-        data: { status: 'ACTIVE' },
+        data: { status: 'ACTIVE', onboardedAt: now },
       });
       await tx.driverProfile.update({
         where: { userId },

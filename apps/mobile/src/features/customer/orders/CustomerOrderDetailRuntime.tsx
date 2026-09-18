@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { createSocketFactory } from '@leopard/mobile-core';
 import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
@@ -14,8 +14,18 @@ export type CustomerOrderDetailRuntimeProps = Readonly<{
   orderId: string;
 }>;
 
+/**
+ * The driver starts broadcasting GPS the moment they take the job, not only
+ * once they are rolling, so the customer watches the approach to the pickup
+ * instead of staring at a dead map until PICKING_UP.
+ */
 function isTrackingEligibleStatus(status: string | null): boolean {
-  return status === 'PICKING_UP' || status === 'IN_TRANSIT';
+  return (
+    status === 'ACCEPTED' ||
+    status === 'PICKING_UP' ||
+    status === 'IN_TRANSIT' ||
+    status === 'RETURNING'
+  );
 }
 
 export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRuntimeProps) {
@@ -46,13 +56,18 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
 
   const [liveTracking, setLiveTracking] = useState<CustomerTrackingView | null>(null);
   const status = query.data && query.data.kind === 'content' ? query.data.order.status : null;
+  const isEligible = isTrackingEligibleStatus(status);
+
+  // The refetch below must not re-run this effect: re-subscribing on every
+  // driver status change would drop the socket between steps and the customer
+  // would lose the driver pin exactly when it matters.
+  const refetchRef = useRef(query.refetch);
+  useEffect(() => {
+    refetchRef.current = query.refetch;
+  }, [query.refetch]);
 
   useEffect(() => {
-    if (!isTrackingEligibleStatus(status)) return undefined;
-
-    setLiveTracking(null);
-    socketManager.joinOrder(orderId);
-    void socketManager.connect();
+    if (!isEligible) return undefined;
 
     const unsubscribe = socketManager.subscribe({
       onPointUpdated: (update) => {
@@ -70,16 +85,28 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
       },
       onStatusUpdated: (update) => {
         if (update.orderId !== orderId) return;
-        void query.refetch();
+        setLiveTracking((current) => {
+          const latestPoint = socketManager.getLatestPoint(orderId);
+          if (!latestPoint) return current;
+          return mapTrackingStateToView({
+            connectionState: socketManager.getConnectionState(),
+            hasDriver: true,
+            latestPoint,
+          });
+        });
+        void refetchRef.current();
       },
     });
+
+    socketManager.joinOrder(orderId);
+    void socketManager.connect();
 
     return () => {
       unsubscribe();
       socketManager.leaveOrder(orderId);
       socketManager.disconnect();
     };
-  }, [socketManager, orderId, status]);
+  }, [socketManager, orderId, isEligible]);
 
   useEffect(() => {
     return () => socketManager.destroy();

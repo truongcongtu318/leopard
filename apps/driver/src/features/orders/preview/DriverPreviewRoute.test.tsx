@@ -52,7 +52,8 @@ describe('DriverPreviewRoute', () => {
       />,
     );
     await waitFor(() => {
-      expect(screen.getByText('Cần ảnh xác nhận trước khi hoàn tất')).toBeTruthy();
+      // The proof-required fixture drives the swipe action that opens the camera.
+      expect(screen.getByText('Vuốt và chụp ảnh xác nhận')).toBeTruthy();
     });
     expect(screen.getByLabelText('LEOPARD Logistics · Phiên bản Thử nghiệm Pilot')).toBeTruthy();
     expect(loadCatalogue).toHaveBeenCalledTimes(1);

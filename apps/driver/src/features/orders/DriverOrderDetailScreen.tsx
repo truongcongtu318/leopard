@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   Button,
   ScreenScaffold,
@@ -17,15 +17,43 @@ import { PublicDetailView } from './components/detail/PublicDetailView';
 import { AssignedDetailView } from './components/detail/AssignedDetailView';
 import { CompletedOrderDetailView } from './components/detail/CompletedOrderDetailView';
 import { DriverIncidentModal } from './DriverIncidentModal';
-import { DriverModalSurface } from '../../navigation/DriverModalSurface';
-import { PickupVerificationView } from './components/detail/PickupVerificationView';
-import { DeliveryVerificationView } from './components/detail/DeliveryVerificationView';
+import { ProofCaptureSheet } from './components/detail/ProofCaptureSheet';
+import { useProofPhotoCapture } from './use-proof-photo-capture';
+import { useWatermarkLocation } from './use-watermark-location';
+
+/**
+ * Result of uploading proof. `nextCommandId` is the lifecycle command the
+ * server now expects — a successful upload replaces the proof task with the
+ * delivery/transit command, so it must not be assumed in advance.
+ */
+export type DriverProofUploadResult = Readonly<{
+  ok: boolean;
+  nextCommandId?: string | null;
+}>;
+
+/** The captured photo handed to the upload, so no second picker is opened. */
+export type DriverProofFileInput = Readonly<{
+  uri: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  /** Real picker File/Blob when available, so the bytes are not re-read. */
+  file?: File | Blob;
+}>;
+
+export type DriverProofSelectHandler = (
+  file: DriverProofFileInput,
+) => void | boolean | DriverProofUploadResult | Promise<void | boolean | DriverProofUploadResult>;
 
 export type DriverOrderDetailScreenProps = Readonly<{
   view?: DriverDetailView;
   orderId?: string;
   onExecuteTask?: (commandId: string) => void;
-  onSelectProof?: () => void;
+  /**
+   * Uploads the captured proof. Resolves true only once the server has accepted
+   * it, so the caller can gate the lifecycle transition on real evidence.
+   */
+  onSelectProof?: DriverProofSelectHandler;
   onRetryProof?: (commandId: string) => void;
   onRetry?: () => void;
   onResolveConflict?: () => void;
@@ -95,24 +123,33 @@ function getLifecycleSlideConfig(command: DriverCommandView) {
 const TaskButton = memo(function TaskButton({
   onExecuteTask,
   onRetryProof,
-  onSelectProof,
+  onStartProofCapture,
   task,
 }: Readonly<{
   task: Exclude<DriverPrimaryTaskView, null>;
   onExecuteTask?: (commandId: string) => void;
-  onSelectProof?: () => void;
   onRetryProof?: (commandId: string) => void;
+  /** Opens the camera for the leg whose proof is still missing. */
+  onStartProofCapture?: () => void;
 }>) {
   if (task.kind === 'upload-proof') {
-    const handler = task.command.id === 'cmd-retry-proof-demo' ? onRetryProof : onSelectProof;
     const disabled = task.command.disabled || task.command.isPending;
+    // Retrying a failed upload re-uses the stored file; a fresh capture opens
+    // the camera. Neither path opens the photo library as a side effect.
+    const isRetry = task.command.id === 'cmd-retry-proof-demo';
+    const action = isRetry
+      ? onRetryProof
+        ? () => onRetryProof(task.command.id)
+        : undefined
+      : onStartProofCapture;
+
     return (
       <View style={styles.advanceLegContainer}>
         <Pressable
           accessibilityLabel={task.command.label}
           accessibilityRole="button"
           disabled={disabled}
-          onPress={handler ? () => handler(task.command.id) : undefined}
+          onPress={action && !disabled ? action : undefined}
           style={styles.a11yHiddenButton}
           testID={`btn-proof-${task.command.id}`}
         >
@@ -123,11 +160,9 @@ const TaskButton = memo(function TaskButton({
           resetKey={task.command.id}
           colorVariant="brand"
           disabled={disabled}
-          label="Đã tới điểm giao hàng"
+          label={isRetry ? 'Vuốt để thử tải lại ảnh' : 'Vuốt và chụp ảnh xác nhận'}
           onActionComplete={() => {
-            if (handler && !disabled) {
-              handler(task.command.id);
-            }
+            if (action && !disabled) action();
           }}
           testID="btn-advance-leg-slide"
         />
@@ -177,9 +212,27 @@ const TaskButton = memo(function TaskButton({
 export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const { view: directView, onBack } = props;
   const [localIncidentOpen, setLocalIncidentOpen] = useState(false);
-  const [isPickupProofModalOpen, setIsPickupProofModalOpen] = useState(false);
-  const [isDeliveryProofModalOpen, setIsDeliveryProofModalOpen] = useState(false);
-  const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
+
+  /**
+   * The proof flow is a single pass: swipe → camera → review sheet → upload.
+   * `pendingLeg` records which leg the in-flight capture belongs to so pickup
+   * and delivery evidence can never be mixed up.
+   */
+  const [pendingLeg, setPendingLeg] = useState<'pickup' | 'delivery' | null>(null);
+  const [captured, setCaptured] = useState<{
+    uri: string;
+    name: string;
+    mimeType: string;
+    size: number;
+    file?: File | Blob;
+    capturedAt: Date;
+    coords: string | null;
+  } | null>(null);
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
+
+  const capture = useProofPhotoCapture();
+  const { captureProofPhoto } = capture;
+  const { formatWatermarkCoords, getCurrentLocation } = useWatermarkLocation();
 
   const handleOpenIncidentModal = useMemo(
     () => props.onOpenIncidentModal ?? (() => setLocalIncidentOpen(true)),
@@ -190,29 +243,112 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
     setLocalIncidentOpen(false);
   }, []);
 
-  const handleOpenPickupProof = useCallback(() => {
-    setIsPickupProofModalOpen(true);
+  /** Opens the camera straight away and records the GPS/time watermark. */
+  const startProofCapture = useCallback(
+    async (leg: 'pickup' | 'delivery') => {
+      if (capture.isCapturing) return;
+      setPendingLeg(leg);
+
+      const outcome = await captureProofPhoto();
+      if (outcome.kind !== 'captured') {
+        setPendingLeg(null);
+        // A silent return here left the driver staring at a button that seemed
+        // dead. Every failure must say what went wrong and what to do next.
+        if (outcome.kind === 'error') {
+          Alert.alert('Không chụp được ảnh', outcome.message);
+        } else if (outcome.kind === 'permission-denied') {
+          Alert.alert(
+            'Cần quyền truy cập ảnh',
+            'Hãy cấp quyền máy ảnh hoặc thư viện ảnh để chụp ảnh xác nhận.',
+          );
+        }
+        return;
+      }
+
+      const location = await getCurrentLocation();
+      setCaptured({
+        uri: outcome.photo.uri,
+        name: outcome.photo.name,
+        mimeType: outcome.photo.mimeType,
+        size: outcome.photo.size,
+        file: outcome.photo.file,
+        capturedAt: outcome.photo.capturedAt,
+        coords:
+          location.kind === 'ready' ? formatWatermarkCoords(location.coords) : null,
+      });
+    },
+    [capture, captureProofPhoto, formatWatermarkCoords, getCurrentLocation],
+  );
+
+  const handleCancelCapture = useCallback(() => {
+    setCaptured(null);
+    setPendingLeg(null);
   }, []);
 
-  const handleOpenDeliveryProof = useCallback(() => {
-    setIsDeliveryProofModalOpen(true);
-  }, []);
+  const handleRetakeCapture = useCallback(() => {
+    if (!pendingLeg) return;
+    setCaptured(null);
+    void startProofCapture(pendingLeg);
+  }, [pendingLeg, startProofCapture]);
 
-  const handleConfirmPickupProof = useCallback((data: { photos: string[]; packageCount: number; notes: string }) => {
-    setIsPickupProofModalOpen(false);
-    if (props.onSelectProof) props.onSelectProof();
-    if (props.onExecuteTask && directView && directView.kind === 'content' && directView.primaryTask) {
-      props.onExecuteTask(directView.primaryTask.command.id);
-    }
-  }, [props, directView]);
+  /**
+   * Uploads the reviewed photo, and only advances the order once the server has
+   * accepted it. A failed upload keeps the sheet open with the photo intact so
+   * the driver can retry rather than losing the evidence.
+   *
+   * The command to run afterwards comes from the upload itself: a successful
+   * proof rewrites the primary task to the delivery command, and reusing the
+   * pre-upload task id would send the order backwards instead of forward.
+   */
+  const handleConfirmCapture = useCallback(async () => {
+    if (!props.onSelectProof || !props.onExecuteTask) return;
+    if (!directView || directView.kind !== 'content' || !directView.primaryTask) return;
+    if (!captured) return;
 
-  const handleConfirmDeliveryProof = useCallback((data: { collectedAmount?: number; photos: string[]; notes?: string }) => {
-    setIsDeliveryProofModalOpen(false);
-    if (props.onSelectProof) props.onSelectProof();
-    if (props.onExecuteTask && directView && directView.kind === 'content' && directView.primaryTask) {
-      props.onExecuteTask(directView.primaryTask.command.id);
+    const uploadFile: DriverProofFileInput = {
+      uri: captured.uri,
+      name: captured.name || captured.uri.split('/').pop() || 'bien-nhan-giao-hang.jpg',
+      mimeType: captured.mimeType || 'image/jpeg',
+      size: captured.size ?? 0,
+      file: captured.file,
+    };
+
+    setIsUploadingProof(true);
+    let uploaded: boolean | void = true;
+    let nextCommandId: string | null = null;
+    try {
+      const result = await props.onSelectProof(uploadFile);
+      if (typeof result === 'object' && result !== null) {
+        uploaded = result.ok;
+        nextCommandId = result.nextCommandId ?? null;
+      } else {
+        uploaded = result;
+      }
+    } catch {
+      uploaded = false;
+    } finally {
+      setIsUploadingProof(false);
     }
-  }, [props, directView]);
+
+    // `undefined` means a legacy handler that does not report status.
+    if (uploaded === false) {
+      // Keeping the sheet open is right, but returning silently is not: the
+      // driver tapped a button and saw nothing happen, so the failure was
+      // indistinguishable from a dead control.
+      Alert.alert(
+        'Chưa tải được ảnh',
+        'Ảnh vẫn được giữ. Hãy kiểm tra kết nối rồi thử lại, hoặc chụp lại ảnh khác.',
+      );
+      return;
+    }
+
+    // Fall back to the current task only when the caller reports no follow-up.
+    const commandId = nextCommandId ?? directView.primaryTask.command.id;
+
+    setCaptured(null);
+    setPendingLeg(null);
+    props.onExecuteTask(commandId);
+  }, [captured, props, directView]);
 
   // Runtime always supplies `view`. An orderId-only deep link renders nothing here —
   // the route resolves it through DriverOrderDetailRuntime, never a fixture.
@@ -265,7 +401,6 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
             <TaskButton
               onExecuteTask={props.onExecuteTask}
               onRetryProof={props.onRetryProof}
-              onSelectProof={props.onSelectProof}
               task={view.primaryTask}
             />
           ) : undefined
@@ -289,6 +424,9 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   }
 
   // ponytail: Modal presentation handles local fallback incident form; upgrade to modal route if incident flows require deep linking.
+  const isPickupLeg =
+    view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
+
   return (
     <>
       <AssignedDetailView
@@ -301,20 +439,14 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
         onOpenLocationSettings={props.onOpenLocationSettings}
         onRecordStopProgress={props.onRecordStopProgress}
         onRetryProof={props.onRetryProof}
-        onSelectProof={props.onSelectProof}
-        onOpenPickupProof={handleOpenPickupProof}
-        onOpenDeliveryProof={handleOpenDeliveryProof}
         taskButtonComponent={
           view.primaryTask ? (
             <TaskButton
               onExecuteTask={props.onExecuteTask}
               onRetryProof={props.onRetryProof}
-              onSelectProof={() => {
-                if (props.onSelectProof) props.onSelectProof();
-                if (view.order.status === 'IN_TRANSIT') {
-                  handleOpenDeliveryProof();
-                }
-              }}
+              onStartProofCapture={() =>
+                void startProofCapture(isPickupLeg ? 'pickup' : 'delivery')
+              }
               task={view.primaryTask}
             />
           ) : undefined
@@ -329,52 +461,24 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
         visible={localIncidentOpen}
       />
 
-      {/* Màn hình chụp ảnh kiểm hàng trước khi bốc (Full-screen Focused Modal - Apple HIG) */}
-      <DriverModalSurface
-        animationType="slide"
-        onRequestClose={() => setIsPickupProofModalOpen(false)}
-        testID="modal-pickup-verification"
-        transparent={false}
-        visible={isPickupProofModalOpen}
-      >
-        <PickupVerificationView
-          initialPackageCount={24}
-          onCancel={() => setIsPickupProofModalOpen(false)}
-          onCapturePhoto={() => {
-            setCapturedPhotos(['file://captured-cargo-photo.jpg']);
-            if (props.onSelectProof) props.onSelectProof();
-          }}
-          onConfirmPickup={handleConfirmPickupProof}
-          orderCode={view.order.reference}
-          photos={capturedPhotos}
+      {/* Review step right after the camera closes: confirm or retake, then
+          upload. Deliberately a sheet, so the map stays visible underneath. */}
+      {captured && pendingLeg ? (
+        <ProofCaptureSheet
+          capturedAt={captured.capturedAt}
+          isUploading={isUploadingProof}
+          onCancel={handleCancelCapture}
+          onConfirm={() => void handleConfirmCapture()}
+          onRetake={handleRetakeCapture}
+          photoUri={captured.uri}
+          title={
+            pendingLeg === 'pickup'
+              ? 'Ảnh kiểm hàng tại điểm lấy'
+              : 'Ảnh xác nhận đã giao hàng'
+          }
+          watermarkCoords={captured.coords}
         />
-      </DriverModalSurface>
-
-      {/* Màn hình xác nhận giao hàng POD / COD (Full-screen Focused Modal - Apple HIG) */}
-      <DriverModalSurface
-        animationType="slide"
-        onRequestClose={() => setIsDeliveryProofModalOpen(false)}
-        testID="modal-delivery-verification"
-        transparent={false}
-        visible={isDeliveryProofModalOpen}
-      >
-        <DeliveryVerificationView
-          expectedAmount={view.order.priceVnd ?? 308106}
-          onCancel={() => setIsDeliveryProofModalOpen(false)}
-          onCapturePhoto={() => {
-            setCapturedPhotos(['file://captured-delivered-photo.jpg']);
-            if (props.onSelectProof) props.onSelectProof();
-          }}
-          onCompleteDelivery={handleConfirmDeliveryProof}
-          onReportFailure={() => {
-            setIsDeliveryProofModalOpen(false);
-            handleOpenIncidentModal();
-          }}
-          orderCode={view.order.reference}
-          photos={capturedPhotos}
-          type={view.order.paymentMethod === 'CASH' ? 'COD' : 'PREPAID'}
-        />
-      </DriverModalSurface>
+      ) : null}
     </>
   );
 }

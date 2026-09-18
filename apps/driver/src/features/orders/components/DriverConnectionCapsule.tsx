@@ -1,8 +1,10 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import {
+  Box,
+  Spinner,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -73,13 +75,13 @@ export function DriverConnectionCapsule({
       ]}
       testID="driver-connection-toggle"
     >
-      <View style={styles.glyphDisc}>
+      <Box style={styles.glyphDisc}>
         {isPending ? (
-          <ActivityIndicator color={colors.neutral.surface} size="small" testID="driver-connection-spinner" />
+          <Spinner color={colors.neutral.surface} size="small" testID="driver-connection-spinner" />
         ) : (
           <PowerGlyph color={isOnline ? '#00B14F' : colors.neutral.surface} size={20} />
         )}
-      </View>
+      </Box>
       {isOnline ? null : <Text style={styles.label}>Bật kết nối</Text>}
     </Pressable>
   );

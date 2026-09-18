@@ -20,7 +20,7 @@ import {
   IconPin,
   IconSearch,
   leopardPalette,
-  RealInteractiveMap,
+  LeopardMapView,
   resolveLocationCoords,
   systemFontFamily,
   typography,
@@ -190,7 +190,7 @@ export default function LocationPickerScreen({
     <View style={styles.container}>
       {/* Layer 0: Full-Bleed Map Canvas */}
       <View style={styles.mapContainer}>
-        <RealInteractiveMap
+        <LeopardMapView
           height="100%"
           initialPinCoords={coords}
           interactive={true}

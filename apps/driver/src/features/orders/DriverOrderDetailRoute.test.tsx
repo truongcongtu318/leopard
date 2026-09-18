@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { Animated, PanResponder } from 'react-native';
 
 const mockDriverOrderDetailRuntime = jest.fn<(props: unknown) => null>(() => null);
@@ -16,6 +16,20 @@ jest.mock('expo-location', () => ({
   Accuracy: { High: 6, Balanced: 3 },
   requestForegroundPermissionsAsync: () => mockRequestForegroundPermissionsAsync(),
   getCurrentPositionAsync: () => mockGetCurrentPositionAsync(),
+}));
+
+// The POD flow now uses the real device camera. Stub it so a capture yields a
+// concrete on-device URI that the preview can actually render.
+const mockLaunchCameraAsync = jest.fn<() => Promise<unknown>>();
+const mockRequestCameraPermissionsAsync = jest.fn<() => Promise<{ granted: boolean }>>();
+
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: () => mockRequestCameraPermissionsAsync(),
+  requestMediaLibraryPermissionsAsync: async () => ({ granted: true }),
+  launchCameraAsync: () => mockLaunchCameraAsync(),
+  launchImageLibraryAsync: async () => ({ canceled: true }),
+  CameraType: { back: 'back' },
+  MediaTypeOptions: { Images: 'Images' },
 }));
 
 jest.mock('expo-router', () => ({
@@ -37,6 +51,18 @@ describe('Driver order detail route', () => {
     mockRequestForegroundPermissionsAsync.mockResolvedValue({ status: 'granted' });
     mockGetCurrentPositionAsync.mockResolvedValue({
       coords: { latitude: 10.7626, longitude: 106.6602 },
+    });
+    mockRequestCameraPermissionsAsync.mockResolvedValue({ granted: true });
+    mockLaunchCameraAsync.mockResolvedValue({
+      canceled: false,
+      assets: [
+        {
+          uri: 'file:///var/mobile/cargo-proof.jpg',
+          fileName: 'cargo-proof.jpg',
+          mimeType: 'image/jpeg',
+          fileSize: 180_000,
+        },
+      ],
     });
   });
 
@@ -63,17 +89,19 @@ describe('Driver order detail route', () => {
     await screen.unmount();
   });
 
-  it('requires delivery proof photo and signature before completing order', async () => {
+  it('captures real delivery proof through the swipe action, with no picker detour', async () => {
     const onExecuteTask = jest.fn();
+    const onSelectProof = jest.fn(async () => ({
+      ok: true,
+      nextCommandId: 'cmd-deliver-22222222-2222-4222-8222-222222222001',
+    }));
     const screen = await render(
       <DriverOrderDetailScreen
         onExecuteTask={onExecuteTask}
+        onSelectProof={onSelectProof}
         view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
       />,
     );
-
-    // Section labeled Xác thực bàn giao (POD)
-    expect(screen.getByText('Xác thực bàn giao (POD)')).toBeTruthy();
 
     // 4-step state machine transition labels inside extras drawer
     await fireEvent.press(screen.getByTestId('btn-toggle-mission-extras'));
@@ -82,33 +110,22 @@ describe('Driver order detail route', () => {
     expect(screen.getByText('Vận chuyển (IN_TRANSIT)')).toBeTruthy();
     expect(screen.getByText('Giao hàng (DELIVERED)')).toBeTruthy();
 
-    // Verification container and requirements
-    expect(screen.getByTestId('epod-verification-container')).toBeTruthy();
-    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
-
-    // Part 1: Cargo photo with GPS + timestamp watermark
-    const captureBtn = screen.getByTestId('btn-capture-cargo-photo');
-    await fireEvent.press(captureBtn);
-    expect(screen.getByTestId('camera-watermark-overlay')).toBeTruthy();
-    // The watermark carries the device position, not a fixed demo coordinate.
-    expect(await screen.findByText(/10\.76260° N, 106\.66020° E/)).toBeTruthy();
-    expect(screen.queryByText(/GPS lock/)).toBeNull();
-    expect(screen.getByText(/LEOPARD e-POD/)).toBeTruthy();
-
-    // Part 2: Warehouse receiver digital signature pad
-    const signPad = screen.getByTestId('epod-signature-pad');
-    await fireEvent.press(signPad);
-    expect(screen.getByText('Nguyễn Văn A')).toBeTruthy();
-    expect(screen.getByText(/Chữ ký điện tử đã được xác thực/)).toBeTruthy();
-
-    // Now both photo & signature are captured -> status pill ready
-    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
-
-    // Final confirmation can be completed via SlideToAction accessibility action
-    await fireEvent(screen.getByTestId('btn-epod-complete-delivery'), 'accessibilityAction', {
+    // Swiping opens the camera itself: no picker prompt, no intermediate modal,
+    // and no placeholder signature panel.
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
-    expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-22222222-2222-4222-8222-222222222001');
+    expect(screen.queryByTestId('modal-delivery-verification')).toBeNull();
+    expect(screen.queryByTestId('epod-signature-pad')).toBeNull();
+
+    // The review sheet previews the real asset the camera returned.
+    await screen.findByTestId('proof-capture-sheet');
+    expect(screen.getByTestId('proof-capture-photo').props.source).toEqual({
+      uri: 'file:///var/mobile/cargo-proof.jpg',
+    });
+    // The watermark carries the device position, not a fixed demo coordinate.
+    expect(screen.getByText(/10\.76260° N, 106\.66020° E/)).toBeTruthy();
+    expect(screen.queryByText(/GPS lock/)).toBeNull();
 
     await screen.unmount();
   });
@@ -120,12 +137,13 @@ describe('Driver order detail route', () => {
       <DriverOrderDetailScreen view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')} />,
     );
 
-    await fireEvent.press(screen.getByTestId('btn-capture-cargo-photo'));
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
 
     expect(await screen.findByText('Chưa có vị trí GPS')).toBeTruthy();
     expect(screen.queryByText(/GPS lock/)).toBeNull();
     expect(screen.queryByText(/10\.7769/)).toBeNull();
-
     await screen.unmount();
   });
 
@@ -133,69 +151,40 @@ describe('Driver order detail route', () => {
     jest.restoreAllMocks();
   });
 
-  it('completes delivery transition via SlideToAction swipe once e-POD requirements are satisfied', async () => {
-    const panSpy = jest.spyOn(PanResponder, 'create');
-    jest.spyOn(Animated, 'spring').mockImplementation((_, config: any) => ({
-      start: (cb?: (result: { finished: boolean }) => void) => {
-        cb?.({ finished: true });
-        return undefined as any;
-      },
-      stop: jest.fn(),
-      reset: jest.fn(),
-    }));
-
+  it('holds the upload until the driver confirms the captured photo', async () => {
     const onExecuteTask = jest.fn();
+    const onSelectProof = jest.fn(async () => ({
+      ok: true,
+      nextCommandId: 'cmd-deliver-22222222-2222-4222-8222-222222222001',
+    }));
     const screen = await render(
       <DriverOrderDetailScreen
         onExecuteTask={onExecuteTask}
+        onSelectProof={onSelectProof}
         view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
       />,
     );
 
-    // Initial state: incomplete e-POD -> SlideToAction disabled
-    const slider = screen.getByTestId('btn-epod-complete-delivery');
-    expect(slider.props.accessibilityState).toEqual({ disabled: true });
-    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
-
-    // 1. Capture cargo photo with GPS watermark
-    await fireEvent.press(screen.getByTestId('btn-capture-cargo-photo'));
-    expect(screen.getByTestId('camera-watermark-overlay')).toBeTruthy();
-    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
-    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
-      disabled: true,
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
     });
+    await screen.findByTestId('proof-capture-sheet');
 
-    // 2. Sign in digital signature pad
-    await fireEvent.press(screen.getByTestId('epod-signature-pad'));
-    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
-    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
-      disabled: false,
-    });
+    // Capturing alone does not upload: the driver reviews first.
+    expect(onSelectProof).not.toHaveBeenCalled();
+    expect(onExecuteTask).not.toHaveBeenCalled();
 
-    // 3. Clear signature to verify dynamic disabling
-    await fireEvent.press(screen.getByRole('button', { name: 'Ký lại chữ ký' }));
-    expect(screen.getByText('Chưa đủ điều kiện')).toBeTruthy();
-    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
-      disabled: true,
-    });
+    await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
 
-    // Re-sign to make it ready again
-    await fireEvent.press(screen.getByTestId('epod-signature-pad'));
-    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
-    expect(screen.getByTestId('btn-epod-complete-delivery').props.accessibilityState).toEqual({
-      disabled: false,
-    });
+    await waitFor(() => expect(onSelectProof).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(onExecuteTask).toHaveBeenCalledWith(
+        'cmd-deliver-22222222-2222-4222-8222-222222222001',
+      ),
+    );
+    // The sheet closes once the flow completes.
+    await waitFor(() => expect(screen.queryByTestId('proof-capture-sheet')).toBeNull());
 
-    // 4. Perform SlideToAction swipe gesture past threshold (>= 75%)
-    const panConfig = panSpy.mock.calls[panSpy.mock.calls.length - 1][0];
-    const mockEvent = {} as any;
-    await act(async () => {
-      panConfig.onPanResponderGrant?.(mockEvent, { dx: 0, dy: 0 } as any);
-      panConfig.onPanResponderMove?.(mockEvent, { dx: 240, dy: 0 } as any);
-      panConfig.onPanResponderRelease?.(mockEvent, { dx: 240, dy: 0 } as any);
-    });
-
-    expect(onExecuteTask).toHaveBeenCalledWith('cmd-deliver-22222222-2222-4222-8222-222222222001');
     await screen.unmount();
   });
 

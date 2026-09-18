@@ -1,9 +1,15 @@
 import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconOrders,
   IconPhone,
   IconSpeedTruck,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -52,43 +58,43 @@ export function CargoAndContactCard({
   vehicleLabel,
 }: CargoAndContactCardProps) {
   return (
-    <View style={styles.cardContainer}>
+    <Card style={styles.cardContainer}>
       <Text style={styles.cardSectionTitle}>HÀNG HÓA & LIÊN HỆ</Text>
 
       {/* Cargo Spec Chips */}
-      <View style={styles.specChipsRow}>
-        <View style={styles.specChip}>
+      <HStack style={styles.specChipsRow}>
+        <Badge action="muted" size="sm" style={styles.specChip}>
           <IconSpeedTruck color={driverPrimitives.colors.gray500} size={15} />
-          <Text style={styles.specChipText}>{vehicleLabel}</Text>
-        </View>
+          <Badge.Text style={styles.specChipText}>{vehicleLabel}</Badge.Text>
+        </Badge>
 
         {typeof cargoWeightKg === 'number' && cargoWeightKg > 0 ? (
-          <View style={styles.specChip} testID="cargo-weight-chip">
+          <Badge action="muted" size="sm" style={styles.specChip} testID="cargo-weight-chip">
             <IconOrders color={driverPrimitives.colors.gray500} size={15} />
-            <Text style={styles.specChipText}>{cargoWeightKg} kg</Text>
-          </View>
+            <Badge.Text style={styles.specChipText}>{cargoWeightKg} kg</Badge.Text>
+          </Badge>
         ) : null}
 
-        <View style={styles.specChip}>
+        <Badge action="muted" size="sm" style={styles.specChip}>
           <IconOrders color={driverPrimitives.colors.gray500} size={15} />
-          <Text numberOfLines={1} style={styles.specChipText}>
+          <Badge.Text numberOfLines={1} style={styles.specChipText}>
             {cargoSummary}
-          </Text>
-        </View>
-      </View>
+          </Badge.Text>
+        </Badge>
+      </HStack>
 
-      <View style={styles.cardDivider} />
+      <Divider style={styles.cardDivider} />
 
       {/* Customer Contact Row */}
-      <View style={styles.contactRow}>
-        <View style={styles.contactIconCircle}>
+      <HStack style={styles.contactRow}>
+        <Box style={styles.contactIconCircle}>
           <IconPhone color={driverPrimitives.colors.gray500} size={16} />
-        </View>
+        </Box>
 
-        <View style={styles.contactInfoCol}>
+        <VStack style={styles.contactInfoCol}>
           <Text style={styles.contactCaption}>{contactRoleLabel.toUpperCase()}</Text>
           <Text style={styles.contactValue}>{customerContact}</Text>
-        </View>
+        </VStack>
 
         <Pressable
           accessibilityHint="Gọi điện thoại cho người nhận hoặc thủ kho"
@@ -101,8 +107,8 @@ export function CargoAndContactCard({
           <IconPhone color={colors.neutral.surface} size={13} />
           <Text style={styles.contactCallBtnText}>Gọi</Text>
         </Pressable>
-      </View>
-    </View>
+      </HStack>
+    </Card>
   );
 }
 

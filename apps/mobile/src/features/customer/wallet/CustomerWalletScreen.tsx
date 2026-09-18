@@ -4,6 +4,22 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  Card,
+  HStack,
+  IconCheck,
+  IconChevron,
+  IconEye,
+  IconEyeOff,
+  IconQrPayment,
+  IconSecurityShield,
+  IconTxPayment,
+  IconTxRefund,
+  IconWallet,
+  ScreenScaffold,
+  Spinner,
+  VStack,
   colors,
   control,
   customerPalette,
@@ -16,16 +32,6 @@ import {
   leopardPalette,
   radius,
   spacing,
-  IconCheck,
-  IconChevron,
-  IconEye,
-  IconEyeOff,
-  IconQrPayment,
-  IconSecurityShield,
-  IconTxPayment,
-  IconTxRefund,
-  IconWallet,
-  ScreenScaffold,
   typeScale,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter, formatOrderReference, formatVndPrice } from '../orders/adapter';
@@ -230,21 +236,21 @@ export function CustomerWalletScreen({
         style={styles.scrollWrap}
       >
         {/* 1. Thẻ Tổng Ký Quỹ Thật (Escrow Pool Card) */}
-        <View style={styles.balanceCard}>
-          <View style={styles.cardTopRow}>
-            <View style={styles.cardHeaderBrand}>
+        <Card style={styles.balanceCard}>
+          <HStack style={styles.cardTopRow}>
+            <HStack style={styles.cardHeaderBrand}>
               <IconWallet color={customerPalette.surfaceWhite} size={16} />
               <Text style={styles.cardHeaderTitle}>Ký quỹ an toàn</Text>
-            </View>
-            <View style={styles.securityBadge}>
+            </HStack>
+            <Badge action="success" size="sm" style={styles.securityBadge}>
               <IconSecurityShield color={colors.success.text} size={14} />
-              <Text style={styles.securityBadgeText}>Bảo đảm 100%</Text>
-            </View>
-          </View>
+              <Badge.Text style={styles.securityBadgeText}>Bảo đảm 100%</Badge.Text>
+            </Badge>
+          </HStack>
 
-          <View style={styles.balanceBody}>
+          <VStack style={styles.balanceBody}>
             <Text style={styles.balanceEyebrow}>Tổng tiền ký quỹ theo đơn</Text>
-            <View style={styles.amountRow}>
+            <HStack style={styles.amountRow}>
               <Text style={styles.balanceAmount}>
                 {showBalance ? formatVndPrice(totalEscrowed) : '•••••••• ₫'}
               </Text>
@@ -267,24 +273,24 @@ export function CustomerWalletScreen({
                   <IconEyeOff color={customerPalette.surfaceWhite} size={18} />
                 )}
               </Pressable>
-            </View>
-          </View>
+            </HStack>
+          </VStack>
 
           {/* Card Meta Footer */}
-          <View style={styles.cardFooter}>
-            <View style={styles.cardFooterLeft}>
+          <HStack style={styles.cardFooter}>
+            <HStack style={styles.cardFooterLeft}>
               <IconQrPayment color={customerPalette.surfaceWhite} size={14} />
               <Text numberOfLines={1} style={styles.cardFooterNapas}>
                 Thanh toán an toàn qua VietQR
               </Text>
-            </View>
-            <View style={styles.cardFooterBadge}>
+            </HStack>
+            <Box style={styles.cardFooterBadge}>
               <Text numberOfLines={1} style={styles.cardFooterNumber}>
                 {escrowItems.length} giao dịch đơn
               </Text>
-            </View>
-          </View>
-        </View>
+            </Box>
+          </HStack>
+        </Card>
 
         {/* 2. Lịch Sử Ký Quỹ & Thanh Toán Theo Đơn */}
         <View style={styles.historySection}>
@@ -326,16 +332,20 @@ export function CustomerWalletScreen({
                     {tab.label}
                   </Text>
                   {count > 0 ? (
-                    <View style={[styles.filterBadge, active && styles.filterBadgeActive]}>
-                      <Text
+                    <Badge
+                      action={active ? 'info' : 'muted'}
+                      size="sm"
+                      style={[styles.filterBadge, active && styles.filterBadgeActive]}
+                    >
+                      <Badge.Text
                         style={[
                           styles.filterBadgeText,
                           active && styles.filterBadgeTextActive,
                         ]}
                       >
                         {count}
-                      </Text>
-                    </View>
+                      </Badge.Text>
+                    </Badge>
                   ) : null}
                 </Pressable>
               );
@@ -343,10 +353,10 @@ export function CustomerWalletScreen({
           </ScrollView>
 
           {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color={colors.brand.primary} size="small" />
+            <VStack space="xs" style={styles.loadingContainer}>
+              <Spinner color={colors.brand.primary} size="small" />
               <Text style={styles.loadingText}>Đang tải lịch sử ký quỹ...</Text>
-            </View>
+            </VStack>
           ) : isError ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyTitle}>Không thể tải dữ liệu</Text>

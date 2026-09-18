@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus, ProviderSource } from '@leopard/shared';
+import type { OrderStatus, PaymentStatus, ProviderSource, TrackingPoint } from '@leopard/shared';
 
 export type CustomerRoutePoint = Readonly<{
   id: string;
@@ -11,6 +11,8 @@ export type CustomerRouteView = Readonly<{
   stops: readonly CustomerRoutePoint[];
   destination: CustomerRoutePoint;
   distanceLabel: string;
+  routeCoords?: readonly LatLng[];
+  polyline?: string;
 }>;
 
 export type CustomerActionView = Readonly<{
@@ -181,6 +183,8 @@ export type CustomerTrackingView =
       driverLabel: string;
       lastUpdatedLabel: string;
       summary: string;
+      point?: TrackingPoint;
+      coords?: LatLng;
     }>
   | Readonly<{
       kind: 'stale' | 'reconnecting' | 'disconnected';
@@ -188,6 +192,8 @@ export type CustomerTrackingView =
       lastUpdatedLabel: string;
       message: string;
       summary: string;
+      point?: TrackingPoint;
+      coords?: LatLng;
     }>
   | Readonly<{ kind: 'map-error'; driverLabel: string; message: string }>
   | Readonly<{ kind: 'loading'; message: string }>;

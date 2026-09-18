@@ -45,7 +45,7 @@ describe('shared domain contracts', () => {
         'RETURNED',
       ],
       StopType: ['PICKUP', 'STOP', 'DROPOFF'],
-      MediaType: ['CARGO', 'DELIVERY_PROOF'],
+      MediaType: ['CARGO', 'PICKUP_PROOF', 'DELIVERY_PROOF'],
       PaymentStatus: ['UNPAID', 'QR_CREATED', 'PAID_MANUAL', 'FAILED'],
       ProviderSource: ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'],
       VehicleType: ['MOTORBIKE', 'VAN', 'TRUCK'],

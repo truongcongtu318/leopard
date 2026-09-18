@@ -79,5 +79,48 @@ describe('appendFileToFormData', () => {
         globalThis.fetch = originalFetch;
       }
     });
+
+    it('throws instead of appending an empty part when the image reads back empty', async () => {
+      const form = new FormData();
+      const originalFetch = globalThis.fetch;
+      // A zero-byte part is what the API rejects as an unsupported type, so it
+      // must never be sent: that surfaced a format error and hid the real cause.
+      globalThis.fetch = jest.fn<typeof fetch>().mockResolvedValue({
+        blob: () => Promise.resolve(new Blob([], { type: 'image/jpeg' })),
+      } as Response);
+
+      try {
+        await expect(
+          appendFileToFormData(form, 'file', {
+            uri: 'blob:http://localhost:8081/empty',
+            name: 'proof.jpg',
+            mimeType: 'image/jpeg',
+          }),
+        ).rejects.toThrow(/Không đọc được dữ liệu ảnh/);
+        expect(form.get('file')).toBeNull();
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it('throws when the image URI cannot be fetched at all', async () => {
+      const form = new FormData();
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = jest
+        .fn<typeof fetch>()
+        .mockRejectedValue(new Error('network down'));
+
+      try {
+        await expect(
+          appendFileToFormData(form, 'file', {
+            uri: 'blob:http://localhost:8081/gone',
+            name: 'proof.jpg',
+          }),
+        ).rejects.toThrow(/Không đọc được dữ liệu ảnh/);
+        expect(form.get('file')).toBeNull();
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
   });
 });

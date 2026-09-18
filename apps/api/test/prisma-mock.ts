@@ -52,6 +52,7 @@ export class InMemoryPrismaService {
   public invoices = new Map<string, Invoice>();
   public invoiceSequences = new Map<number, InvoiceSequence>();
   public withdrawalRequests = new Map<string, WithdrawalRequest>();
+  public driverDeposits = new Map<string, any>();
   public supportTickets = new Map<string, SupportTicket>();
   public orderReviews = new Map<string, OrderReview>();
   public orderMessages = new Map<string, any>();
@@ -601,7 +602,7 @@ export class InMemoryPrismaService {
       }
       return order;
     }),
-    findMany: jest.fn(async ({ where, skip = 0, take = 20, include, orderBy }: { where?: any; skip?: number; take?: number; include?: any; orderBy?: any } = {}) => {
+    findMany: jest.fn(async ({ where, skip = 0, take = 20, select, include, orderBy }: { where?: any; skip?: number; take?: number; select?: any; include?: any; orderBy?: any } = {}) => {
       let filtered = this.filterOrders(where);
 
       if (orderBy?.createdAt === 'asc') {
@@ -611,6 +612,21 @@ export class InMemoryPrismaService {
       }
 
       const pageItems = where?.id?.in ? filtered : (take !== undefined ? filtered.slice(skip, skip + take) : filtered.slice(skip));
+
+      if (select) {
+        return pageItems.map((order) => {
+          const res: any = {};
+          if (select.id) res.id = order.id;
+          if (select.priceVnd) res.priceVnd = order.priceVnd;
+          if (select.paymentIntents) {
+            const list = Array.from(this.paymentIntents.values())
+              .filter((p) => p.orderId === order.id)
+              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+            res.paymentIntents = select.paymentIntents.take ? list.slice(0, select.paymentIntents.take) : list;
+          }
+          return res;
+        });
+      }
 
       if (include) {
         return pageItems.map((order) => {
@@ -1197,6 +1213,55 @@ export class InMemoryPrismaService {
         else if (where.status.in) list = list.filter((r) => where.status.in.includes(r.status));
       }
       return list.length;
+    }),
+  };
+
+  driverDeposit = {
+    create: jest.fn(async ({ data }: { data: any }) => {
+      const id = data.id ?? `dd-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const deposit = {
+        id,
+        driverId: data.driverId,
+        amountVnd: data.amountVnd,
+        status: data.status ?? 'PENDING',
+        payosOrderCode: data.payosOrderCode,
+        qrPayload: data.qrPayload ?? null,
+        clientRequestId: data.clientRequestId ?? null,
+        completedAt: data.completedAt ?? null,
+        createdAt: data.createdAt ?? new Date(),
+        updatedAt: data.updatedAt ?? new Date(),
+      };
+      this.driverDeposits.set(id, deposit);
+      return deposit;
+    }),
+    findUnique: jest.fn(async ({ where }: { where: { id?: string; payosOrderCode?: bigint } }) => {
+      if (where.id) return this.driverDeposits.get(where.id) ?? null;
+      if (where.payosOrderCode !== undefined) {
+        return Array.from(this.driverDeposits.values()).find((d) => d.payosOrderCode === where.payosOrderCode) ?? null;
+      }
+      return null;
+    }),
+    findFirst: jest.fn(async ({ where }: { where?: any }) => {
+      let list = Array.from(this.driverDeposits.values());
+      if (where?.driverId) list = list.filter((d) => d.driverId === where.driverId);
+      if (where?.clientRequestId) list = list.filter((d) => d.clientRequestId === where.clientRequestId);
+      return list[0] ?? null;
+    }),
+    findMany: jest.fn(async ({ where }: { where?: any } = {}) => {
+      let list = Array.from(this.driverDeposits.values());
+      if (where?.driverId) list = list.filter((d) => d.driverId === where.driverId);
+      if (where?.status) {
+        if (typeof where.status === 'string') list = list.filter((d) => d.status === where.status);
+        else if (where.status.in) list = list.filter((d) => where.status.in.includes(d.status));
+      }
+      return list;
+    }),
+    update: jest.fn(async ({ where, data }: { where: { id: string }; data: any }) => {
+      const existing = this.driverDeposits.get(where.id);
+      if (!existing) throw new Error('Deposit not found');
+      const updated = { ...existing, ...data, updatedAt: new Date() };
+      this.driverDeposits.set(where.id, updated);
+      return updated;
     }),
   };
 

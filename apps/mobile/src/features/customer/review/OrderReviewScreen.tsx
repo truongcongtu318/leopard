@@ -3,17 +3,23 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
-  colors,
-  customerPalette,
-  leopardPalette,
-  spacing,
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
   FormField,
+  HStack,
   IconCheck,
   IconRoleDriver,
   IconStar,
   ScreenScaffold,
+  VStack,
+  colors,
+  customerPalette,
   httpClient,
+  leopardPalette,
+  spacing,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -111,11 +117,11 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {submitted ? (
-          <View style={styles.successOuter}>
-            <View style={styles.successInner}>
-              <View style={styles.successIconBox}>
+          <Card style={styles.successOuter}>
+            <VStack style={styles.successInner}>
+              <Box style={styles.successIconBox}>
                 <IconCheck color={leopardPalette.ecoGreen} size={32} strokeWidth={2.5} />
-              </View>
+              </Box>
               <Text style={styles.successTitle}>Cảm ơn bạn đã đánh giá!</Text>
               <Text style={styles.successMessage}>
                 Phản hồi của bạn đã được gửi đến tài xế và hệ thống điều phối LEOPARD.
@@ -124,25 +130,25 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
                 label="Quay lại chi tiết đơn hàng"
                 onPress={() => router.replace(orderId ? `/customer/orders/${orderId}` : '/customer/orders')}
               />
-            </View>
-          </View>
+            </VStack>
+          </Card>
         ) : (
           <>
             {/* ── Driver VIP Card (Double-Bezel: 24px outer, 18px inner) ── */}
-            <View style={styles.driverCardOuter}>
-              <View style={styles.driverCardInner}>
-                <View style={styles.avatarBox}>
+            <Card style={styles.driverCardOuter}>
+              <VStack style={styles.driverCardInner}>
+                <Box style={styles.avatarBox}>
                   <IconRoleDriver color={customerPalette.textSlateDark} size={26} />
-                </View>
+                </Box>
                 <Text style={styles.driverName}>{driverName}</Text>
                 {vehicleBadgeText ? (
-                  <View style={styles.plateBadge}>
-                    <Text style={styles.plateText}>{vehicleBadgeText}</Text>
-                  </View>
+                  <Badge action="muted" size="sm" style={styles.plateBadge}>
+                    <Badge.Text style={styles.plateText}>{vehicleBadgeText}</Badge.Text>
+                  </Badge>
                 ) : null}
 
                 {/* 1-5 Star SVG Rating (Touch targets >= 44x44px, Zero Emoji) */}
-                <View style={styles.starsRow}>
+                <HStack style={styles.starsRow}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Pressable
                       accessibilityLabel={`Đánh giá ${star} sao`}
@@ -159,7 +165,7 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
                       />
                     </Pressable>
                   ))}
-                </View>
+                </HStack>
                 <Text style={styles.ratingLabel}>
                   {rating === 5
                     ? 'Tuyệt vời!'
@@ -171,12 +177,12 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
                           ? 'Chưa hài lòng'
                           : 'Rất tệ'}
                 </Text>
-              </View>
-            </View>
+              </VStack>
+            </Card>
 
             {/* ── Quick Tags (Touch targets >= 44px) ───────────── */}
             <Text style={styles.sectionLabel}>ĐIỂM NỔI BẬT</Text>
-            <View style={styles.tagGrid}>
+            <HStack style={styles.tagGrid}>
               {feedbackTags.map((tag) => {
                 const isSelected = selectedTags.includes(tag);
                 return (
@@ -197,11 +203,11 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
                   </Pressable>
                 );
               })}
-            </View>
+            </HStack>
 
             {/* ── Tip Options (Touch targets >= 44px, Tabular Nums) ── */}
             <Text style={styles.sectionLabel}>TIP CHO TÀI XẾ (TÙY CHỌN)</Text>
-            <View style={styles.tipGrid}>
+            <HStack style={styles.tipGrid}>
               {tipOptions.map((tip) => {
                 const isSelected = selectedTip === tip;
                 return (
@@ -222,7 +228,7 @@ export function OrderReviewScreen(props?: OrderReviewScreenProps) {
                   </Pressable>
                 );
               })}
-            </View>
+            </HStack>
 
             {/* ── Comment Note ─────────────────────────────────── */}
             <FormField

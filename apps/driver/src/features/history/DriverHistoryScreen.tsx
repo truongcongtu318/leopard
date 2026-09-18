@@ -3,6 +3,11 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useRouter } from 'expo-router';
 
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconCameraProof,
   IconCheck,
   IconClose,
@@ -12,6 +17,7 @@ import {
   IconTrophy,
   ScreenScaffold,
   ScreenState,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -124,7 +130,7 @@ export function DriverHistoryScreen({
         ) : null}
 
         {/* ── 2. Date Filter Segmented Toolbar ── */}
-        <View accessibilityRole="toolbar" style={styles.segmentedControl}>
+        <HStack accessibilityRole="toolbar" style={styles.segmentedControl}>
           <Pressable
             accessibilityLabel="Lọc tất cả chuyến xe"
             accessibilityRole="button"
@@ -160,81 +166,82 @@ export function DriverHistoryScreen({
               Tuần này
             </Text>
           </Pressable>
-        </View>
+        </HStack>
 
         {/* ── 3. Trip Feed Cards ── */}
         {displayedList.length === 0 ? (
-          <View style={styles.emptyBox}>
+          <VStack style={styles.emptyBox}>
             <IconOrders color="#94A3B8" size={32} />
             <Text style={styles.emptyTitle}>Không có dữ liệu</Text>
             <Text style={styles.emptyMessage}>Không có chuyến nào khớp với bộ lọc ngày đã chọn.</Text>
-          </View>
+          </VStack>
         ) : (
-          <View style={styles.listContent}>
+          <VStack space="sm" style={styles.listContent}>
             {displayedList.map((item) => (
-              <Pressable
-                accessibilityLabel={`Chuyến xe ${item.reference}`}
-                accessibilityRole="button"
-                key={item.id}
-                onPress={() => router.push(`/orders/${item.id}`)}
-                style={({ pressed }) => [styles.tripCard, pressed ? styles.pressed : null]}
-              >
-                {/* Header: Reference & Payout */}
-                <View style={styles.tripHeaderRow}>
-                  <View style={styles.tripReferenceBadge}>
-                    <Text style={styles.tripReferenceText}>{item.reference}</Text>
-                  </View>
-                  <Text style={styles.tripPayoutText}>
-                    {item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
-                  </Text>
-                </View>
+              <Card key={item.id} style={styles.tripCard}>
+                <Pressable
+                  accessibilityLabel={`Chuyến xe ${item.reference}`}
+                  accessibilityRole="button"
+                  onPress={() => router.push(`/orders/${item.id}`)}
+                  style={({ pressed }) => (pressed ? styles.pressed : null)}
+                >
+                  {/* Header: Reference & Payout */}
+                  <HStack style={styles.tripHeaderRow}>
+                    <Badge action="muted" size="sm" style={styles.tripReferenceBadge}>
+                      <Badge.Text style={styles.tripReferenceText}>{item.reference}</Badge.Text>
+                    </Badge>
+                    <Text style={styles.tripPayoutText}>
+                      {item.payoutAmount > 0 ? `+${formatCurrency(item.payoutAmount)}` : '0 ₫'}
+                    </Text>
+                  </HStack>
 
-                {/* Route */}
-                <View style={styles.routeRow}>
-                  <Text numberOfLines={1} style={styles.routeOriginText}>
-                    {item.origin}
-                  </Text>
-                  <Text style={styles.routeArrowText}> → </Text>
-                  <Text numberOfLines={1} style={styles.routeDestText}>
-                    {item.destination}
-                  </Text>
-                </View>
+                  {/* Route */}
+                  <HStack style={styles.routeRow}>
+                    <Text numberOfLines={1} style={styles.routeOriginText}>
+                      {item.origin}
+                    </Text>
+                    <Text style={styles.routeArrowText}> → </Text>
+                    <Text numberOfLines={1} style={styles.routeDestText}>
+                      {item.destination}
+                    </Text>
+                  </HStack>
 
-                {/* Meta row & ePOD button */}
-                <View style={styles.tripFooterRow}>
-                  <View style={styles.tripMetaWrap}>
-                    <Text style={styles.distanceText}>{item.distanceLabel}</Text>
-                    <Text style={styles.metaDot}> · </Text>
-                    <Text style={styles.timeText}>{item.completedAtLabel}</Text>
-                    {item.vehicleLabel ? (
-                      <>
-                        <Text style={styles.metaDot}> · </Text>
-                        <Text style={styles.vehicleText}>{item.vehicleLabel}</Text>
-                      </>
+                  {/* Meta row & ePOD button */}
+                  <HStack style={styles.tripFooterRow}>
+                    <HStack style={styles.tripMetaWrap}>
+                      <Text style={styles.distanceText}>{item.distanceLabel}</Text>
+                      <Text style={styles.metaDot}> · </Text>
+                      <Text style={styles.timeText}>{item.completedAtLabel}</Text>
+                      {item.vehicleLabel ? (
+                        <>
+                          <Text style={styles.metaDot}> · </Text>
+                          <Text style={styles.vehicleText}>{item.vehicleLabel}</Text>
+                        </>
+                      ) : null}
+                    </HStack>
+
+                    {item.hasProof ? (
+                      <Pressable
+                        accessibilityLabel={`Xem ảnh e-POD của chuyến ${item.reference}`}
+                        accessibilityRole="button"
+                        hitSlop={8}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setSelectedEpodTrip(item);
+                        }}
+                        style={styles.proofBadgeBtn}
+                        testID={`btn-view-epod-${item.id}`}
+                      >
+                        <IconCheck color="#059669" size={11} strokeWidth={2.5} />
+                        <IconCameraProof color="#059669" size={12} />
+                        <Text style={styles.proofBadgeText}>Xem e-POD</Text>
+                      </Pressable>
                     ) : null}
-                  </View>
-
-                  {item.hasProof ? (
-                    <Pressable
-                      accessibilityLabel={`Xem ảnh e-POD của chuyến ${item.reference}`}
-                      accessibilityRole="button"
-                      hitSlop={8}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setSelectedEpodTrip(item);
-                      }}
-                      style={styles.proofBadgeBtn}
-                      testID={`btn-view-epod-${item.id}`}
-                    >
-                      <IconCheck color="#059669" size={11} strokeWidth={2.5} />
-                      <IconCameraProof color="#059669" size={12} />
-                      <Text style={styles.proofBadgeText}>Xem e-POD</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-              </Pressable>
+                  </HStack>
+                </Pressable>
+              </Card>
             ))}
-          </View>
+          </VStack>
         )}
       </ScrollView>
 

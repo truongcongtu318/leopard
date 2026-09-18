@@ -9,8 +9,13 @@ import {
 
 import {
   IconChevronLeft,
-  RealInteractiveMap,
+  IconRoute,
+  LeopardMapView,
   customerPalette,
+  haptic,
+  iosContinuousCurve,
+  radius,
+  resolveLocationCoords,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
@@ -26,6 +31,8 @@ export interface BookingRouteMapHeaderProps {
   stops?: readonly { id: string; label: string; coords?: { lat: number; lng: number } }[];
   routeCoords?: readonly { lat: number; lng: number }[];
   mapHeight?: number;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 export function BookingRouteMapHeader({
@@ -37,10 +44,22 @@ export function BookingRouteMapHeader({
   dropoffCoords,
   stops = [],
   routeCoords,
-  mapHeight = 210,
+  mapHeight = 250,
+  isExpanded = false,
+  onToggleExpand,
 }: BookingRouteMapHeaderProps) {
   const insets = useSafeInsets();
   const topInset = insets.top || 44;
+
+  const handleBack = () => {
+    haptic.light();
+    onBack();
+  };
+
+  const handleToggleExpand = () => {
+    haptic.selection();
+    onToggleExpand?.();
+  };
 
   // Nav bar opacity when scrolling past 100pt
   const navBgOpacity = scrollY
@@ -59,21 +78,27 @@ export function BookingRouteMapHeader({
       })
     : 0;
 
+  const effectivePickupCoords =
+    pickupCoords || (pickupAddress ? resolveLocationCoords(pickupAddress) : undefined);
+  const effectiveDropoffCoords =
+    dropoffCoords ||
+    (dropoffAddress ? resolveLocationCoords(dropoffAddress, effectivePickupCoords) : undefined);
+
   return (
     <View style={[styles.container, { height: mapHeight }]}>
-      {/* Dynamic Route Map Background */}
+      {/* Dynamic Route Map Background - FULLY INTERACTIVE */}
       <View style={[styles.mapWrap, { height: mapHeight }]}>
-        <RealInteractiveMap
+        <LeopardMapView
           destination={{
             label: dropoffAddress,
-            coords: dropoffCoords || { lat: 10.7325, lng: 106.7351 },
+            coords: effectiveDropoffCoords,
           }}
           height="100%"
-          interactive={false}
+          interactive={true}
           mode="route"
           origin={{
             label: pickupAddress,
-            coords: pickupCoords || { lat: 10.8421, lng: 106.6192 },
+            coords: effectivePickupCoords,
           }}
           routeCoords={routeCoords}
           stops={stops}
@@ -82,6 +107,7 @@ export function BookingRouteMapHeader({
 
       {/* Dynamic Navigation Bar overlay */}
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.navBarOverlay,
           { height: topInset + 44, opacity: navBgOpacity },
@@ -89,13 +115,14 @@ export function BookingRouteMapHeader({
       />
 
       {/* Floating Header Controls */}
-      <View style={[styles.headerBar, { top: topInset }]}>
+      <View pointerEvents="box-none" style={[styles.headerBar, { top: topInset }]}>
         <Pressable
           accessibilityLabel="Quay lại"
           accessibilityRole="button"
-          hitSlop={12}
-          onPress={onBack}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+          onPress={handleBack}
           style={({ pressed }) => [styles.circleGlassBtn, pressed && styles.btnPressed]}
+          testID="btn-booking-back"
         >
           <IconChevronLeft color={customerPalette.primary} size={22} />
         </Pressable>
@@ -106,8 +133,37 @@ export function BookingRouteMapHeader({
           </Text>
         </Animated.View>
 
-        <View style={styles.placeholderRight} />
+        {onToggleExpand ? (
+          <Pressable
+            accessibilityLabel={isExpanded ? 'Thu nhỏ bản đồ' : 'Xem toàn cảnh bản đồ'}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={handleToggleExpand}
+            style={({ pressed }) => [styles.circleGlassBtn, pressed && styles.btnPressed]}
+          >
+            <IconRoute color={customerPalette.primary} size={18} />
+          </Pressable>
+        ) : (
+          <View style={styles.placeholderRight} />
+        )}
       </View>
+
+      {/* Floating Interactive Badge at bottom-right of map */}
+      {onToggleExpand ? (
+        <View style={styles.bottomMapBadgeWrap}>
+          <Pressable
+            accessibilityLabel={isExpanded ? 'Thu nhỏ bản đồ' : 'Chạm để xem toàn cảnh bản đồ'}
+            accessibilityRole="button"
+            onPress={handleToggleExpand}
+            style={({ pressed }) => [styles.mapInteractivePill, pressed && styles.btnPressed]}
+          >
+            <IconRoute color={customerPalette.primary} size={13} />
+            <Text style={styles.mapInteractivePillText}>
+              {isExpanded ? 'Thu nhỏ ▾' : 'Toàn cảnh bản đồ ▴'}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -140,17 +196,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     zIndex: 20,
   },
   circleGlassBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.12)',
+    ...iosContinuousCurve,
   },
   btnPressed: {
     opacity: 0.85,
@@ -163,13 +222,34 @@ const styles = StyleSheet.create({
   },
   inlineTitle: {
     ...typeScale.headline,
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000000',
-    letterSpacing: -0.4,
+    color: customerPalette.textSlateDark,
   },
   placeholderRight: {
     width: 44,
     height: 44,
+  },
+  bottomMapBadgeWrap: {
+    position: 'absolute',
+    bottom: spacing.md + 14,
+    right: spacing.md,
+    zIndex: 15,
+  },
+  mapInteractivePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
+    ...iosContinuousCurve,
+  },
+  mapInteractivePillText: {
+    ...typeScale.caption2,
+    fontWeight: '700',
+    color: customerPalette.primary,
   },
 });

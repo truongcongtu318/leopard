@@ -6,6 +6,33 @@ import type { DriverAssignedDetailView, DriverDetailView } from './model';
 
 const mockRouterBack = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockRouterBack }) }));
+// The proof flow opens the real device camera and stamps the real GPS fix.
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: async () => ({ granted: true }),
+  requestMediaLibraryPermissionsAsync: async () => ({ granted: true }),
+  launchCameraAsync: async () => ({
+    canceled: false,
+    assets: [
+      {
+        uri: 'file:///var/mobile/audit-proof.jpg',
+        fileName: 'audit-proof.jpg',
+        mimeType: 'image/jpeg',
+        fileSize: 180_000,
+      },
+    ],
+  }),
+  launchImageLibraryAsync: async () => ({ canceled: true }),
+  CameraType: { back: 'back' },
+  MediaTypeOptions: { Images: 'Images' },
+}));
+jest.mock('expo-location', () => ({
+  Accuracy: { High: 6, Balanced: 3 },
+  requestForegroundPermissionsAsync: async () => ({ status: 'granted' }),
+  getCurrentPositionAsync: async () => ({
+    coords: { latitude: 10.7626, longitude: 106.6602 },
+  }),
+  watchPositionAsync: async () => ({ remove: () => {} }),
+}));
 jest.mock('./adapter', () => ({
   createDriverHttpAdapter: jest.fn(),
   createDriverProofAdapter: jest.fn(),
@@ -71,17 +98,76 @@ describe('DriverOrderDetailRuntime audit: asynchronous user actions', () => {
 
   it('offers DELIVERED immediately after proof upload without requiring refresh', async () => {
     getOrderDetailView.mockResolvedValue(createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED'));
+    // The transition runs only after the upload is accepted, so its response is
+    // what the driver ends up seeing.
+    executeLifecycle.mockResolvedValue(createDriverDetailFixture('D-DETAIL-TERMINAL-DELIVERED'));
     const screen = await mount();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Thêm ảnh xác nhận giao hàng' })).toBeTruthy());
+    // Swipe (or press) opens the camera, then the review sheet confirms the upload.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Thêm ảnh xác nhận giao hàng' })).toBeTruthy(),
+    );
     await fireEvent.press(screen.getByRole('button', { name: 'Thêm ảnh xác nhận giao hàng' }));
-    await waitFor(() => expect(client.getQueryData(['driver', 'order', orderId])).toMatchObject({
-      proof: { kind: 'persisted', mediaId: 'audit-media-001' },
-    }));
-    await waitFor(() => expect(screen.getByText('Ảnh xác nhận đã tải lên')).toBeTruthy());
-    expect(uploadProof).toHaveBeenCalledWith(`cmd-select-proof-${orderId}`);
-    expect(client.getQueryData(['driver', 'order', orderId])).toMatchObject({
-      primaryTask: { kind: 'advance-lifecycle', command: { targetStatus: 'DELIVERED' } },
-    });
+    await waitFor(() => expect(screen.getByTestId('proof-capture-sheet')).toBeTruthy());
+    await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
+
+    // Uploaded exactly once, with the captured file, and never via a second
+    // picker pass.
+    await waitFor(() => expect(uploadProof).toHaveBeenCalledTimes(1));
+    expect(uploadProof).toHaveBeenCalledWith(`cmd-select-proof-${orderId}`, expect.anything());
+    expect(selectProof).not.toHaveBeenCalled();
+
+    // The upload is what promotes the order to the delivery command, and that
+    // command is the one executed — not the stale proof task.
+    await waitFor(() => expect(executeLifecycle).toHaveBeenCalledWith(`cmd-deliver-${orderId}`));
+  });
+
+  it('uploads pickup evidence to the pickup endpoint and then advances to IN_TRANSIT', async () => {
+    const baseFixture = createDriverDetailFixture('D-DETAIL-PICKING-UP') as DriverAssignedDetailView;
+    // The real adapter swaps the transit task for a pickup capture while the
+    // order sits at PICKING_UP. Reproduce that shape exactly.
+    const pickupCaptureView: DriverDetailView = {
+      ...baseFixture,
+      proof: {
+        kind: 'required',
+        label: 'Cần ảnh xác nhận đã lấy hàng',
+        message: 'Chụp ảnh hàng hóa tại điểm lấy.',
+        fileLabel: null,
+      },
+      primaryTask: {
+        kind: 'upload-proof',
+        command: {
+          id: `cmd-select-pickup-proof-${orderId}`,
+          orderId,
+          label: 'Chụp ảnh xác nhận đã lấy hàng',
+        },
+      },
+      offeredLifecycleCommand: null,
+    };
+    getOrderDetailView.mockResolvedValue(pickupCaptureView);
+    executeLifecycle.mockResolvedValue(createDriverDetailFixture('D-DETAIL-IN-TRANSIT'));
+
+    const screen = await mount();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Chụp ảnh xác nhận đã lấy hàng' }),
+      ).toBeTruthy(),
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Chụp ảnh xác nhận đã lấy hàng' }));
+    await waitFor(() => expect(screen.getByTestId('proof-capture-sheet')).toBeTruthy());
+    await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
+
+    // The pickup photo must reach the pickup command, never the delivery one.
+    await waitFor(() => expect(uploadProof).toHaveBeenCalledTimes(1));
+    expect(uploadProof).toHaveBeenCalledWith(
+      `cmd-select-pickup-proof-${orderId}`,
+      expect.anything(),
+    );
+
+    // And the leg that opens next is delivery, not DELIVERED.
+    await waitFor(() =>
+      expect(executeLifecycle).toHaveBeenCalledWith(`cmd-transit-${orderId}`),
+    );
+    expect(executeLifecycle).not.toHaveBeenCalledWith(`cmd-deliver-${orderId}`);
   });
 
   it('sends only one lifecycle mutation while the first request is pending', async () => {

@@ -15,15 +15,15 @@ import { useSafeInsets } from './safe-insets';
 
 import {
   appendFileToFormData,
+  colors,
   customerPalette,
   decodePolyline,
   httpClient,
-  resolveLocationCoords,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from '../orders/adapter';
-import { calculateBookingFare } from './booking-pricing';
+import { calculateBookingFare, type VehicleTypeId } from './booking-pricing';
 import {
   type BookingDraftState,
   type CargoCategory,
@@ -50,12 +50,16 @@ export interface BookingScreenProps {
   initialDropoff?: string;
   initialDropoffLat?: number;
   initialDropoffLng?: number;
-  distanceKm?: number;
-  etaMinutes?: number;
+  initialVehicleId?: VehicleTypeId;
   initialFocusTarget?: 'pickup' | 'dropoff';
   onBack?: () => void;
-  onOrderCreated?: (orderId: string, totalFare: number, paymentMethod?: PaymentMethod) => void;
-  onOpenSearchAddress?: () => void;
+  onOrderCreated?: (
+    orderId: string,
+    totalFare: number,
+    paymentMethod?: PaymentMethod,
+    vehicleType?: string,
+    vehicleName?: string,
+  ) => void;
 }
 
 function resolveVehicleOrderType(vehicleId: string): {
@@ -78,38 +82,32 @@ function resolveVehicleOrderType(vehicleId: string): {
 }
 
 export function BookingScreen({
-  initialPickup = 'Kho VLXD Đại Phát - 120 Song Hành, Q.12',
-  initialPickupLat = 10.8421,
-  initialPickupLng = 106.6192,
-  initialDropoff = 'Công trình Jamona City, Đào Trí, Q.7',
-  initialDropoffLat = 10.7325,
-  initialDropoffLng = 106.7351,
-  distanceKm = 12.5,
-  etaMinutes = 35,
+  initialPickup = '',
+  initialPickupLat,
+  initialPickupLng,
+  initialDropoff = '',
+  initialDropoffLat,
+  initialDropoffLng,
+  initialVehicleId,
   initialFocusTarget,
   onBack,
   onOrderCreated,
-  onOpenSearchAddress,
 }: BookingScreenProps) {
   const insets = useSafeInsets();
 
   // Initialize store draft synchronously
   const [draft, setDraft] = useState<BookingDraftState>(() => {
-    const existing = bookingDraftStore.getDraft();
-    const resolvedPickup = existing.pickupAddress || initialPickup;
-    const resolvedDropoff = existing.dropoffAddress || initialDropoff;
-    const resolvedName = existing.receiverName || 'Anh Tuấn';
-    const resolvedPhone = existing.receiverPhone || '90 123 4567';
+    // Fresh initialization from props: do not preserve stale address from past store sessions if initial is empty
+    const resolvedPickup = initialPickup ?? '';
+    const resolvedDropoff = initialDropoff ?? '';
     bookingDraftStore.initDraft({
-      ...existing,
       pickupAddress: resolvedPickup,
-      pickupLat: initialPickupLat,
-      pickupLng: initialPickupLng,
+      ...(initialPickupLat !== undefined ? { pickupLat: initialPickupLat } : { pickupLat: undefined }),
+      ...(initialPickupLng !== undefined ? { pickupLng: initialPickupLng } : { pickupLng: undefined }),
       dropoffAddress: resolvedDropoff,
-      dropoffLat: initialDropoffLat,
-      dropoffLng: initialDropoffLng,
-      receiverName: resolvedName,
-      receiverPhone: resolvedPhone,
+      ...(initialDropoffLat !== undefined ? { dropoffLat: initialDropoffLat } : { dropoffLat: undefined }),
+      ...(initialDropoffLng !== undefined ? { dropoffLng: initialDropoffLng } : { dropoffLng: undefined }),
+      ...(initialVehicleId ? { vehicleId: initialVehicleId } : {}),
     });
     return bookingDraftStore.getDraft();
   });
@@ -119,42 +117,86 @@ export function BookingScreen({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [liveRouteCoords, setLiveRouteCoords] = useState<readonly { lat: number; lng: number }[] | undefined>(undefined);
+  /**
+   * Real distance/duration from the routing backend. Null until the estimate
+   * resolves for a complete route, and null again if it fails — the UI shows
+   * nothing rather than a made-up kilometre figure.
+   */
+  const [routeEstimate, setRouteEstimate] = useState<
+    Readonly<{ distanceKm: number; etaMinutes: number }> | null
+  >(null);
+  const [isEstimatingRoute, setIsEstimatingRoute] = useState(false);
 
-  // Subscribe to store updates
+  // Subscribe to store updates and clean up on unmount
   useEffect(() => {
     const unsub = bookingDraftStore.subscribe(() => {
       setDraft({ ...bookingDraftStore.getDraft() });
     });
     return () => {
       unsub();
+      bookingDraftStore.reset();
     };
   }, []);
+
+  useEffect(() => {
+    if (initialVehicleId && initialVehicleId !== draft.vehicleId) {
+      bookingDraftStore.updateDraft({ vehicleId: initialVehicleId });
+    }
+  }, [initialVehicleId]);
 
   // Fetch real street routing via backend estimate API
   useEffect(() => {
     let mounted = true;
     async function fetchRouteEstimate() {
       if (!draft.pickupAddress || !draft.dropoffAddress) return;
-      try {
-        const pickupCoords =
-          (draft.pickupLat && draft.pickupLng ? { lat: draft.pickupLat, lng: draft.pickupLng } : undefined) ||
-          resolveLocationCoords(draft.pickupAddress);
-        const dropoffCoords =
-          (draft.dropoffLat && draft.dropoffLng ? { lat: draft.dropoffLat, lng: draft.dropoffLng } : undefined) ||
-          resolveLocationCoords(draft.dropoffAddress, pickupCoords);
+      // Real coordinates are required. Guessing them from an address dictionary
+      // sent the estimate to a fabricated point, so the returned distance and
+      // fare described a route the customer never chose.
+      const pickupCoords =
+        draft.pickupLat !== undefined && draft.pickupLng !== undefined
+          ? { lat: draft.pickupLat, lng: draft.pickupLng }
+          : undefined;
+      const dropoffCoords =
+        draft.dropoffLat !== undefined && draft.dropoffLng !== undefined
+          ? { lat: draft.dropoffLat, lng: draft.dropoffLng }
+          : undefined;
 
+      if (!pickupCoords || !dropoffCoords) {
+        if (mounted) {
+          setRouteEstimate(null);
+          setLiveRouteCoords(undefined);
+          setIsEstimatingRoute(false);
+        }
+        return;
+      }
+
+      if (mounted) setIsEstimatingRoute(true);
+
+      try {
         const payload = {
-          pickup: draft.pickupAddress,
-          pickupCoords,
+          pickup: {
+            type: 'PICKUP',
+            address: draft.pickupAddress.trim(),
+            lat: pickupCoords.lat,
+            lng: pickupCoords.lng,
+          },
           stops: draft.stops
-            .filter((s) => s.address.trim().length > 0)
+            .filter(
+              (s) =>
+                s.address.trim().length > 0 && s.lat !== undefined && s.lng !== undefined,
+            )
             .map((s) => ({
-              id: s.id,
-              value: s.address,
-              coords: s.lat && s.lng ? { lat: s.lat, lng: s.lng } : resolveLocationCoords(s.address, pickupCoords),
+              type: 'STOP',
+              address: s.address.trim(),
+              lat: s.lat as number,
+              lng: s.lng as number,
             })),
-          dropoff: draft.dropoffAddress,
-          dropoffCoords,
+          dropoff: {
+            type: 'DROPOFF',
+            address: draft.dropoffAddress.trim(),
+            lat: dropoffCoords.lat,
+            lng: dropoffCoords.lng,
+          },
           vehicleType: resolveVehicleOrderType(draft.vehicleId).vehicleType,
           cargoWeightKg: parseInt(resolveVehicleOrderType(draft.vehicleId).cargoWeight, 10) || 1250,
         };
@@ -167,25 +209,47 @@ export function BookingScreen({
           }>;
         }>('/orders/estimate', payload);
 
-        console.log('[Routing API] Backend Estimate Response:', response);
-        if (mounted && response?.routes?.[0]?.polyline) {
-          const rawPolyline = response.routes[0].polyline;
+        if (!mounted) return;
+
+        const route = response?.routes?.[0];
+
+        // Distance and duration now drive the fare and the ETA line, so they
+        // must come from this response rather than a constant.
+        if (route && typeof route.distanceM === 'number' && route.distanceM > 0) {
+          setRouteEstimate({
+            distanceKm: route.distanceM / 1000,
+            etaMinutes:
+              typeof route.durationS === 'number' && route.durationS > 0
+                ? Math.max(1, Math.round(route.durationS / 60))
+                : 0,
+          });
+        } else {
+          setRouteEstimate(null);
+        }
+
+        if (route?.polyline) {
+          const rawPolyline = route.polyline;
           try {
-            const decoded = decodePolyline(rawPolyline.trim(), 'POLYLINE5');
-            console.log('[Routing API] Decoded Coordinates count (POLYLINE5):', decoded.length);
-            setLiveRouteCoords(decoded);
+            setLiveRouteCoords(decodePolyline(rawPolyline.trim(), 'POLYLINE5'));
           } catch {
             try {
-              const decoded = decodePolyline(rawPolyline.trim(), 'POLYLINE6');
-              console.log('[Routing API] Decoded Coordinates count (POLYLINE6):', decoded.length);
-              setLiveRouteCoords(decoded);
-            } catch (err) {
-              console.warn('[Routing API] Polyline decode error:', err);
+              setLiveRouteCoords(decodePolyline(rawPolyline.trim(), 'POLYLINE6'));
+            } catch {
+              // A malformed polyline is dropped rather than replaced with a
+              // straight line that pretends to be the real road route.
+              setLiveRouteCoords(undefined);
             }
           }
+        } else {
+          setLiveRouteCoords(undefined);
         }
-      } catch (err) {
-        console.warn('[Routing API] Route estimate fetch error:', err);
+      } catch {
+        if (mounted) {
+          setRouteEstimate(null);
+          setLiveRouteCoords(undefined);
+        }
+      } finally {
+        if (mounted) setIsEstimatingRoute(false);
       }
     }
     void fetchRouteEstimate();
@@ -240,16 +304,27 @@ export function BookingScreen({
     ]).start();
   }, [entranceFade, entranceScale]);
 
-  // Live Pricing Calculation
+  // Live pricing from the real routed distance. Until the estimate resolves the
+  // distance is unknown, so the fare is withheld instead of quoting a made-up
+  // number the customer would then be charged against.
+  const estimatedDistanceKm = routeEstimate?.distanceKm;
+  const hasFare = estimatedDistanceKm !== undefined && estimatedDistanceKm > 0;
+
   const pricingBreakdown = useMemo(() => {
     return calculateBookingFare({
       vehicleId: draft.vehicleId,
-      distanceKm,
+      distanceKm: estimatedDistanceKm ?? 0,
       stopCount: draft.stops.length,
       hasLoadingSupport: draft.hasLoadingSupport,
       hasVatInvoice: draft.hasVatInvoice,
     });
-  }, [draft.vehicleId, distanceKm, draft.stops.length, draft.hasLoadingSupport, draft.hasVatInvoice]);
+  }, [
+    draft.vehicleId,
+    estimatedDistanceKm,
+    draft.stops.length,
+    draft.hasLoadingSupport,
+    draft.hasVatInvoice,
+  ]);
 
   // Validation
   const validation = useMemo(() => {
@@ -264,8 +339,9 @@ export function BookingScreen({
           if (onBack) onBack();
         },
       });
-    } else if (onBack) {
-      onBack();
+    } else {
+      bookingDraftStore.reset();
+      if (onBack) onBack();
     }
   };
 
@@ -297,12 +373,16 @@ export function BookingScreen({
 
     try {
       const port = createCustomerHttpAdapter();
+      // Only real, customer-chosen coordinates are submitted. Falling back to a
+      // dictionary guess would place the order at a location nobody selected.
       const pickupCoords =
-        (draft.pickupLat && draft.pickupLng ? { lat: draft.pickupLat, lng: draft.pickupLng } : undefined) ||
-        resolveLocationCoords(draft.pickupAddress);
+        draft.pickupLat !== undefined && draft.pickupLng !== undefined
+          ? { lat: draft.pickupLat, lng: draft.pickupLng }
+          : undefined;
       const dropoffCoords =
-        (draft.dropoffLat && draft.dropoffLng ? { lat: draft.dropoffLat, lng: draft.dropoffLng } : undefined) ||
-        resolveLocationCoords(draft.dropoffAddress, pickupCoords);
+        draft.dropoffLat !== undefined && draft.dropoffLng !== undefined
+          ? { lat: draft.dropoffLat, lng: draft.dropoffLng }
+          : undefined;
 
       const formPayload = {
         pickup: draft.pickupAddress,
@@ -312,7 +392,10 @@ export function BookingScreen({
           .map((s) => ({
             id: s.id,
             value: s.address,
-            coords: s.lat && s.lng ? { lat: s.lat, lng: s.lng } : resolveLocationCoords(s.address, pickupCoords),
+            coords:
+              s.lat !== undefined && s.lng !== undefined
+                ? { lat: s.lat, lng: s.lng }
+                : undefined,
           })),
         dropoff: draft.dropoffAddress,
         dropoffCoords,
@@ -390,7 +473,13 @@ export function BookingScreen({
     }
 
     if (onOrderCreated) {
-      onOrderCreated(orderId, finalAmount, draft.paymentMethod);
+      onOrderCreated(
+        orderId,
+        finalAmount,
+        draft.paymentMethod,
+        vehicleType,
+        pricingBreakdown.vehicleName,
+      );
     }
   };
 
@@ -410,8 +499,12 @@ export function BookingScreen({
       >
         {/* Animated ScrollView */}
         <Animated.ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 110 + Math.max(insets.bottom, spacing.md) },
+          ]}
           contentInsetAdjustmentBehavior="never"
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -447,11 +540,11 @@ export function BookingScreen({
 
           {/* Section 1: Lộ trình với Dropdown Overlay đè lên component bên dưới */}
           <BookingRouteSection
-            distanceKm={distanceKm}
+            distanceKm={estimatedDistanceKm}
             dropoffAddress={draft.dropoffAddress}
-            etaMinutes={etaMinutes}
+            etaMinutes={routeEstimate?.etaMinutes}
+            isEstimating={isEstimatingRoute}
             onAddStop={handleAddStop}
-            onPickOnMap={onOpenSearchAddress}
             onRemoveStop={handleRemoveStop}
             onSearchStateChange={(isSearching) => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -483,71 +576,66 @@ export function BookingScreen({
             stops={draft.stops}
           />
 
-          {/* Khi đang nhập/tìm địa chỉ: ẨN hoàn toàn các section bên dưới để overlay chiếm trọn màn hình */}
-          {!isSearchingAddress && (
-            <>
-              {/* Section 2: Loại xe */}
-              <BookingVehicleSection
-                distanceKm={distanceKm}
-                onSelectVehicle={(vehicleId) => bookingDraftStore.updateDraft({ vehicleId })}
-                selectedVehicleId={draft.vehicleId}
-              />
+          {/* Section 2: Loại xe */}
+          <BookingVehicleSection
+            distanceKm={estimatedDistanceKm}
+            onSelectVehicle={(vehicleId) => bookingDraftStore.updateDraft({ vehicleId })}
+            selectedVehicleId={draft.vehicleId}
+          />
 
-              {/* Section 3: Người nhận */}
-              <BookingReceiverSection
-                nameError={validation.errors.receiverName}
-                onChangeName={(name) => bookingDraftStore.updateDraft({ receiverName: name })}
-                onChangePhone={(phone) => bookingDraftStore.updateDraft({ receiverPhone: phone })}
-                phoneError={validation.errors.receiverPhone}
-                receiverName={draft.receiverName}
-                receiverPhone={draft.receiverPhone}
-              />
+          {/* Section 3: Người nhận */}
+          <BookingReceiverSection
+            nameError={validation.errors.receiverName}
+            onChangeName={(name) => bookingDraftStore.updateDraft({ receiverName: name })}
+            onChangePhone={(phone) => bookingDraftStore.updateDraft({ receiverPhone: phone })}
+            phoneError={validation.errors.receiverPhone}
+            receiverName={draft.receiverName}
+            receiverPhone={draft.receiverPhone}
+          />
 
-              {/* Section 4: Hàng hóa */}
-              <BookingCargoSection
-                cargoImages={draft.cargoImages}
-                cargoNote={draft.cargoNote}
-                onAddImage={(uri) =>
-                  bookingDraftStore.updateDraft({ cargoImages: [...draft.cargoImages, uri] })
-                }
-                onChangeNote={(note) => bookingDraftStore.updateDraft({ cargoNote: note })}
-                onRemoveImage={(idx) =>
-                  bookingDraftStore.updateDraft({
-                    cargoImages: draft.cargoImages.filter((_, i) => i !== idx),
-                  })
-                }
-                onSelectCategory={(category: CargoCategory) =>
-                  bookingDraftStore.updateDraft({ cargoCategory: category })
-                }
-                selectedCategory={draft.cargoCategory}
-              />
+          {/* Section 4: Hàng hóa */}
+          <BookingCargoSection
+            cargoImages={draft.cargoImages}
+            cargoNote={draft.cargoNote}
+            onAddImage={(uri) =>
+              bookingDraftStore.updateDraft({ cargoImages: [...draft.cargoImages, uri] })
+            }
+            onChangeNote={(note) => bookingDraftStore.updateDraft({ cargoNote: note })}
+            onRemoveImage={(idx) =>
+              bookingDraftStore.updateDraft({
+                cargoImages: draft.cargoImages.filter((_, i) => i !== idx),
+              })
+            }
+            onSelectCategory={(category: CargoCategory) =>
+              bookingDraftStore.updateDraft({ cargoCategory: category })
+            }
+            selectedCategory={draft.cargoCategory}
+          />
 
-              {/* Section 5: Dịch vụ thêm */}
-              <BookingServicesSection
-                hasLoadingSupport={draft.hasLoadingSupport}
-                hasVatInvoice={draft.hasVatInvoice}
-                onChangeVatField={(field, value) => bookingDraftStore.updateDraft({ [field]: value })}
-                onToggleLoading={(value) => bookingDraftStore.updateDraft({ hasLoadingSupport: value })}
-                onToggleVat={(value) => bookingDraftStore.updateDraft({ hasVatInvoice: value })}
-                vatCompany={draft.vatCompany}
-                vatEmail={draft.vatEmail}
-                vatErrors={{
-                  company: validation.errors.vatCompany,
-                  taxId: validation.errors.vatTaxId,
-                  email: validation.errors.vatEmail,
-                }}
-                vatTaxId={draft.vatTaxId}
-              />
+          {/* Section 5: Dịch vụ thêm */}
+          <BookingServicesSection
+            hasLoadingSupport={draft.hasLoadingSupport}
+            hasVatInvoice={draft.hasVatInvoice}
+            onChangeVatField={(field, value) => bookingDraftStore.updateDraft({ [field]: value })}
+            onToggleLoading={(value) => bookingDraftStore.updateDraft({ hasLoadingSupport: value })}
+            onToggleVat={(value) => bookingDraftStore.updateDraft({ hasVatInvoice: value })}
+            vatCompany={draft.vatCompany}
+            vatEmail={draft.vatEmail}
+            vatErrors={{
+              company: validation.errors.vatCompany,
+              taxId: validation.errors.vatTaxId,
+              email: validation.errors.vatEmail,
+            }}
+            vatTaxId={draft.vatTaxId}
+          />
 
-              {/* Section 6: Phương thức thanh toán */}
-              <BookingPaymentSection
-                onSelectMethod={(method: PaymentMethod) =>
-                  bookingDraftStore.updateDraft({ paymentMethod: method })
-                }
-                selectedMethod={draft.paymentMethod}
-              />
-            </>
-          )}
+          {/* Section 6: Phương thức thanh toán */}
+          <BookingPaymentSection
+            onSelectMethod={(method: PaymentMethod) =>
+              bookingDraftStore.updateDraft({ paymentMethod: method })
+            }
+            selectedMethod={draft.paymentMethod}
+          />
         </Animated.ScrollView>
 
         {/* Keyboard Toolbar when typing */}
@@ -569,7 +657,8 @@ export function BookingScreen({
         {!isKeyboardVisible && !isSearchingAddress && (
           <BookingFixedBottomBar
             isLoading={isSubmitting}
-            isValid={validation.isValid}
+            hasFare={hasFare}
+            isValid={validation.isValid && hasFare}
             onPressBook={handleCreateOrder}
             onPressDetails={() => setShowPriceDetail(true)}
             totalFare={pricingBreakdown.totalFare}
@@ -579,7 +668,7 @@ export function BookingScreen({
         {/* Price Detail Presentation Sheet */}
         <PriceDetailModal
           breakdown={pricingBreakdown}
-          distanceKm={distanceKm}
+          distanceKm={estimatedDistanceKm}
           onClose={() => setShowPriceDetail(false)}
           visible={showPriceDetail}
         />
@@ -591,28 +680,26 @@ export function BookingScreen({
 const styles = StyleSheet.create({
   rootView: {
     flex: 1,
-    backgroundColor: '#F2F2F7', // Apple systemGroupedBackground
+    backgroundColor: customerPalette.canvas,
   },
   scrollContent: {
-    paddingBottom: 60,
+    flexGrow: 1,
   },
   keyboardToolbar: {
     height: 44,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: customerPalette.surfaceWhite,
     borderTopWidth: 0.5,
-    borderTopColor: '#C6C6C8',
+    borderTopColor: colors.neutral.border,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
   },
   keyboardDoneBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.sm,
   },
   keyboardDoneText: {
-    ...typeScale.body,
-    fontSize: 16,
-    fontWeight: '600',
+    ...typeScale.headline,
     color: customerPalette.primary,
   },
 });

@@ -88,9 +88,12 @@ export default function CustomerHomePage() {
                 ? { lat: detail.order.route.destination.coords.lat, lng: detail.order.route.destination.coords.lng }
                 : undefined,
               cargoNote: detail.order.cargo.note ?? undefined,
+              driverName: detail.order.assignedDriver?.name ?? undefined,
+              plate: detail.order.assignedDriver?.licensePlate ?? undefined,
               etaMinutes: isFinished
                 ? undefined
                 : Math.max(1, Math.round(detail.order.etaDurationSeconds / 60)),
+              routeCoords: detail.order.route.routeCoords,
             });
           }
         } else if (mounted) {
@@ -382,13 +385,21 @@ export default function CustomerHomePage() {
       onOpenProfile={() => router.push('/customer/profile')}
       onOpenQrScan={() => router.push('/customer/wallet')}
       onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
-      onPressSearchAddress={() => router.push('/customer/booking')}
-      onQuickBook={(pickup, dropoff, dropoffCoords, pickupCoords) => {
+      onPressSearchAddress={(fleetVehicleId) => {
+        router.push({
+          pathname: '/customer/booking',
+          params: {
+            ...(fleetVehicleId ? { vehicleId: fleetVehicleId } : {}),
+          },
+        });
+      }}
+      onQuickBook={(pickup, dropoff, dropoffCoords, pickupCoords, fleetVehicleId) => {
         router.push({
           pathname: '/customer/booking',
           params: {
             pickup,
             dropoff,
+            ...(fleetVehicleId ? { vehicleId: fleetVehicleId } : {}),
             ...(pickupCoords
               ? {
                   pickupLat: String(pickupCoords.lat),
@@ -405,8 +416,8 @@ export default function CustomerHomePage() {
         });
       }}
       onRegisterDriver={() => router.push('/(public)/driver-register')}
-      onSelectVehicleAndBook={(vehicleId) => {
-        setSelectedVehicleCategory(vehicleId);
+      onSelectVehicleAndBook={(vehicleCategory, fleetVehicleId) => {
+        setSelectedVehicleCategory(vehicleCategory);
       }}
       onSwitchRole={handleSwitchRole}
       onTopUpWallet={() => router.push('/customer/wallet')}

@@ -13,7 +13,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { typeScale, httpClient, colors, customerPalette, leopardPalette } from '@leopard/mobile-core';
-import { IconLocationPin, RealInteractiveMap, resolveLocationCoords, VIETNAM_LOCATION_DICT, type MapCoordinate } from '@leopard/mobile-core';
+import {
+  IconLocationPin,
+  LeopardMapView,
+  resolveLocationCoords,
+  UNKNOWN_LOCATION_ANCHOR,
+  VIETNAM_LOCATION_DICT,
+  type MapCoordinate,
+} from '@leopard/mobile-core';
 
 function formatVietnamesePhone(phone?: string | null): string {
   if (!phone) return '';
@@ -160,48 +167,6 @@ export const POPULAR_MAP_SUGGESTIONS: readonly AddressSuggestion[] = [
     address: 'Chạm để tự động xác định địa chỉ chính xác qua GPS',
     lat: 0,
     lng: 0,
-  },
-  {
-    id: 'popular-tsn',
-    label: 'Sân bay Quốc tế Tân Sơn Nhất',
-    address: 'Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
-    lat: 10.8185,
-    lng: 106.6588,
-  },
-  {
-    id: 'popular-benthanh',
-    label: 'Chợ Bến Thành',
-    address: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-    lat: 10.7725,
-    lng: 106.698,
-  },
-  {
-    id: 'popular-landmark81',
-    label: 'Tòa nhà Landmark 81',
-    address: '720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh',
-    lat: 10.7954,
-    lng: 106.722,
-  },
-  {
-    id: 'popular-tanbinh',
-    label: 'Kho Hàng Tân Bình',
-    address: 'Kho VLXD Tân Bình, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
-    lat: 10.795,
-    lng: 106.652,
-  },
-  {
-    id: 'popular-catlai',
-    label: 'Cảng Cát Lái',
-    address: 'Đường Nguyễn Thị Định, Phường Cát Lái, TP. Thủ Đức, TP. Hồ Chí Minh',
-    lat: 10.764,
-    lng: 106.796,
-  },
-  {
-    id: 'popular-bxmd',
-    label: 'Bến Xe Miền Đông',
-    address: '292 Đinh Bộ Lĩnh, Phường 26, Quận Bình Thạnh, TP. Hồ Chí Minh',
-    lat: 10.813,
-    lng: 106.711,
   },
 ];
 
@@ -484,7 +449,10 @@ export function MapAddressPickerModal({
     if (modalAddress && modalAddress.trim()) {
       return resolveLocationCoords(modalAddress);
     }
-    return resolveLocationCoords(defaultFallbackAddress || 'Kho Tân Bình, TP. Hồ Chí Minh');
+    if (defaultFallbackAddress && defaultFallbackAddress.trim()) {
+      return resolveLocationCoords(defaultFallbackAddress);
+    }
+    return UNKNOWN_LOCATION_ANCHOR;
   }, [customPinCoords, modalAddress, defaultFallbackAddress]);
 
   const handleChangeAddress = () => {
@@ -546,7 +514,9 @@ export function MapAddressPickerModal({
         return;
       }
 
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      } as any);
       const lat = Number(pos.coords.latitude.toFixed(5));
       const lng = Number(pos.coords.longitude.toFixed(5));
       setCustomPinCoords({ lat, lng });
@@ -631,7 +601,7 @@ export function MapAddressPickerModal({
           >
             {/* Real Interactive Map Stage */}
             <View style={styles.mapStageContainer}>
-              <RealInteractiveMap
+              <LeopardMapView
                 height={260}
                 initialPinCoords={mapCoords}
                 interactive={true}

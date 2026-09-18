@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Box,
+  Card,
+  HStack,
   IconClose,
+  VStack,
   colors,
   iosContinuousCurve,
   leopardPalette,
@@ -36,9 +40,9 @@ export function DriverReceivingSettingsModal({
       transparent
       visible={visible}
     >
-      <View style={styles.backdrop}>
-        <View style={styles.sheet} testID="driver-receiving-settings">
-          <View style={styles.header}>
+      <Box style={styles.backdrop}>
+        <Card style={styles.sheet} testID="driver-receiving-settings">
+          <HStack style={styles.header}>
             <Text accessibilityRole="header" style={styles.title}>
               Thiết lập nhận đơn
             </Text>
@@ -51,11 +55,11 @@ export function DriverReceivingSettingsModal({
             >
               <IconClose color={colors.neutral.subtleText} size={18} />
             </Pressable>
-          </View>
+          </HStack>
 
-          <View style={styles.body}>
+          <VStack style={styles.body}>
             <Text style={styles.sectionLabel}>Bán kính quét đơn (km)</Text>
-            <View style={styles.optionsRow}>
+            <HStack style={styles.optionsRow}>
               {DRIVER_RADIUS_OPTIONS.map((radius) => {
                 const isSelected = selectedRadius === radius;
                 return (
@@ -82,7 +86,7 @@ export function DriverReceivingSettingsModal({
                   </Pressable>
                 );
               })}
-            </View>
+            </HStack>
 
             <Pressable
               accessibilityLabel="Lưu cấu hình"
@@ -96,9 +100,9 @@ export function DriverReceivingSettingsModal({
             >
               <Text style={styles.saveBtnText}>Áp dụng</Text>
             </Pressable>
-          </View>
-        </View>
-      </View>
+          </VStack>
+        </Card>
+      </Box>
     </Modal>
   );
 }

@@ -156,6 +156,11 @@ describe('Driver route and string adapter helpers', () => {
 });
 
 describe('Driver mappers', () => {
+  // Real-format encoded polyline (precision 5) spanning sampleOrder's pickup to
+  // its dropoff, as the booking estimate would persist it.
+  const REAL_POLYLINE =
+    'oun`AoxhjScFsNaF_BaF_B_F{A}EyA{EuAyEuAuEsAsEoAmEoAkEkAgEkAcEiA}DiA{DgAuDgAoDeAmDeAiDcAcDeAaDcA}CeAyCeAwCeAsCgAsCgAoCiAoCiAmCkAoCmAmCoAoCqAoCsAqCuAsCwAuC{AyC{A{C_B}CaBcDcBeDeBkDiBoDkBsDmBwDoB{DsBaEuBeEuBgEyBmEyBqE}BsE}BwE_C{E_C}EaC}EcCaFcCaFcCaFcCcFcCaFcCaFcCaFcC}EcC}EaC{E_CwE_CsE}BqE}BmEyBgEyBeEuBaEuB{DsBwDoBsDmBoDkBkDiBeDeBcDcB}CaB{C_ByC{AuC{AsCwAqCuAoCsAoCqAmCoAoCmAmCkAoCiAoCiAsCgAsCgAwCeAyCeA}CeAaDcAcDeAiDcAmDeAoDeAuDgA{DgA}DiAcEiAgEkAkEkAmEoAsEoAuEsAyEuA{EuA}EyA_F{AaF_BaF_BcFsN';
+
   const sampleOrder: MappedDriverOrderResponse = {
     id: '22222222-2222-4222-8222-222222222001',
     reference: 'LP-D-260815-001',
@@ -190,6 +195,30 @@ describe('Driver mappers', () => {
     expect(route.distanceLabel).toBe('18,4 km');
     expect(route.etaDurationSeconds).toBe(1080);
     expect(route.etaSource).toBe('DEMO');
+  });
+
+  it('decodes the booking polyline into real road geometry', () => {
+    // A straight two-point line is what the map falls back to when geometry is
+    // missing, so this must decode to many road points, not the endpoints.
+    const route = mapOrderToRouteView({
+      ...sampleOrder,
+      routeSnapshot: { polyline: REAL_POLYLINE },
+    });
+
+    expect(route.routeCoords).toBeDefined();
+    expect(route.routeCoords!.length).toBeGreaterThan(50);
+    // First/last decoded points line up with the pickup and dropoff stops.
+    const first = route.routeCoords![0];
+    const last = route.routeCoords![route.routeCoords!.length - 1];
+    expect(first.lat).toBeCloseTo(route.origin.lat!, 2);
+    expect(first.lng).toBeCloseTo(route.origin.lng!, 2);
+    expect(last.lat).toBeCloseTo(route.destination.lat!, 2);
+    expect(last.lng).toBeCloseTo(route.destination.lng!, 2);
+  });
+
+  it('leaves route geometry undefined when the snapshot has no polyline', () => {
+    const route = mapOrderToRouteView({ ...sampleOrder, routeSnapshot: {} });
+    expect(route.routeCoords).toBeUndefined();
   });
 
   it('maps order to public order view', () => {
@@ -282,7 +311,19 @@ describe('Driver mappers', () => {
 
     const pickingUpView = mapOrderToDriverDetailView({ ...sampleOrder, status: 'PICKING_UP' });
     expect(pickingUpView.scenarioId).toBe('D-DETAIL-PICKING-UP');
-    expect(pickingUpView.primaryTask?.command.targetStatus).toBe('IN_TRANSIT');
+    // Leaving the pickup point requires pickup evidence, so the primary task is
+    // the capture itself rather than the status transition.
+    expect(pickingUpView.primaryTask?.kind).toBe('upload-proof');
+    expect(pickingUpView.proof?.kind).toBe('required');
+
+    // Once the pickup photo exists, the leg advances to delivery.
+    const pickingUpWithProofView = mapOrderToDriverDetailView({
+      ...sampleOrder,
+      status: 'PICKING_UP',
+      media: [{ id: 'pickup-proof-1', type: 'PICKUP_PROOF' }],
+    } as typeof sampleOrder);
+    expect(pickingUpWithProofView.proof?.kind).toBe('persisted');
+    expect(pickingUpWithProofView.primaryTask?.command.targetStatus).toBe('IN_TRANSIT');
 
     const inTransitNoProofView = mapOrderToDriverDetailView({ ...sampleOrder, status: 'IN_TRANSIT' });
     expect(inTransitNoProofView.scenarioId).toBe('D-DETAIL-IN-TRANSIT');
@@ -692,7 +733,12 @@ describe('createDriverHttpAdapter', () => {
       expect(view.kind).toBe('content');
       if (view.kind === 'content') {
         expect(view.scenarioId).toBe('D-DETAIL-PICKING-UP');
-        expect(view.primaryTask?.command.targetStatus).toBe('IN_TRANSIT');
+        // Arriving at the pickup point opens the pickup-proof task, not the
+        // transit transition.
+        expect(view.primaryTask?.kind).toBe('upload-proof');
+        expect(view.primaryTask?.command.id).toBe(
+          `cmd-select-pickup-proof-${sampleOrder.id}`,
+        );
       }
       expect(client.post).toHaveBeenCalledWith(
         `/driver/orders/${sampleOrder.id}/status`,

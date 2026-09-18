@@ -2,7 +2,34 @@ import { useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { typeScale, colors, customerPalette, layout, leopardPalette, radius, spacing, IconChevron, IconCrown, IconFileText, IconLocationPin, IconLogOut, IconOrders, IconSecurityShield, IconSettings, IconSupport247, IconTag, IconWallet, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
+import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
+  IconChevron,
+  IconCrown,
+  IconFileText,
+  IconLocationPin,
+  IconLogOut,
+  IconOrders,
+  IconSecurityShield,
+  IconSettings,
+  IconSupport247,
+  IconTag,
+  IconWallet,
+  ScreenScaffold,
+  ScreenState,
+  VStack,
+  colors,
+  customerPalette,
+  layout,
+  leopardPalette,
+  radius,
+  spacing,
+  typeScale,
+} from '@leopard/mobile-core';
 import type { CustomerProfileView } from './model';
 
 export type CustomerProfileScreenProps = Readonly<{
@@ -45,18 +72,18 @@ function MenuRow({
         pressed ? styles.pressed : null,
       ]}
     >
-      <View style={[styles.menuIconBox, { backgroundColor: iconBg }]}>{icon}</View>
-      <View style={styles.menuContent}>
-        <View style={styles.menuLabelRow}>
+      <Box style={[styles.menuIconBox, { backgroundColor: iconBg }]}>{icon}</Box>
+      <VStack style={styles.menuContent}>
+        <HStack style={styles.menuLabelRow}>
           <Text style={styles.menuLabel}>{label}</Text>
           {badge ? (
-            <View style={styles.menuBadgePill}>
-              <Text style={styles.menuBadgeText}>{badge}</Text>
-            </View>
+            <Badge action="info" size="sm" style={styles.menuBadgePill}>
+              <Badge.Text style={styles.menuBadgeText}>{badge}</Badge.Text>
+            </Badge>
           ) : null}
-        </View>
+        </HStack>
         {subtitle ? <Text style={styles.menuSubtitle}>{subtitle}</Text> : null}
-      </View>
+      </VStack>
       <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
     </Pressable>
   );
@@ -89,12 +116,12 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
         showsVerticalScrollIndicator={false}
       >
         {/* 1. IMMERSIVE APPLE LUXURY HERO HEADER */}
-        <View style={styles.heroCard}>
+        <Card style={styles.heroCard}>
           {/* Top meta bar */}
-          <View style={styles.heroTopBar}>
-            <View style={styles.leopardIdBadge}>
-              <Text style={styles.leopardIdText}>LEOPARD ID</Text>
-            </View>
+          <HStack style={styles.heroTopBar}>
+            <Badge action="muted" size="sm" style={styles.leopardIdBadge}>
+              <Badge.Text style={styles.leopardIdText}>LEOPARD ID</Badge.Text>
+            </Badge>
 
             <Pressable
               accessibilityLabel="Chỉnh sửa hồ sơ"
@@ -104,13 +131,13 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
             >
               <Text style={styles.editHeroBtnText}>Sửa hồ sơ</Text>
             </Pressable>
-          </View>
+          </HStack>
 
           {/* User Identity Section */}
-          <View style={styles.identityRow}>
+          <HStack style={styles.identityRow}>
             {/* Squircle Avatar with Neon Cyan Glow Border */}
-            <View style={styles.avatarWrap}>
-              <View style={styles.avatarSquircle}>
+            <Box style={styles.avatarWrap}>
+              <Box style={styles.avatarSquircle}>
                 {view.avatarUrl ? (
                   <Image source={{ uri: view.avatarUrl }} style={styles.avatarImage} />
                 ) : (
@@ -118,58 +145,58 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                     {(view.name ?? 'K').charAt(0).toUpperCase()}
                   </Text>
                 )}
-              </View>
+              </Box>
               {/* Verified Shield Badge */}
-              <View style={styles.verifiedDot}>
+              <Box style={styles.verifiedDot}>
                 <IconSecurityShield color={customerPalette.surfaceWhite} size={10} />
-              </View>
-            </View>
+              </Box>
+            </Box>
 
             {/* Profile Info Details */}
-            <View style={styles.identityInfo}>
+            <VStack style={styles.identityInfo}>
               <Text numberOfLines={1} style={styles.heroName}>
                 {view.name || 'Khách hàng LEOPARD'}
               </Text>
               <Text style={styles.heroPhone}>{view.phone}</Text>
 
               {/* Role Pill */}
-              <View style={styles.membershipPill}>
+              <Badge action="warning" size="sm" style={styles.membershipPill}>
                 <IconCrown color={leopardPalette.accentYellow} size={13} />
-                <Text style={styles.membershipText}>{view.roleLabel}</Text>
-              </View>
-            </View>
-          </View>
+                <Badge.Text style={styles.membershipText}>{view.roleLabel}</Badge.Text>
+              </Badge>
+            </VStack>
+          </HStack>
 
           {/* Quick Stats: Tổng đơn · Đang xử lý · Ưu đãi */}
-          <View style={styles.quickStatsRow}>
-            <View style={styles.statCol}>
+          <HStack style={styles.quickStatsRow}>
+            <VStack style={styles.statCol}>
               <Text style={styles.statLabel}>Tổng đơn</Text>
               <Text style={styles.statValueWhite}>{view.totalOrdersLabel ?? '0'}</Text>
-            </View>
+            </VStack>
 
-            <View style={styles.statDivider} />
+            <Divider orientation="vertical" style={styles.statDivider} />
 
-            <View style={styles.statCol}>
+            <VStack style={styles.statCol}>
               <Text style={styles.statLabel}>Đang xử lý</Text>
               <Text style={styles.statValueGold}>{view.activeOrdersLabel ?? '0'}</Text>
-            </View>
+            </VStack>
 
-            <View style={styles.statDivider} />
+            <Divider orientation="vertical" style={styles.statDivider} />
 
-            <View style={styles.statCol}>
+            <VStack style={styles.statCol}>
               <Text style={styles.statLabel}>Mã ưu đãi</Text>
               <Text style={styles.statValueGreen}>
                 {view.vouchersLabel ? `${view.vouchersLabel} mã` : '0 mã'}
               </Text>
-            </View>
-          </View>
-        </View>
+            </VStack>
+          </HStack>
+        </Card>
 
         {/* 2. FLOATING BENTO BENEFIT CARD (NẰM ĐÈ LÊN CHÂN HERO) */}
-        <View style={styles.bentoWalletCard}>
+        <Card style={styles.bentoWalletCard}>
           {/* VietQR Escrow & Payment History Hub */}
-          <View style={styles.bentoCol}>
-            <View style={styles.bentoHeaderRow}>
+          <VStack style={styles.bentoCol}>
+            <HStack style={styles.bentoHeaderRow}>
               <Pressable
                 accessibilityLabel="Mở ví VietQR"
                 accessibilityRole="button"
@@ -179,13 +206,13 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <View style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
+                <Box style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
                   <IconWallet color={customerPalette.textSlateDark} size={14} />
-                </View>
+                </Box>
                 <Text style={styles.bentoEyebrow}>Ký quỹ & đơn</Text>
               </Pressable>
               <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="sm" />
-            </View>
+            </HStack>
 
             <Pressable
               accessibilityLabel="Ví VietQR"
@@ -199,9 +226,9 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               <Text style={styles.bentoAmountText}>Lịch sử ký quỹ</Text>
               <Text style={styles.bentoSubGreen}>Xem theo đơn hàng</Text>
             </Pressable>
-          </View>
+          </VStack>
 
-          <View style={styles.bentoColDivider} />
+          <Divider orientation="vertical" style={styles.bentoColDivider} />
 
           {/* Vouchers & Promos Hub */}
           <Pressable
@@ -210,27 +237,27 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
             onPress={() => router.push('/customer/promotions')}
             style={({ pressed }) => [styles.bentoCol, pressed ? styles.pressed : null]}
           >
-            <View style={styles.bentoHeaderRow}>
-              <View style={styles.bentoLabelWithIcon}>
-                <View style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
+            <HStack style={styles.bentoHeaderRow}>
+              <HStack style={styles.bentoLabelWithIcon}>
+                <Box style={[styles.bentoIconBadge, { backgroundColor: colors.neutral.surfaceMuted }]}>
                   <IconTag color={customerPalette.textSlateDark} size={14} />
-                </View>
+                </Box>
                 <Text style={styles.bentoEyebrow}>Mã ưu đãi</Text>
-              </View>
+              </HStack>
               <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="sm" />
-            </View>
+            </HStack>
 
             <Text style={styles.bentoPromoText}>
               {view.vouchersLabel ? `${view.vouchersLabel} khả dụng` : '0 khả dụng'}
             </Text>
             <Text style={styles.bentoSubMuted}>Mã giảm cước vận chuyển</Text>
           </Pressable>
-        </View>
+        </Card>
 
         {/* 3. NHÓM VẬN CHUYỂN & ĐƠN HÀNG */}
-        <View style={styles.sectionGroup}>
+        <VStack style={styles.sectionGroup}>
           <SectionHeader title="Vận chuyển & đơn hàng" />
-          <View style={styles.insetCard}>
+          <Card style={styles.insetCard}>
             <MenuRow
               badge={
                 view.activeOrdersLabel && view.activeOrdersLabel !== '0'
@@ -251,13 +278,13 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               onPress={() => router.push('/customer/addresses')}
               subtitle="Kho bãi, văn phòng và điểm lưu cố định"
             />
-          </View>
-        </View>
+          </Card>
+        </VStack>
 
         {/* 4. NHÓM TÀI CHÍNH & DOANH NGHIỆP (B2B ECOSYSTEM) */}
-        <View style={styles.sectionGroup}>
+        <VStack style={styles.sectionGroup}>
           <SectionHeader title="Tài chính & doanh nghiệp" />
-          <View style={styles.insetCard}>
+          <Card style={styles.insetCard}>
             <MenuRow
               icon={<IconFileText color={customerPalette.textSlateDark} size={19} />}
               iconBg={colors.neutral.surfaceMuted}
@@ -266,13 +293,13 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               onPress={() => router.push('/customer/settings')}
               subtitle="Tự động xuất hóa đơn đỏ điện tử theo chuyến"
             />
-          </View>
-        </View>
+          </Card>
+        </VStack>
 
         {/* 5. NHÓM HỖ TRỢ & HỆ THỐNG */}
-        <View style={styles.sectionGroup}>
+        <VStack style={styles.sectionGroup}>
           <SectionHeader title="Hỗ trợ & hệ thống" />
-          <View style={styles.insetCard}>
+          <Card style={styles.insetCard}>
             <MenuRow
               icon={<IconSupport247 color={colors.danger.text} size={19} />}
               iconBg={colors.danger.background}
@@ -288,11 +315,11 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               onPress={() => router.push('/customer/settings')}
               subtitle="Bảo mật sinh trắc học & thông báo"
             />
-          </View>
-        </View>
+          </Card>
+        </VStack>
 
         {/* 6. NÚT ĐĂNG XUẤT NHẸ NHÀNG (SUBTLE LOGOUT) */}
-        <View style={styles.logoutSection}>
+        <Box style={styles.logoutSection}>
           <Pressable
             accessibilityLabel="Đăng xuất"
             accessibilityRole="button"
@@ -308,10 +335,10 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
               {view.isLoggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
             </Text>
           </Pressable>
-        </View>
+        </Box>
 
         {/* ℹ️ 7. CHÂN TRANG PHIÊN BẢN (ENTERPRISE BUILD INFO) */}
-        <View style={styles.footerInfoBox}>
+        <VStack style={styles.footerInfoBox}>
           <Text style={styles.footerVersionText}>
             LEOPARD Logistics · Phiên bản{' '}
             <Text style={styles.footerVersionBold}>{view.appVersion}</Text> (Build 2026)
@@ -319,7 +346,7 @@ export function CustomerProfileScreen({ onLogout, onRetry, view }: CustomerProfi
           <Text style={styles.footerCopyrightText}>
             Hệ thống kết nối chuỗi cung ứng vận tải hàng hóa chuyên nghiệp
           </Text>
-        </View>
+        </VStack>
       </ScrollView>
     </ScreenScaffold>
   );

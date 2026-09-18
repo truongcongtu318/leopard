@@ -383,6 +383,7 @@ function defaultTracking(): CustomerTrackingView {
     driverLabel: 'Tài xế Trần Đình Trọng',
     lastUpdatedLabel: '14:32 · 05/09/2026',
     summary: 'Bản đồ lộ trình; vị trí tài xế cập nhật lúc 14:32.',
+    coords: { lat: 10.7769, lng: 106.7009 },
   };
 }
 

@@ -41,6 +41,17 @@ export class MediaService {
       if (order.customerId !== actor.userId) {
         throw new DomainError('FORBIDDEN', 403, 'Chỉ khách hàng tạo đơn mới được upload ảnh hàng');
       }
+    } else if (type === 'PICKUP_PROOF') {
+      if (order.driverId !== actor.userId) {
+        throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế được phân công mới được upload bằng chứng lấy hàng');
+      }
+      if (order.status !== 'PICKING_UP') {
+        throw new DomainError(
+          'ORDER_INVALID_TRANSITION',
+          409,
+          'Chỉ có thể tải lên bằng chứng lấy hàng khi đơn đang ở trạng thái PICKING_UP',
+        );
+      }
     } else if (type === 'DELIVERY_PROOF') {
       if (order.driverId !== actor.userId) {
         throw new DomainError('FORBIDDEN', 403, 'Chỉ tài xế được phân công mới được upload bằng chứng giao hàng');
@@ -102,6 +113,13 @@ export class MediaService {
           await tx.order.update({
             where: { id: orderId },
             data: { proofMediaId: createdMedia.id },
+          });
+        }
+
+        if (type === 'PICKUP_PROOF') {
+          await tx.order.update({
+            where: { id: orderId },
+            data: { pickupProofMediaId: createdMedia.id },
           });
         }
 

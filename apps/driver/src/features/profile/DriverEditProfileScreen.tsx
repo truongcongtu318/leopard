@@ -13,7 +13,13 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 
 import {
+  Alert as LeopardAlert,
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
+  HStack,
   IconCamera,
   IconCheck,
   IconIdCard,
@@ -23,6 +29,7 @@ import {
   IconSpeedTruck,
   IconUser,
   ScreenScaffold,
+  VStack,
   colors,
   driverPrimitives,
   iconSize,
@@ -167,20 +174,20 @@ export function DriverEditProfileScreen({
         style={styles.scrollWrap}
       >
         {/* ── 1. Avatar Studio Hero ── */}
-        <View style={styles.avatarHeroContainer}>
-          <View style={styles.avatarWrapper}>
+        <VStack style={styles.avatarHeroContainer}>
+          <Box style={styles.avatarWrapper}>
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
             ) : name.trim() ? (
-              <View style={styles.avatarPlaceholder}>
+              <Box style={styles.avatarPlaceholder}>
                 <Text style={styles.avatarInitial}>
                   {name.trim().charAt(0).toUpperCase()}
                 </Text>
-              </View>
+              </Box>
             ) : (
-              <View style={styles.avatarPlaceholder}>
+              <Box style={styles.avatarPlaceholder}>
                 <IconUser color={colors.neutral.surface} size={38} />
-              </View>
+              </Box>
             )}
 
             <Pressable
@@ -192,10 +199,10 @@ export function DriverEditProfileScreen({
             >
               <IconCamera color={colors.neutral.surface} size={13} />
             </Pressable>
-          </View>
+          </Box>
 
           {/* Action Buttons */}
-          <View style={styles.avatarActionRow}>
+          <HStack style={styles.avatarActionRow}>
             <Pressable
               accessibilityLabel="Chụp ảnh mới"
               accessibilityRole="button"
@@ -215,14 +222,14 @@ export function DriverEditProfileScreen({
               <IconIdCard color={driverPrimitives.colors.gray700} size={15} />
               <Text style={styles.avatarActionText}>Chọn từ thư viện</Text>
             </Pressable>
-          </View>
+          </HStack>
 
           {/* Guideline Card */}
-          <View style={styles.guidelineCard}>
-            <View style={styles.guidelineHeader}>
+          <Card style={styles.guidelineCard}>
+            <HStack style={styles.guidelineHeader}>
               <IconSecurityShield color={colors.brand.primary} size={14} />
               <Text style={styles.guidelineTitle}>Tiêu chuẩn ảnh nhận diện đối tác</Text>
-            </View>
+            </HStack>
             <Text style={styles.guidelineText}>
               • Chụp rõ khuôn mặt, nhìn thẳng, không đeo kính râm hoặc khẩu trang.
             </Text>
@@ -232,19 +239,19 @@ export function DriverEditProfileScreen({
             <Text style={styles.guidelineText}>
               • Ảnh chân dung sắc nét giúp khách hàng yên tâm bàn giao hàng hóa.
             </Text>
-          </View>
-        </View>
+          </Card>
+        </VStack>
 
         {/* ── 2. Editable Form Section (Apple Inset Grouped) ── */}
-        <View style={styles.sectionBlock}>
+        <VStack style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>THÔNG TIN LIÊN HỆ & HIỂN THỊ</Text>
-          <View style={styles.card}>
+          <Card style={styles.card}>
             {/* Field: Full Name */}
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldIconWrap}>
+            <HStack style={styles.fieldRow}>
+              <Box style={styles.fieldIconWrap}>
                 <IconUser color={driverPrimitives.colors.gray400} size={18} />
-              </View>
-              <View style={styles.fieldInputCol}>
+              </Box>
+              <VStack style={styles.fieldInputCol}>
                 <Text style={styles.fieldLabel}>Họ và tên tài xế</Text>
                 <TextInput
                   accessibilityLabel="Nhập họ và tên tài xế"
@@ -259,18 +266,18 @@ export function DriverEditProfileScreen({
                   style={styles.textInput}
                   value={name}
                 />
-              </View>
-            </View>
+              </VStack>
+            </HStack>
             {nameError && <Text style={styles.errorTextRow}>{nameError}</Text>}
 
-            <View style={styles.rowDivider} />
+            <Divider style={styles.rowDivider} />
 
             {/* Field: Email */}
-            <View style={styles.fieldRow}>
-              <View style={styles.fieldIconWrap}>
+            <HStack style={styles.fieldRow}>
+              <Box style={styles.fieldIconWrap}>
                 <IconMessage color={driverPrimitives.colors.gray400} size={18} />
-              </View>
-              <View style={styles.fieldInputCol}>
+              </Box>
+              <VStack style={styles.fieldInputCol}>
                 <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
                 <TextInput
                   accessibilityLabel="Nhập địa chỉ email"
@@ -286,51 +293,51 @@ export function DriverEditProfileScreen({
                   style={styles.textInput}
                   value={email}
                 />
-              </View>
-            </View>
+              </VStack>
+            </HStack>
             {emailError && <Text style={styles.errorTextRow}>{emailError}</Text>}
-          </View>
+          </Card>
 
           {errorMessage ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerText}>{errorMessage}</Text>
-            </View>
+            <LeopardAlert action="error" style={styles.errorBanner}>
+              <LeopardAlert.Text style={styles.errorBannerText}>{errorMessage}</LeopardAlert.Text>
+            </LeopardAlert>
           ) : null}
-        </View>
+        </VStack>
 
         {/* ── 3. Protected Read-Only Identity Section ── */}
-        <View style={styles.sectionBlock}>
+        <VStack style={styles.sectionBlock}>
           <Text style={styles.sectionLabel}>THÔNG TIN ĐỊNH DANH (CHỈ ĐỌC)</Text>
-          <View style={styles.card}>
+          <Card style={styles.card}>
             {/* Phone */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
+            <HStack style={styles.readonlyRow}>
+              <Box style={styles.fieldIconWrap}>
                 <IconPhone color={driverPrimitives.colors.gray400} size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
+              </Box>
+              <VStack style={styles.readonlyTextCol}>
                 <Text style={styles.readonlyLabel}>Số điện thoại đăng ký</Text>
                 <Text style={styles.readonlyValue}>{displayPhone}</Text>
-              </View>
-              <View style={styles.verifiedBadge}>
+              </VStack>
+              <Badge action="success" size="sm" style={styles.verifiedBadge}>
                 <IconCheck color={driverPrimitives.colors.green600} size={iconSize.xs} />
-                <Text style={styles.verifiedBadgeText}>Xác thực OTP</Text>
-              </View>
-            </View>
+                <Badge.Text style={styles.verifiedBadgeText}>Xác thực OTP</Badge.Text>
+              </Badge>
+            </HStack>
 
-            <View style={styles.rowDivider} />
+            <Divider style={styles.rowDivider} />
 
             {/* Vehicle */}
-            <View style={styles.readonlyRow}>
-              <View style={styles.fieldIconWrap}>
+            <HStack style={styles.readonlyRow}>
+              <Box style={styles.fieldIconWrap}>
                 <IconSpeedTruck color={driverPrimitives.colors.gray400} size={18} />
-              </View>
-              <View style={styles.readonlyTextCol}>
+              </Box>
+              <VStack style={styles.readonlyTextCol}>
                 <Text style={styles.readonlyLabel}>Phương tiện phân công</Text>
                 <Text style={styles.readonlyValue}>{displayVehicle}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+              </VStack>
+            </HStack>
+          </Card>
+        </VStack>
       </ScrollView>
     </ScreenScaffold>
   );

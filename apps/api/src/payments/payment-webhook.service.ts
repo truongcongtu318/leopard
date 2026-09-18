@@ -29,9 +29,55 @@ export class PaymentWebhookService {
       throw new BadRequestException('Invalid webhook signature');
     }
 
-    const intent = await this.paymentsRepo.findByPayosOrderCode(BigInt(verified.orderCode));
+    const orderCodeBigInt = BigInt(verified.orderCode);
+    const intent = await this.paymentsRepo.findByPayosOrderCode(orderCodeBigInt);
     if (!intent) {
-      this.logger.error(`payOS webhook orderCode ${verified.orderCode} matches no PaymentIntent`);
+      // Check if this webhook corresponds to a DriverDeposit
+      const deposit = await this.prisma.driverDeposit.findUnique({
+        where: { payosOrderCode: orderCodeBigInt },
+      });
+
+      if (deposit) {
+        if (deposit.status === 'COMPLETED') return; // already processed
+
+        if (deposit.amountVnd !== verified.amount) {
+          this.logger.error(
+            `payOS webhook amount mismatch for DriverDeposit ${deposit.id}: expected ${deposit.amountVnd}, got ${verified.amount}`,
+          );
+          return;
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+          await tx.driverDeposit.update({
+            where: { id: deposit.id },
+            data: {
+              status: 'COMPLETED',
+              completedAt: new Date(),
+            },
+          });
+
+          await this.auditService.append(
+            {
+              actorId: deposit.driverId,
+              action: 'DRIVER_DEPOSIT_COMPLETED',
+              resourceType: 'DriverDeposit',
+              resourceId: deposit.id,
+              idempotencyRequestId: `payos-webhook-deposit-${verified.orderCode}`,
+              metadata: {
+                paymentLinkId: verified.paymentLinkId,
+                transactionReference: verified.reference,
+                amountVnd: verified.amount,
+              },
+            },
+            tx,
+          );
+        });
+
+        this.logger.log(`Driver deposit ${deposit.id} completed successfully for driver ${deposit.driverId}`);
+        return;
+      }
+
+      this.logger.error(`payOS webhook orderCode ${verified.orderCode} matches neither PaymentIntent nor DriverDeposit`);
       return;
     }
 

@@ -4,6 +4,11 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconCheck,
   IconChevronRight,
   IconEarnings,
@@ -13,6 +18,7 @@ import {
   ScreenScaffold,
   ScreenState,
   SkeletonCard,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -74,35 +80,35 @@ export function DriverEarningsScreen({
         style={styles.scrollWrap}
       >
         {isLoading ? (
-          <View style={styles.sectionGap}>
+          <VStack space="sm" style={styles.sectionGap}>
             <SkeletonCard />
             <SkeletonCard />
-          </View>
+          </VStack>
         ) : isError ? (
-          <View style={styles.boundaryBox}>
+          <Box style={styles.boundaryBox}>
             <ScreenState actionLabel="Thử lại" onAction={onRetry} state="error" />
-          </View>
+          </Box>
         ) : (
           <>
             {/* ── 1. Today Hero Bento Card ── */}
-            <View style={styles.heroCard} testID="kpi-period-today">
-              <View style={styles.heroHeaderRow}>
-                <View style={styles.heroTitleGroup}>
-                  <View style={styles.heroIconBox}>
+            <Card style={styles.heroCard} testID="kpi-period-today">
+              <HStack style={styles.heroHeaderRow}>
+                <HStack style={styles.heroTitleGroup}>
+                  <Box style={styles.heroIconBox}>
                     <IconEarnings color="#FFFFFF" size={18} />
-                  </View>
+                  </Box>
                   <Text style={styles.heroTitle}>Thu nhập hôm nay</Text>
-                </View>
-                <View style={styles.jobsBadge}>
-                  <Text style={styles.jobsBadgeText}>{todayJobCount} Jobs</Text>
-                </View>
-              </View>
+                </HStack>
+                <Badge action="warning" size="sm" style={styles.jobsBadge}>
+                  <Badge.Text style={styles.jobsBadgeText}>{todayJobCount} Jobs</Badge.Text>
+                </Badge>
+              </HStack>
 
               <Text style={styles.heroAmount}>
                 {todayEarningsVnd === 0 ? '0 ₫' : formatCurrency(todayEarningsVnd)}
               </Text>
 
-              <View style={styles.heroFooterRow}>
+              <HStack style={styles.heroFooterRow}>
                 <Text style={styles.heroScopeNote}>Tính từ danh sách đã tải</Text>
                 <Pressable
                   accessibilityLabel="Xem chi tiết Thu nhập hôm nay"
@@ -112,14 +118,14 @@ export function DriverEarningsScreen({
                 >
                   <Text style={styles.detailLinkText}>Xem chi tiết →</Text>
                 </Pressable>
-              </View>
-            </View>
+              </HStack>
+            </Card>
 
             {/* ── 2. Operational KPIs (Apple Inset Grouped) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionHeading}>Hiệu suất giao hàng</Text>
 
-              <View style={styles.groupedCard} testID="kpi-completed-trips">
+              <Card style={styles.groupedCard} testID="kpi-completed-trips">
                 {/* Row 1: Cuốc xe đã hoàn tất */}
                 <Pressable
                   accessibilityLabel="Xem chi tiết cuốc xe đã hoàn tất"
@@ -127,40 +133,40 @@ export function DriverEarningsScreen({
                   onPress={() => handleNavigate('/history')}
                   style={({ pressed }) => [styles.itemRow, pressed ? styles.itemPressed : null]}
                 >
-                  <View style={styles.itemLeft}>
-                    <View style={styles.itemIconBox}>
+                  <HStack style={styles.itemLeft}>
+                    <Box style={styles.itemIconBox}>
                       <IconSpeedTruck color={driverPrimitives.colors.gray500} size={20} />
-                    </View>
+                    </Box>
                     <Text style={styles.itemTitle}>Cuốc xe đã hoàn tất</Text>
-                  </View>
-                  <View style={styles.itemRight}>
+                  </HStack>
+                  <HStack style={styles.itemRight}>
                     <Text style={styles.itemValue}>{deliveredOrderCount} cuốc xe</Text>
                     <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
-                  </View>
+                  </HStack>
                 </Pressable>
 
-                <View style={styles.itemDivider} />
+                <Divider style={styles.itemDivider} />
 
                 {/* Row 2: Tỷ lệ giao thành công */}
-                <View style={styles.itemRow}>
-                  <View style={styles.itemLeft}>
-                    <View style={styles.itemIconBox}>
+                <HStack style={styles.itemRow}>
+                  <HStack style={styles.itemLeft}>
+                    <Box style={styles.itemIconBox}>
                       <IconCheck color={driverPrimitives.colors.gray500} size={20} strokeWidth={2.5} />
-                    </View>
+                    </Box>
                     <Text style={styles.itemTitle}>Tỷ lệ giao thành công</Text>
-                  </View>
-                  <View style={styles.itemRight}>
+                  </HStack>
+                  <Box style={styles.itemRight}>
                     <Text style={styles.itemValue}>{completionRate}%</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
+                  </Box>
+                </HStack>
+              </Card>
+            </VStack>
 
             {/* ── 3. Lifetime & Available Financials (Apple Inset Grouped) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionHeading}>Thống kê tài chính</Text>
 
-              <View style={styles.groupedCard} testID="kpi-net-payout">
+              <Card style={styles.groupedCard} testID="kpi-net-payout">
                 {/* Row 1: Tổng thu nhập trọn đời */}
                 <Pressable
                   accessibilityLabel="Xem chi tiết tổng thu nhập trọn đời"
@@ -168,19 +174,19 @@ export function DriverEarningsScreen({
                   onPress={() => handleNavigate('/history')}
                   style={({ pressed }) => [styles.itemRow, pressed ? styles.itemPressed : null]}
                 >
-                  <View style={styles.itemLeft}>
-                    <View style={styles.itemIconBox}>
+                  <HStack style={styles.itemLeft}>
+                    <Box style={styles.itemIconBox}>
                       <IconEarnings color={driverPrimitives.colors.gray500} size={20} />
-                    </View>
+                    </Box>
                     <Text style={styles.itemTitle}>Tổng thu nhập (trọn đời)</Text>
-                  </View>
-                  <View style={styles.itemRight}>
+                  </HStack>
+                  <HStack style={styles.itemRight}>
                     <Text style={styles.itemValue}>{formatCurrency(lifetimeDeliveredVnd)}</Text>
                     <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
-                  </View>
+                  </HStack>
                 </Pressable>
 
-                <View style={styles.itemDivider} />
+                <Divider style={styles.itemDivider} />
 
                 {/* Row 2: Số dư khả dụng để rút */}
                 <Pressable
@@ -189,22 +195,22 @@ export function DriverEarningsScreen({
                   onPress={() => handleNavigate('/wallet')}
                   style={({ pressed }) => [styles.itemRow, pressed ? styles.itemPressed : null]}
                 >
-                  <View style={styles.itemLeft}>
-                    <View style={styles.itemIconBox}>
+                  <HStack style={styles.itemLeft}>
+                    <Box style={styles.itemIconBox}>
                       <IconWallet color={driverPrimitives.colors.gray500} size={20} />
-                    </View>
-                    <View style={styles.itemTitleCol}>
+                    </Box>
+                    <VStack style={styles.itemTitleCol}>
                       <Text style={styles.itemTitle}>Số dư khả dụng để rút</Text>
                       <Text style={styles.itemSub}>Tự động cập nhật</Text>
-                    </View>
-                  </View>
-                  <View style={styles.itemRight}>
+                    </VStack>
+                  </HStack>
+                  <HStack style={styles.itemRight}>
                     <Text style={styles.itemValue}>{formatCurrency(availableBalanceVnd)}</Text>
                     <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
-                  </View>
+                  </HStack>
                 </Pressable>
-              </View>
-            </View>
+              </Card>
+            </VStack>
           </>
         )}
       </ScrollView>

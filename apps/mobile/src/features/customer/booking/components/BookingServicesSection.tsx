@@ -4,6 +4,7 @@ import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import {
   colors,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   radius,
   spacing,
@@ -37,6 +38,16 @@ export function BookingServicesSection({
   onChangeVatField,
   vatErrors,
 }: BookingServicesSectionProps) {
+  const handleToggleLoading = (val: boolean) => {
+    haptic.selection();
+    onToggleLoading(val);
+  };
+
+  const handleToggleVat = (val: boolean) => {
+    haptic.selection();
+    onToggleVat(val);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>Dịch vụ thêm</Text>
@@ -50,7 +61,7 @@ export function BookingServicesSection({
           </View>
           <Switch
             accessibilityLabel="Tài xế hỗ trợ bốc xếp"
-            onValueChange={onToggleLoading}
+            onValueChange={handleToggleLoading}
             thumbColor="#FFFFFF"
             trackColor={{ false: '#E9E9EA', true: customerPalette.primary }}
             value={hasLoadingSupport}
@@ -67,7 +78,7 @@ export function BookingServicesSection({
           </View>
           <Switch
             accessibilityLabel="Xuất hóa đơn VAT"
-            onValueChange={onToggleVat}
+            onValueChange={handleToggleVat}
             thumbColor="#FFFFFF"
             trackColor={{ false: '#E9E9EA', true: customerPalette.primary }}
             value={hasVatInvoice}
@@ -86,7 +97,7 @@ export function BookingServicesSection({
                 accessibilityLabel="Tên công ty"
                 onChangeText={(text) => onChangeVatField('vatCompany', text)}
                 placeholder="Tên công ty đầy đủ"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={customerPalette.offlineGray}
                 style={styles.textInput}
                 value={vatCompany}
               />
@@ -105,7 +116,7 @@ export function BookingServicesSection({
                 keyboardType="number-pad"
                 onChangeText={(text) => onChangeVatField('vatTaxId', text)}
                 placeholder="Mã số thuế doanh nghiệp"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={customerPalette.offlineGray}
                 style={styles.textInput}
                 value={vatTaxId}
               />
@@ -125,7 +136,7 @@ export function BookingServicesSection({
                 keyboardType="email-address"
                 onChangeText={(text) => onChangeVatField('vatEmail', text)}
                 placeholder="ketoan@congty.com"
-                placeholderTextColor="#C7C7CC"
+                placeholderTextColor={customerPalette.offlineGray}
                 style={styles.textInput}
                 value={vatEmail}
               />
@@ -155,6 +166,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
@@ -194,7 +207,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   fieldLabel: {
-    ...typeScale.footnote,
+    ...typeScale.caption1,
     fontWeight: '500',
     color: customerPalette.textSubtle,
     marginBottom: spacing.xxs,

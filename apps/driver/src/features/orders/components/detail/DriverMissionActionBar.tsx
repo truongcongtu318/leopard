@@ -1,10 +1,14 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
+  Box,
   Button,
+  Card,
+  HStack,
   IconPhone,
   IconRoute,
   IconShieldAlert,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -38,15 +42,15 @@ export function DriverMissionActionBar({
   taskButtonComponent,
 }: DriverMissionActionBarProps) {
   return (
-    <View style={styles.card} testID="driver-mission-action-bar">
+    <Card style={styles.card} testID="driver-mission-action-bar">
       {/* ── Top Header Row: Leg title & Accessory Controls (Phone, Route, Incident) ── */}
-      <View style={styles.headerRow}>
+      <HStack style={styles.headerRow}>
         <Text numberOfLines={1} style={styles.legTitle}>
           {legTitle}
         </Text>
 
         {!isTerminal && (
-          <View style={styles.accessoryRow}>
+          <HStack style={styles.accessoryRow}>
             <Pressable
               accessibilityHint="Gọi điện thoại trực tiếp cho người nhận hoặc thủ kho"
               accessibilityLabel="Gọi cho người nhận"
@@ -94,12 +98,12 @@ export function DriverMissionActionBar({
                 </Pressable>
               </>
             ) : null}
-          </View>
+          </HStack>
         )}
-      </View>
+      </HStack>
 
       {/* ── Bottom Primary Action Row: Full Width (>= 56pt) ── */}
-      <View style={styles.primaryActionRow}>
+      <Box style={styles.primaryActionRow}>
         {!isTerminal && taskButtonComponent ? (
           taskButtonComponent
         ) : (
@@ -111,8 +115,8 @@ export function DriverMissionActionBar({
             variant="primary"
           />
         )}
-      </View>
-    </View>
+      </Box>
+    </Card>
   );
 }
 

@@ -14,6 +14,7 @@ import {
   IconClose,
   colors,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   pickDeviceImage,
   radius,
@@ -49,8 +50,14 @@ export function BookingCargoSection({
   onAddImage,
   onRemoveImage,
 }: BookingCargoSectionProps) {
+  const handleSelectCategory = (cat: CargoCategory) => {
+    haptic.selection();
+    onSelectCategory(cat);
+  };
+
   const handlePickImage = async () => {
     if (cargoImages.length >= 5) return;
+    haptic.light();
     try {
       const result = await pickDeviceImage();
       if (result && result.uri) {
@@ -59,6 +66,11 @@ export function BookingCargoSection({
     } catch {
       onAddImage(`file:///cargo-${Date.now()}.jpg`);
     }
+  };
+
+  const handleRemove = (idx: number) => {
+    haptic.light();
+    onRemoveImage(idx);
   };
 
   return (
@@ -75,10 +87,11 @@ export function BookingCargoSection({
           const isSelected = selectedCategory === cat;
           return (
             <Pressable
+              accessibilityLabel={`Loại hàng ${cat}${isSelected ? ', đã chọn' : ''}`}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               key={cat}
-              onPress={() => onSelectCategory(cat)}
+              onPress={() => handleSelectCategory(cat)}
               style={({ pressed }) => [
                 styles.chip,
                 isSelected && styles.chipSelected,
@@ -103,7 +116,7 @@ export function BookingCargoSection({
             numberOfLines={3}
             onChangeText={onChangeNote}
             placeholder="Khối lượng, tính chất hàng, lưu ý khi bốc dỡ"
-            placeholderTextColor="#C7C7CC"
+            placeholderTextColor={customerPalette.offlineGray}
             style={styles.multilineInput}
             value={cargoNote}
           />
@@ -126,7 +139,7 @@ export function BookingCargoSection({
                   accessibilityLabel={`Xóa ảnh ${idx + 1}`}
                   accessibilityRole="button"
                   hitSlop={12}
-                  onPress={() => onRemoveImage(idx)}
+                  onPress={() => handleRemove(idx)}
                   style={styles.deletePhotoBtn}
                 >
                   <View style={styles.deletePhotoCircle}>
@@ -146,7 +159,12 @@ export function BookingCargoSection({
                   pressed && styles.chipPressed,
                 ]}
               >
-                <IconCamera color={customerPalette.primary} size={22} />
+                <View
+                  accessibilityElementsHidden={true}
+                  importantForAccessibility="no"
+                >
+                  <IconCamera color={customerPalette.primary} size={22} />
+                </View>
                 <Text style={styles.addPhotoText}>+ Thêm ảnh</Text>
               </Pressable>
             )}
@@ -178,6 +196,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
     minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
@@ -186,9 +206,11 @@ const styles = StyleSheet.create({
   },
   chipSelected: {
     backgroundColor: customerPalette.primary,
+    borderColor: customerPalette.primary,
   },
   chipPressed: {
-    opacity: 0.75,
+    opacity: 0.8,
+    transform: [{ scale: 0.97 }],
   },
   chipText: {
     ...typeScale.footnote,
@@ -203,6 +225,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
     padding: spacing.md,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
@@ -212,7 +236,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxs,
   },
   fieldLabel: {
-    ...typeScale.footnote,
+    ...typeScale.caption1,
     fontWeight: '500',
     color: customerPalette.textSubtle,
     marginBottom: spacing.xxs,
@@ -286,7 +310,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.control,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.neutral.border,
+    borderColor: customerPalette.primaryBorder,
     backgroundColor: colors.neutral.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',

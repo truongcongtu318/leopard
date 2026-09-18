@@ -14,17 +14,23 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
-  colors,
-  customerPalette,
-  leopardPalette,
-  spacing,
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconCamera,
   IconChevronRight,
   IconPhone,
   IconRoleDriver,
   IconStar,
   ScreenScaffold,
+  VStack,
+  colors,
+  customerPalette,
   httpClient,
+  leopardPalette,
+  spacing,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -195,26 +201,26 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
         style={styles.container}
       >
         {/* ── Driver Header Info Card (Double-Bezel) ──────── */}
-        <View style={styles.driverHeaderOuter}>
-          <View style={styles.driverHeaderInner}>
-            <View style={styles.driverAvatarBox}>
+        <Card style={styles.driverHeaderOuter}>
+          <HStack style={styles.driverHeaderInner}>
+            <Box style={styles.driverAvatarBox}>
               <IconRoleDriver color={customerPalette.primary} size={20} />
-            </View>
-            <View style={styles.driverTextWrap}>
+            </Box>
+            <VStack style={styles.driverTextWrap}>
               <Text style={styles.driverName}>{driverName}</Text>
-              <View style={styles.driverMetaRow}>
-                <View style={styles.plateBadge}>
-                  <Text style={styles.plateText}>{licensePlate}</Text>
-                </View>
-                <View style={styles.ratingBadge}>
+              <HStack style={styles.driverMetaRow}>
+                <Badge action="muted" size="sm" style={styles.plateBadge}>
+                  <Badge.Text style={styles.plateText}>{licensePlate}</Badge.Text>
+                </Badge>
+                <Badge action="warning" size="sm" style={styles.ratingBadge}>
                   <IconStar color={leopardPalette.accentYellow} fill={leopardPalette.accentYellow} size={12} strokeWidth={1.8} />
-                  <Text style={styles.ratingText}>{ratingText}</Text>
-                </View>
+                  <Badge.Text style={styles.ratingText}>{ratingText}</Badge.Text>
+                </Badge>
                 <Text style={styles.driverPhone}>{displayPhone}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+              </HStack>
+            </VStack>
+          </HStack>
+        </Card>
 
         {/* ── Message List ────────────────────────────────── */}
         <FlatList
@@ -224,16 +230,16 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
           renderItem={({ item }) => {
             if (item.sender === 'SYSTEM') {
               return (
-                <View style={styles.systemMsgWrap}>
+                <Box style={styles.systemMsgWrap}>
                   <Text style={styles.systemMsgText}>{item.text}</Text>
-                </View>
+                </Box>
               );
             }
 
             const isCustomer = item.sender === 'CUSTOMER';
             const senderLabel = isCustomer ? 'Bạn' : 'Tài xế';
             return (
-              <View
+              <Box
                 accessibilityLabel={`${senderLabel} gửi lúc ${item.time}: ${item.text}`}
                 accessible={true}
                 style={[styles.bubbleWrap, isCustomer ? styles.bubbleCustomer : styles.bubbleDriver]}
@@ -244,13 +250,13 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
                 <Text style={[styles.bubbleTime, isCustomer ? styles.bubbleTimeCustomer : styles.bubbleTimeDriver]}>
                   {item.time}
                 </Text>
-              </View>
+              </Box>
             );
           }}
         />
 
         {/* ── Quick Message Suggestions (>= 44px touch target) ── */}
-        <View style={styles.quickReplyRow}>
+        <Box style={styles.quickReplyRow}>
           <FlatList
             data={quickReplies}
             horizontal
@@ -267,10 +273,10 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
             )}
             showsHorizontalScrollIndicator={false}
           />
-        </View>
+        </Box>
 
         {/* ── Input Bar (>= 44px touch targets) ───────────── */}
-        <View style={styles.inputBar}>
+        <HStack style={styles.inputBar}>
           <Pressable
             accessibilityLabel="Đính kèm ảnh kiện hàng"
             accessibilityRole="button"
@@ -306,7 +312,7 @@ export function OrderChatScreen(props?: OrderChatScreenProps) {
               strokeWidth={2.5}
             />
           </Pressable>
-        </View>
+        </HStack>
       </KeyboardAvoidingView>
     </ScreenScaffold>
   );

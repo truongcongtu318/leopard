@@ -34,13 +34,27 @@ export class WithdrawalsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async getWalletSummary(driverId: string): Promise<WalletSummary> {
-    const [deliveredOrders, heldWithdrawals, profile] = await Promise.all([
+    const [deliveredOrders, heldWithdrawals, deposits, profile] = await Promise.all([
       this.prisma.order.findMany({
         where: { driverId, status: 'DELIVERED' },
-        select: { priceVnd: true },
+        select: {
+          id: true,
+          priceVnd: true,
+          paymentIntents: {
+            select: {
+              status: true,
+              confirmationNote: true,
+            },
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
+        },
       }),
       this.prisma.withdrawalRequest.findMany({
         where: { driverId, status: { in: ['PENDING', 'APPROVED'] } },
+      }),
+      this.prisma.driverDeposit.findMany({
+        where: { driverId, status: 'COMPLETED' },
       }),
       // Bank columns already exist on DriverProfile (schema.prisma:287-289) — no new migration.
       this.prisma.driverProfile.findUnique({
@@ -49,10 +63,29 @@ export class WithdrawalsRepository {
       }),
     ]);
 
-    const lifetimeDeliveredVnd = deliveredOrders.reduce(
-      (sum: number, o: { priceVnd: number | null }) => sum + (o.priceVnd ?? 0),
+    const totalDepositedVnd = deposits.reduce(
+      (sum: number, d: { amountVnd: number }) => sum + (d.amountVnd ?? 0),
       0,
     );
+
+    let netOrdersEarningsVnd = 0;
+    let lifetimeDeliveredVnd = 0;
+
+    for (const order of deliveredOrders) {
+      const price = order.priceVnd ?? 0;
+      lifetimeDeliveredVnd += price;
+      const latestPayment = (order as any).paymentIntents?.[0];
+      const isCash = latestPayment?.confirmationNote?.includes('tiền mặt');
+
+      if (isCash) {
+        // Driver collected 100% cash in hand; platform charges 20% commission fee
+        netOrdersEarningsVnd -= Math.round(price * 0.2);
+      } else {
+        // Online payment (payOS / VietQR): platform collected 100%; driver earns 80%
+        netOrdersEarningsVnd += Math.round(price * 0.8);
+      }
+    }
+
     const pendingWithdrawalVnd = heldWithdrawals
       .filter((w: WithdrawalRequest) => w.status === 'PENDING')
       .reduce((sum: number, w: WithdrawalRequest) => sum + w.amountVnd, 0);
@@ -61,8 +94,10 @@ export class WithdrawalsRepository {
       0,
     );
 
+    const availableBalanceVnd = totalDepositedVnd + netOrdersEarningsVnd - heldTotalVnd;
+
     return {
-      availableBalanceVnd: lifetimeDeliveredVnd - heldTotalVnd,
+      availableBalanceVnd,
       lifetimeDeliveredVnd,
       pendingWithdrawalVnd,
       deliveredOrderCount: deliveredOrders.length,
@@ -127,5 +162,40 @@ export class WithdrawalsRepository {
     ]);
 
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) || 0 };
+  }
+
+  async createDeposit(data: {
+    driverId: string;
+    amountVnd: number;
+    payosOrderCode: bigint;
+    qrPayload?: string | undefined;
+    clientRequestId?: string | undefined;
+  }) {
+    return this.prisma.driverDeposit.create({
+      data: {
+        driverId: data.driverId,
+        amountVnd: data.amountVnd,
+        payosOrderCode: data.payosOrderCode,
+        ...(data.qrPayload ? { qrPayload: data.qrPayload } : {}),
+        ...(data.clientRequestId ? { clientRequestId: data.clientRequestId } : {}),
+        status: 'PENDING',
+      },
+    });
+  }
+
+  async findDepositByOrderCode(payosOrderCode: bigint) {
+    return this.prisma.driverDeposit.findUnique({
+      where: { payosOrderCode },
+    });
+  }
+
+  async completeDeposit(id: string) {
+    return this.prisma.driverDeposit.update({
+      where: { id },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+    });
   }
 }

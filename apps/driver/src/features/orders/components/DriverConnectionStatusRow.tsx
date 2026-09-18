@@ -1,7 +1,9 @@
 import React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import {
+  Box,
+  HStack,
   driverPrimitives,
   iosContinuousCurve,
   radius,
@@ -17,14 +19,15 @@ export type DriverConnectionStatusRowProps = Readonly<{
 
 /**
  * Grab-style status row: clean white pill with glowing status dot.
+ * Refactored using Gluestack Box and HStack primitives while preserving driverTokens.
  */
 export function DriverConnectionStatusRow({
   isOnline,
   subtitle,
 }: DriverConnectionStatusRowProps): React.JSX.Element {
   return (
-    <View style={styles.row} testID="driver-connection-status">
-      <View
+    <HStack style={styles.row} testID="driver-connection-status">
+      <Box
         style={[
           styles.dot,
           {
@@ -34,7 +37,7 @@ export function DriverConnectionStatusRow({
           },
         ]}
       />
-      <View style={styles.textWrap}>
+      <Box style={styles.textWrap}>
         <Text style={styles.title}>
           {isOnline ? 'Bạn đang bật kết nối.' : 'Bạn đang tắt kết nối.'}
         </Text>
@@ -43,8 +46,8 @@ export function DriverConnectionStatusRow({
             {subtitle}
           </Text>
         ) : null}
-      </View>
-    </View>
+      </Box>
+    </HStack>
   );
 }
 

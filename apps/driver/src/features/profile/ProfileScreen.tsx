@@ -3,6 +3,11 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useRouter } from 'expo-router';
 
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconChevronRight,
   IconCrown,
   IconEarnings,
@@ -18,6 +23,7 @@ import {
   IconWallet,
   ScreenScaffold,
   ScreenState,
+  VStack,
   colors,
   customerPalette,
   driverPrimitives,
@@ -115,12 +121,12 @@ export function DriverProfileScreen({
         style={styles.scrollWrap}
       >
         {/* ── 1. IMMERSIVE APPLE LUXURY HERO HEADER ── */}
-        <View style={styles.heroCard}>
+        <Card style={styles.heroCard}>
           {/* Top meta bar */}
-          <View style={styles.heroTopBar}>
-            <View style={styles.leopardIdBadge}>
-              <Text style={styles.leopardIdText}>LEOPARD ID</Text>
-            </View>
+          <HStack style={styles.heroTopBar}>
+            <Badge action="muted" size="sm" style={styles.leopardIdBadge}>
+              <Badge.Text style={styles.leopardIdText}>LEOPARD ID</Badge.Text>
+            </Badge>
 
             <Pressable
               accessibilityLabel={`Chỉnh sửa hồ sơ ${driverName}`}
@@ -130,13 +136,13 @@ export function DriverProfileScreen({
             >
               <Text style={styles.editHeroBtnText}>Sửa hồ sơ</Text>
             </Pressable>
-          </View>
+          </HStack>
 
           {/* User Identity Section */}
-          <View style={styles.identityRow}>
+          <HStack style={styles.identityRow}>
             {/* Squircle Avatar with subtle badge */}
-            <View style={styles.avatarWrap}>
-              <View style={styles.avatarSquircle}>
+            <Box style={styles.avatarWrap}>
+              <Box style={styles.avatarSquircle}>
                 {view.avatarUrl ? (
                   <Image source={{ uri: view.avatarUrl }} style={styles.avatarImage} />
                 ) : (
@@ -144,15 +150,15 @@ export function DriverProfileScreen({
                     {(driverName ?? 'T').charAt(0).toUpperCase()}
                   </Text>
                 )}
-              </View>
+              </Box>
               {/* Verified Shield Badge */}
-              <View style={styles.verifiedDot}>
+              <Box style={styles.verifiedDot}>
                 <IconSecurityShield color={customerPalette.surfaceWhite} size={10} />
-              </View>
-            </View>
+              </Box>
+            </Box>
 
             {/* Profile Info Details */}
-            <View style={styles.identityInfo}>
+            <VStack style={styles.identityInfo}>
               <Text numberOfLines={1} style={styles.heroName}>
                 {driverName}
               </Text>
@@ -161,23 +167,23 @@ export function DriverProfileScreen({
               ) : null}
 
               {/* Role & Vehicle Badges */}
-              <View style={styles.badgeRow}>
-                <View style={styles.membershipPill}>
+              <HStack style={styles.badgeRow}>
+                <Badge action="warning" size="sm" style={styles.membershipPill}>
                   <IconCrown color={leopardPalette.accentYellow} size={13} />
-                  <Text style={styles.membershipText}>
+                  <Badge.Text style={styles.membershipText}>
                     {view.roleLabel || 'Tài xế đối tác'}
-                  </Text>
-                </View>
+                  </Badge.Text>
+                </Badge>
                 {view.vehicleLabel ? (
-                  <View style={styles.vehiclePill}>
-                    <Text numberOfLines={1} style={styles.vehiclePillText}>
+                  <Badge action="muted" size="sm" style={styles.vehiclePill}>
+                    <Badge.Text numberOfLines={1} style={styles.vehiclePillText}>
                       {view.vehicleLabel}
-                    </Text>
-                  </View>
+                    </Badge.Text>
+                  </Badge>
                 ) : null}
-              </View>
-            </View>
-          </View>
+              </HStack>
+            </VStack>
+          </HStack>
 
           {/* Quick Stats: Đánh giá sao · Chấp nhận · Huỷ chuyến */}
           <Pressable
@@ -186,35 +192,35 @@ export function DriverProfileScreen({
             onPress={() => router.push('/performance')}
             style={({ pressed }) => [styles.quickStatsRow, pressed ? styles.pressed : null]}
           >
-            <View style={styles.statCol}>
+            <VStack style={styles.statCol}>
               <Text style={styles.statLabel}>Đánh giá sao</Text>
-              <View style={styles.kpiValueRow}>
+              <HStack style={styles.kpiValueRow}>
                 <IconStar color={leopardPalette.accentYellow} filled size={14} />
                 <Text style={styles.statValueWhite}>{ratingAvg.toFixed(1)}</Text>
-              </View>
-            </View>
+              </HStack>
+            </VStack>
 
-            <View style={styles.statDivider} />
+            <Divider orientation="vertical" style={styles.statDivider} />
 
-            <View style={styles.statCol}>
+            <VStack style={styles.statCol}>
               <Text style={styles.statLabel}>Chấp nhận</Text>
               <Text style={styles.statValueWhite}>{acceptancePct.toFixed(1)}%</Text>
-            </View>
+            </VStack>
 
-            <View style={styles.statDivider} />
+            <Divider orientation="vertical" style={styles.statDivider} />
 
-            <View style={styles.statCol}>
+            <VStack style={styles.statCol}>
               <Text style={styles.statLabel}>Huỷ chuyến</Text>
               <Text style={styles.statValueWhite}>{cancellationPct.toFixed(1)}%</Text>
-            </View>
+            </VStack>
           </Pressable>
-        </View>
+        </Card>
 
         {/* ── 2. Quick Bento Grid: Hoạt động & Tài chính (Monochrome Icons) ── */}
-        <View style={styles.bentoSection}>
+        <VStack style={styles.bentoSection}>
           <Text style={styles.sectionHeaderTitle}>Hoạt động & Tài chính</Text>
 
-          <View style={styles.bentoGridRow}>
+          <HStack style={styles.bentoGridRow}>
             {/* Tile 1: Ví tài xế */}
             <Pressable
               accessibilityLabel="Ví tài xế và rút tiền"
@@ -222,12 +228,12 @@ export function DriverProfileScreen({
               onPress={() => router.push('/wallet')}
               style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
             >
-              <View style={styles.bentoTopRow}>
-                <View style={styles.bentoIconBox}>
+              <HStack style={styles.bentoTopRow}>
+                <Box style={styles.bentoIconBox}>
                   <IconWallet color={driverPrimitives.colors.gray700} size={20} />
-                </View>
+                </Box>
                 <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
-              </View>
+              </HStack>
               <Text style={styles.bentoTileTitle}>Ví tài xế</Text>
               <Text style={styles.bentoTileSub}>Số dư & rút tiền</Text>
             </Pressable>
@@ -239,18 +245,18 @@ export function DriverProfileScreen({
               onPress={() => router.push('/earnings')}
               style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
             >
-              <View style={styles.bentoTopRow}>
-                <View style={styles.bentoIconBox}>
+              <HStack style={styles.bentoTopRow}>
+                <Box style={styles.bentoIconBox}>
                   <IconEarnings color={driverPrimitives.colors.gray700} size={20} />
-                </View>
+                </Box>
                 <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
-              </View>
+              </HStack>
               <Text style={styles.bentoTileTitle}>Thu nhập</Text>
               <Text style={styles.bentoTileSub}>Doanh thu & tiền cước</Text>
             </Pressable>
-          </View>
+          </HStack>
 
-          <View style={styles.bentoGridRow}>
+          <HStack style={styles.bentoGridRow}>
             {/* Tile 3: Lịch nhận cuốc */}
             <Pressable
               accessibilityLabel="Bảng tin và lịch nhận cuốc"
@@ -258,12 +264,12 @@ export function DriverProfileScreen({
               onPress={() => router.push('/board')}
               style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
             >
-              <View style={styles.bentoTopRow}>
-                <View style={styles.bentoIconBox}>
+              <HStack style={styles.bentoTopRow}>
+                <Box style={styles.bentoIconBox}>
                   <IconRoute color={driverPrimitives.colors.gray700} size={20} />
-                </View>
+                </Box>
                 <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
-              </View>
+              </HStack>
               <Text style={styles.bentoTileTitle}>Lịch nhận cuốc</Text>
               <Text style={styles.bentoTileSub}>Lịch trình & đơn mới</Text>
             </Pressable>
@@ -275,23 +281,23 @@ export function DriverProfileScreen({
               onPress={() => router.push('/performance')}
               style={({ pressed }) => [styles.bentoTile, pressed ? styles.pressed : null]}
             >
-              <View style={styles.bentoTopRow}>
-                <View style={styles.bentoIconBox}>
+              <HStack style={styles.bentoTopRow}>
+                <Box style={styles.bentoIconBox}>
                   <IconTrophy color={driverPrimitives.colors.gray700} size={20} />
-                </View>
+                </Box>
                 <IconChevronRight color={driverPrimitives.colors.gray300} size={15} />
-              </View>
+              </HStack>
               <Text style={styles.bentoTileTitle}>Hiệu suất tài xế</Text>
               <Text style={styles.bentoTileSub}>Tỷ lệ nhận & huỷ chuyến</Text>
             </Pressable>
-          </View>
-        </View>
+          </HStack>
+        </VStack>
 
         {/* ── 3. Grouped Settings & Legal (Apple Inset Grouped) ── */}
-        <View style={styles.menuGroupSection}>
+        <VStack style={styles.menuGroupSection}>
           <Text style={styles.sectionHeaderTitle}>Cài đặt & Pháp lý</Text>
 
-          <View style={styles.groupedMenuCard}>
+          <Card style={styles.groupedMenuCard}>
             {/* 1. Giấy tờ & Hồ sơ KYC */}
             <Pressable
               accessibilityLabel="Xem giấy tờ và hồ sơ KYC"
@@ -299,17 +305,17 @@ export function DriverProfileScreen({
               onPress={() => router.push('/kyc')}
               style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
             >
-              <View style={styles.iconBox}>
+              <Box style={styles.iconBox}>
                 <IconIdCard color={driverPrimitives.colors.gray700} size={20} />
-              </View>
-              <View style={styles.menuItemTextCol}>
+              </Box>
+              <VStack style={styles.menuItemTextCol}>
                 <Text style={styles.menuItemTitle}>Giấy tờ & Hồ sơ KYC</Text>
                 <Text style={styles.menuItemSub}>CCCD, Bằng lái, Cà vẹt xe & Bảo hiểm</Text>
-              </View>
+              </VStack>
               <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
             </Pressable>
 
-            <View style={styles.menuItemSeparator} />
+            <Divider style={styles.menuItemSeparator} />
 
             {/* 2. Hợp đồng đối tác điện tử */}
             <Pressable
@@ -318,17 +324,17 @@ export function DriverProfileScreen({
               onPress={() => router.push('/contract')}
               style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
             >
-              <View style={styles.iconBox}>
+              <Box style={styles.iconBox}>
                 <IconInsuranceDoc color={driverPrimitives.colors.gray700} size={20} />
-              </View>
-              <View style={styles.menuItemTextCol}>
+              </Box>
+              <VStack style={styles.menuItemTextCol}>
                 <Text style={styles.menuItemTitle}>Hợp đồng đối tác</Text>
                 <Text style={styles.menuItemSub}>Hợp đồng điện tử & điều khoản dịch vụ</Text>
-              </View>
+              </VStack>
               <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
             </Pressable>
 
-            <View style={styles.menuItemSeparator} />
+            <Divider style={styles.menuItemSeparator} />
 
             {/* 3. Cài đặt ứng dụng */}
             <Pressable
@@ -337,20 +343,20 @@ export function DriverProfileScreen({
               onPress={() => router.push('/settings')}
               style={({ pressed }) => [styles.menuItemRow, pressed ? styles.menuItemPressed : null]}
             >
-              <View style={styles.iconBox}>
+              <Box style={styles.iconBox}>
                 <IconSettings color={driverPrimitives.colors.gray700} size={20} />
-              </View>
-              <View style={styles.menuItemTextCol}>
+              </Box>
+              <VStack style={styles.menuItemTextCol}>
                 <Text style={styles.menuItemTitle}>Cài đặt ứng dụng</Text>
                 <Text style={styles.menuItemSub}>Định vị GPS, thông tin ứng dụng & bảo mật</Text>
-              </View>
+              </VStack>
               <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
             </Pressable>
-          </View>
-        </View>
+          </Card>
+        </VStack>
 
         {/* ── 4. Nút Đăng xuất nhẹ nhàng (Subtle Logout) ── */}
-        <View style={styles.logoutSection}>
+        <Box style={styles.logoutSection}>
           <Pressable
             accessibilityLabel="Đăng xuất"
             accessibilityRole="button"
@@ -366,10 +372,10 @@ export function DriverProfileScreen({
               {view.isLoggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
             </Text>
           </Pressable>
-        </View>
+        </Box>
 
         {/* ── 5. Chân trang thông tin phiên bản ── */}
-        <View style={styles.footerInfoBox}>
+        <VStack style={styles.footerInfoBox}>
           <Text style={styles.footerVersionText}>
             LEOPARD Driver · Phiên bản{' '}
             <Text style={styles.footerVersionBold}>{view.appVersion}</Text> (Build 2026)
@@ -377,7 +383,7 @@ export function DriverProfileScreen({
           <Text style={styles.footerCopyrightText}>
             Hệ thống kết nối chuỗi cung ứng vận tải hàng hóa chuyên nghiệp
           </Text>
-        </View>
+        </VStack>
       </ScrollView>
     </ScreenScaffold>
   );

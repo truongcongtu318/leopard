@@ -26,15 +26,28 @@ describe('Order State Machine', () => {
       ).not.toThrow();
     });
 
-    it('allows DRIVER to transition PICKING_UP -> IN_TRANSIT', () => {
+    it('allows DRIVER to transition PICKING_UP -> IN_TRANSIT with pickup proof', () => {
       expect(() =>
         assertOrderTransition({
           from: OrderStatus.PICKING_UP,
           to: OrderStatus.IN_TRANSIT,
           actorRole: Role.DRIVER,
           hasDeliveryProof: false,
+          hasPickupProof: true,
         }),
       ).not.toThrow();
+    });
+
+    it('rejects PICKING_UP -> IN_TRANSIT when pickup proof is missing', () => {
+      expect(() =>
+        assertOrderTransition({
+          from: OrderStatus.PICKING_UP,
+          to: OrderStatus.IN_TRANSIT,
+          actorRole: Role.DRIVER,
+          hasDeliveryProof: false,
+          hasPickupProof: false,
+        }),
+      ).toThrow(DomainError);
     });
 
     it('allows DRIVER to transition IN_TRANSIT -> DELIVERED when delivery proof is present', () => {

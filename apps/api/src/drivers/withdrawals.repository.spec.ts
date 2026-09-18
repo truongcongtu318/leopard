@@ -55,7 +55,39 @@ describe('WithdrawalsRepository', () => {
 
     expect(summary.lifetimeDeliveredVnd).toBe(500000);
     expect(summary.pendingWithdrawalVnd).toBe(100000);
-    expect(summary.availableBalanceVnd).toBe(350000); // 500000 - 100000 (pending) - 50000 (approved)
+    // 500000 * 0.8 (online 80%) - 100000 (pending) - 50000 (approved) = 250000
+    expect(summary.availableBalanceVnd).toBe(250000);
+  });
+
+  it('correctly calculates 20% platform fee for CASH orders and adds completed deposits', async () => {
+    const { prisma, repo, driverId } = await setup();
+    // 1. Order cash 200,000đ: driver collected cash, owes 20% fee = -40,000đ
+    const cashOrder = await prisma.order.create({
+      data: { customerId: 'c1', driverId, status: 'DELIVERED', priceVnd: 200000 },
+    });
+    await prisma.paymentIntent.create({
+      data: {
+        orderId: cashOrder.id,
+        amountVnd: 200000,
+        status: 'PAID_MANUAL',
+        confirmationNote: 'Tài xế đã thu tiền mặt 200.000 ₫ từ khách',
+      },
+    });
+
+    // 2. Deposit 100,000đ completed: +100,000đ
+    await prisma.driverDeposit.create({
+      data: {
+        driverId,
+        amountVnd: 100000,
+        status: 'COMPLETED',
+        payosOrderCode: BigInt(123456789),
+      },
+    });
+
+    const summary = await repo.getWalletSummary(driverId);
+    // 100000 (deposit) - 40000 (cash commission 20%) = 60000
+    expect(summary.availableBalanceVnd).toBe(60000);
+    expect(summary.lifetimeDeliveredVnd).toBe(200000);
   });
 
   it('finds an existing request by clientRequestId for idempotent replay', async () => {

@@ -40,6 +40,20 @@ export interface WithdrawalHistoryItem {
   title?: string;
 }
 
+export interface TopupWalletInput {
+  amountVnd: number;
+  clientRequestId?: string;
+}
+
+export interface TopupWalletResponse {
+  depositId: string;
+  amountVnd: number;
+  qrPayload: string;
+  provider: string;
+  providerReference: string;
+  expiresAt: string;
+}
+
 export interface WithdrawalRequestInput {
   amountVnd: number;
   bankName?: string;
@@ -103,6 +117,13 @@ export function createDriverWalletHttpAdapter(client?: DriverWalletHttpClient) {
       return getClient().get<WithdrawalHistoryResponse>(
         `/driver/wallet/withdrawals?page=${page}&pageSize=${pageSize}`,
       );
+    },
+
+    async topupWallet(input: TopupWalletInput): Promise<TopupWalletResponse> {
+      return getClient().post<TopupWalletResponse>('/driver/wallet/topup', {
+        amountVnd: input.amountVnd,
+        clientRequestId: input.clientRequestId ?? newClientRequestId(),
+      });
     },
   };
 }

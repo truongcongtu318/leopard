@@ -49,6 +49,16 @@ export class MediaRepository implements DeliveryProofReader {
     return count > 0;
   }
 
+  async hasPickupProof(orderId: string): Promise<boolean> {
+    const count = await this.prisma.mediaObject.count({
+      where: {
+        orderId,
+        type: 'PICKUP_PROOF',
+      },
+    });
+    return count > 0;
+  }
+
   async findByOrderId(orderId: string, skip: number = 0, take: number = 10): Promise<MediaObject[]> {
     return this.prisma.mediaObject.findMany({
       where: { orderId },

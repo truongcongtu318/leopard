@@ -9,6 +9,7 @@ import { MediaModule } from '../media/media.module.js';
 import { StorageProvider } from '../media/storage.provider.js';
 import { OrdersModule } from '../orders/orders.module.js';
 import { PdfModule } from '../pdf/pdf.module.js';
+import { PaymentsModule } from '../payments/payments.module.js';
 import { DriversController } from './drivers.controller.js';
 import { DriversRepository } from './drivers.repository.js';
 import { WithdrawalsRepository } from './withdrawals.repository.js';
@@ -18,7 +19,7 @@ import { DriverContractService } from './driver-contract.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 
 @Module({
-  imports: [AuthModule, DatabaseModule, OrdersModule, MediaModule, PdfModule],
+  imports: [AuthModule, DatabaseModule, OrdersModule, MediaModule, PdfModule, PaymentsModule],
   controllers: [DriversController],
   providers: [
     AccountStatusCache,

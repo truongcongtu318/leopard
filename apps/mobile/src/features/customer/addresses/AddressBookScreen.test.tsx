@@ -261,7 +261,7 @@ describe('AddressBookScreen', () => {
 
     // Map preview now open
     expect(screen.getByText('Ẩn bản đồ')).toBeTruthy();
-    expect(screen.getByTestId('real-interactive-map')).toBeTruthy();
+    expect(screen.getByTestId(/leopard-map-view|real-interactive-map/)).toBeTruthy();
 
     // Toggle close
     await fireEvent.press(toggleMapBtn);
@@ -273,7 +273,7 @@ describe('AddressBookScreen', () => {
 
     expect(screen.getByText('Định vị trên bản đồ')).toBeTruthy();
     expect(screen.getByText('Chạm hoặc kéo ghim để chỉnh')).toBeTruthy();
-    expect(screen.getByTestId('real-interactive-map')).toBeTruthy();
+    expect(screen.getByTestId(/leopard-map-view|real-interactive-map/)).toBeTruthy();
 
     screen.unmount();
   });

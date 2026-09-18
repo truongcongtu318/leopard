@@ -1,8 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Box,
+  Card,
+  Divider,
+  HStack,
+  IconChevron,
+  ScreenScaffold,
+  Switch,
+  VStack,
   colors,
   customerPalette,
   iosContinuousCurve,
@@ -11,8 +19,6 @@ import {
   radius,
   spacing,
   systemFontFamily,
-  IconChevron,
-  ScreenScaffold,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -32,12 +38,12 @@ export function CustomerSettingsScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Group 1: Thông báo */}
         <Text style={styles.sectionLabel}>Thông báo</Text>
-        <View style={styles.groupedCard}>
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+        <Card style={styles.groupedCard}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Thông báo đẩy (Push Notification)</Text>
               <Text style={styles.settingDesc}>Nhận thông báo khi tài xế nhận đơn và di chuyển</Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Bật hoặc tắt thông báo đẩy"
               onValueChange={setPushEnabled}
@@ -45,13 +51,13 @@ export function CustomerSettingsScreen() {
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={pushEnabled}
             />
-          </View>
+          </HStack>
 
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Tin nhắn SMS cập nhật</Text>
               <Text style={styles.settingDesc}>Gửi SMS khi đơn hàng hoàn tất hoặc có sự cố</Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Bật hoặc tắt tin nhắn SMS cập nhật"
               onValueChange={setSmsEnabled}
@@ -59,13 +65,13 @@ export function CustomerSettingsScreen() {
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={smsEnabled}
             />
-          </View>
+          </HStack>
 
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Âm thanh thông báo</Text>
               <Text style={styles.settingDesc}>Phát âm thanh khi có cập nhật mới</Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Bật hoặc tắt âm thanh thông báo"
               onValueChange={setSoundEnabled}
@@ -73,13 +79,13 @@ export function CustomerSettingsScreen() {
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={soundEnabled}
             />
-          </View>
+          </HStack>
 
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.textWrap}>
+          <HStack style={[styles.settingRow, styles.settingRowLast]}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Tin tức & Khuyến mãi</Text>
               <Text style={styles.settingDesc}>Nhận thông tin ưu đãi và giảm giá cước</Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Bật hoặc tắt tin tức và khuyến mãi"
               onValueChange={setPromoEnabled}
@@ -87,34 +93,34 @@ export function CustomerSettingsScreen() {
               trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
               value={promoEnabled}
             />
-          </View>
-        </View>
+          </HStack>
+        </Card>
 
         {/* Group 2: Ngôn ngữ */}
         <Text style={styles.sectionLabel}>Ngôn ngữ & khu vực</Text>
-        <View style={styles.groupedCard}>
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.textWrap}>
+        <Card style={styles.groupedCard}>
+          <HStack style={[styles.settingRow, styles.settingRowLast]}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Ngôn ngữ hiển thị</Text>
               <Text style={styles.settingDesc}>Tiếng Việt (Mặc định)</Text>
-            </View>
+            </VStack>
             <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
-          </View>
-        </View>
+          </HStack>
+        </Card>
 
         {/* Group 3: Bảo mật & Pháp lý */}
         <Text style={styles.sectionLabel}>Bảo mật & pháp lý</Text>
-        <View style={styles.groupedCard}>
+        <Card style={styles.groupedCard}>
           <Pressable
             accessibilityLabel="Bảo mật tài khoản & PIN"
             accessibilityRole="button"
             onPress={() => router.push('/customer/settings/security')}
             style={({ pressed }) => [styles.settingRow, pressed ? styles.rowPressed : null]}
           >
-            <View style={styles.textWrap}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Bảo mật tài khoản & PIN</Text>
               <Text style={styles.settingDesc}>Sinh trắc học FaceID và xóa tài khoản vĩnh viễn</Text>
-            </View>
+            </VStack>
             <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
           </Pressable>
 
@@ -138,11 +144,11 @@ export function CustomerSettingsScreen() {
             <IconChevron color={leopardPalette.inputPlaceholder} direction="right" size="md" />
           </Pressable>
 
-          <View style={[styles.settingRow, styles.settingRowLast]}>
+          <HStack style={[styles.settingRow, styles.settingRowLast]}>
             <Text style={styles.settingTitle}>Phiên bản hệ thống</Text>
             <Text style={styles.versionText}>1.0.0-pilot (Build 2608)</Text>
-          </View>
-        </View>
+          </HStack>
+        </Card>
       </ScrollView>
     </ScreenScaffold>
   );

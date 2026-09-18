@@ -3,8 +3,15 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Alert,
+  Badge,
+  Box,
+  Card,
+  HStack,
   IconCheck,
   ScreenScaffold,
+  Spinner,
+  VStack,
   colors,
   control,
   customerPalette,
@@ -166,40 +173,43 @@ export function PromotionsScreen() {
       onBack={() => router.back()}
       title="Khuyến mãi"
     >
-      <View style={styles.container}>
+      <Box style={styles.container}>
         {feedbackMessage ? (
-          <View
+          <Alert
+            action={feedbackMessage.isError ? 'error' : 'success'}
             style={[
               styles.bannerBox,
               feedbackMessage.isError ? styles.bannerBoxError : styles.bannerBoxSuccess,
             ]}
           >
             {!feedbackMessage.isError ? (
-              <IconCheck color={colors.success.text} size={16} />
+              <Alert.Icon>
+                <IconCheck color={colors.success.text} size={16} />
+              </Alert.Icon>
             ) : null}
-            <Text
+            <Alert.Text
               style={[
                 styles.feedbackText,
                 feedbackMessage.isError ? styles.feedbackError : styles.feedbackSuccess,
               ]}
             >
               {feedbackMessage.text}
-            </Text>
-          </View>
+            </Alert.Text>
+          </Alert>
         ) : null}
 
         {/* Available Vouchers Section */}
         <Text style={styles.sectionLabel}>Mã khuyến mãi có sẵn</Text>
 
         {isLoading ? (
-          <View style={styles.loadingWrap}>
-            <ActivityIndicator color={customerPalette.primary} size="small" />
-          </View>
+          <Box style={styles.loadingWrap}>
+            <Spinner color={customerPalette.primary} size="small" />
+          </Box>
         ) : promotions.length === 0 ? (
-          <View style={styles.emptyContainer}>
+          <Box style={styles.emptyContainer}>
             <Text style={styles.emptyTitle}>Chưa có mã khuyến mãi</Text>
             <Text style={styles.emptySubtitle}>Các mã ưu đãi mới sẽ được cập nhật sớm.</Text>
-          </View>
+          </Box>
         ) : (
           <FlatList
             contentContainerStyle={styles.listContent}
@@ -209,16 +219,16 @@ export function PromotionsScreen() {
             renderItem={({ item }) => {
               const isApplied = appliedCode === item.code;
               return (
-                <View style={[styles.promoCard, isApplied ? styles.promoCardApplied : null]}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.codeTag}>
-                      <Text style={styles.codeText}>{item.code}</Text>
-                    </View>
+                <Card style={[styles.promoCard, isApplied ? styles.promoCardApplied : null]}>
+                  <HStack style={styles.cardHeader}>
+                    <Badge action="info" size="sm" style={styles.codeTag}>
+                      <Badge.Text style={styles.codeText}>{item.code}</Badge.Text>
+                    </Badge>
                     <Text style={styles.discountText}>{item.discount}</Text>
-                  </View>
+                  </HStack>
                   <Text style={styles.promoTitle}>{item.title}</Text>
                   {item.description ? <Text style={styles.promoDesc}>{item.description}</Text> : null}
-                  <View style={styles.cardFooter}>
+                  <HStack style={styles.cardFooter}>
                     <Text style={styles.expiryText}>HSD: {item.expiresAt}</Text>
                     <Pressable
                       accessibilityLabel={isApplied ? 'Đang dùng mã' : `Sử dụng mã ${item.code}`}
@@ -235,14 +245,14 @@ export function PromotionsScreen() {
                         {isApplied ? 'Đang dùng' : 'Sử dụng'}
                       </Text>
                     </Pressable>
-                  </View>
-                </View>
+                  </HStack>
+                </Card>
               );
             }}
             showsVerticalScrollIndicator={false}
           />
         )}
-      </View>
+      </Box>
     </ScreenScaffold>
   );
 }

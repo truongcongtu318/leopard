@@ -79,6 +79,9 @@ describe('CustomerTrackingSocket mapping helpers', () => {
       expect(view.driverLabel).toBe('Tài xế Nguyễn Minh An');
       expect(view.lastUpdatedLabel).toBeTruthy();
       expect(view.summary).toContain('Bản đồ lộ trình; vị trí tài xế cập nhật lúc');
+      // The customer map needs the actual coordinate, not just a timestamp.
+      expect(view.coords).toEqual({ lat: 10.7326, lng: 106.7168 });
+      expect(view.point).toBe(samplePoint);
     }
   });
 
@@ -200,17 +203,21 @@ describe('CustomerTrackingSocketManager', () => {
 
       mockSocket.connected = true;
       manager.joinOrder(validOrderId);
-      expect(mockSocket.emit).toHaveBeenCalledWith('tracking:join-order', {
-        orderId: validOrderId,
-      });
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'tracking:join-order',
+        { orderId: validOrderId },
+        expect.any(Function),
+      );
 
       mockSocket.emit.mockClear();
       mockSocket.trigger('reconnect');
 
       expect(manager.getConnectionState()).toBe('connected');
-      expect(mockSocket.emit).toHaveBeenCalledWith('tracking:join-order', {
-        orderId: validOrderId,
-      });
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'tracking:join-order',
+        { orderId: validOrderId },
+        expect.any(Function),
+      );
       expect(onReconnected).toHaveBeenCalledWith(validOrderId);
     });
 
@@ -237,9 +244,11 @@ describe('CustomerTrackingSocketManager', () => {
       expect(manager.getActiveOrderId()).toBeNull();
 
       manager.joinOrder(validOrderId);
-      expect(mockSocket.emit).toHaveBeenCalledWith('tracking:join-order', {
-        orderId: validOrderId,
-      });
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'tracking:join-order',
+        { orderId: validOrderId },
+        expect.any(Function),
+      );
       expect(manager.getActiveOrderId()).toBe(validOrderId);
     });
 
@@ -254,9 +263,11 @@ describe('CustomerTrackingSocketManager', () => {
       expect(mockSocket.emit).toHaveBeenCalledWith('tracking:leave-order', {
         orderId: validOrderId,
       });
-      expect(mockSocket.emit).toHaveBeenCalledWith('tracking:join-order', {
-        orderId: secondOrderId,
-      });
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'tracking:join-order',
+        { orderId: secondOrderId },
+        expect.any(Function),
+      );
       expect(manager.getActiveOrderId()).toBe(secondOrderId);
     });
 
@@ -271,6 +282,104 @@ describe('CustomerTrackingSocketManager', () => {
         orderId: validOrderId,
       });
       expect(manager.getActiveOrderId()).toBeNull();
+    });
+
+    it('joinOrders watches several rooms at once and drops the ones removed', () => {
+      mockSocket.connected = true;
+
+      manager.joinOrders([validOrderId, secondOrderId]);
+
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'tracking:join-order',
+        { orderId: validOrderId },
+        expect.any(Function),
+      );
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'tracking:join-order',
+        { orderId: secondOrderId },
+        expect.any(Function),
+      );
+
+      mockSocket.emit.mockClear();
+      manager.joinOrders([secondOrderId]);
+
+      expect(mockSocket.emit).toHaveBeenCalledWith('tracking:leave-order', {
+        orderId: validOrderId,
+      });
+      expect(mockSocket.emit).not.toHaveBeenCalledWith(
+        'tracking:leave-order',
+        { orderId: secondOrderId },
+      );
+    });
+
+    it('adopts the point replayed in the join ack so the map is never blank', () => {
+      const onPointUpdated = jest.fn();
+      manager.subscribe({ onPointUpdated });
+      mockSocket.connected = true;
+
+      manager.joinOrder(validOrderId);
+
+      const ack = (mockSocket.emit as jest.Mock).mock.calls.find(
+        ([event]) => event === 'tracking:join-order',
+      )?.[2] as ((ack: unknown) => void) | undefined;
+      expect(ack).toBeDefined();
+
+      ack?.({
+        ok: true,
+        latestPoint: {
+          id: 'point-replayed',
+          driverId: 'driver-9',
+          clientPointId: 'cp-replayed',
+          latitude: 10.7621,
+          longitude: 106.6605,
+          capturedAt: '2026-08-15T14:40:00.000Z',
+        },
+      });
+
+      expect(onPointUpdated).toHaveBeenCalledTimes(1);
+      expect(onPointUpdated).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderId: validOrderId,
+          point: expect.objectContaining({ latitude: 10.7621, longitude: 106.6605 }),
+          trackingView: expect.objectContaining({
+            coords: { lat: 10.7621, lng: 106.6605 },
+          }),
+        }),
+      );
+      expect(manager.getLatestPoint(validOrderId)?.latitude).toBe(10.7621);
+    });
+
+    it('ignores a stale point replayed by the join ack', () => {
+      const onPointUpdated = jest.fn();
+      manager.subscribe({ onPointUpdated });
+      mockSocket.connected = true;
+
+      manager.joinOrder(validOrderId);
+      const ack = (mockSocket.emit as jest.Mock).mock.calls.find(
+        ([event]) => event === 'tracking:join-order',
+      )?.[2] as ((ack: unknown) => void) | undefined;
+
+      ack?.({
+        ok: true,
+        latestPoint: {
+          id: 'point-newer',
+          latitude: 10.9,
+          longitude: 106.9,
+          capturedAt: '2026-08-15T15:00:00.000Z',
+        },
+      });
+      ack?.({
+        ok: true,
+        latestPoint: {
+          id: 'point-older',
+          latitude: 10.1,
+          longitude: 106.1,
+          capturedAt: '2026-08-15T14:00:00.000Z',
+        },
+      });
+
+      expect(onPointUpdated).toHaveBeenCalledTimes(1);
+      expect(manager.getLatestPoint(validOrderId)?.latitude).toBe(10.9);
     });
   });
 
@@ -455,9 +564,11 @@ describe('CustomerTrackingSocketManager', () => {
         message: 'JWT token is expired',
       });
       expect(onTokenExpired).toHaveBeenCalledTimes(1);
-      expect(mockSocket.emit).toHaveBeenCalledWith('tracking:join-order', {
-        orderId: validOrderId,
-      });
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'tracking:join-order',
+        { orderId: validOrderId },
+        expect.any(Function),
+      );
     });
   });
 

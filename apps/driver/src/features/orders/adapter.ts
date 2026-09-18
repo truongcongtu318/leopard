@@ -31,6 +31,7 @@ import type {
   DriverOrdersPort,
   DriverProofPort,
   DriverTrackingPort,
+  ProofFileInput,
 } from './port';
 import { pickDeviceImage, appendFileToFormData } from '@leopard/mobile-core';
 
@@ -569,6 +570,29 @@ export function mapDriverProof(
   const status = order.status as OrderStatus;
   const proofMedia = order.media?.find((m) => m.type === 'DELIVERY_PROOF') ?? null;
   const deliveryProofUrl = proofMedia?.id ?? order.deliveryProofUrl ?? null;
+  const pickupProofMedia = order.media?.find((m) => m.type === 'PICKUP_PROOF') ?? null;
+
+  // PICKING_UP is its own evidence step: the cargo is only confirmed as taken
+  // once a pickup photo exists, so this leg must never borrow the delivery
+  // proof metadata.
+  if (status === 'PICKING_UP') {
+    if (pickupProofMedia) {
+      return {
+        kind: 'persisted',
+        label: 'Ảnh xác nhận đã lấy hàng đã tải lên',
+        message: 'Bằng chứng lấy hàng đã có trong snapshot phản hồi từ hệ thống.',
+        fileLabel: pickupProofMedia.id,
+        mediaId: pickupProofMedia.id,
+      };
+    }
+    return {
+      kind: 'required',
+      label: 'Cần ảnh xác nhận đã lấy hàng',
+      message: 'Chụp ảnh hàng hóa tại điểm lấy để xác nhận đã lấy thành công.',
+      fileLabel: null,
+      mediaId: null,
+    };
+  }
 
   if (status === 'IN_TRANSIT') {
     if (deliveryProofUrl) {
@@ -639,15 +663,28 @@ function resolveDriverTask(
     };
   }
   if (status === 'PICKING_UP') {
-    const offered: DriverCommandView = {
-      id: `cmd-transit-${order.id}`,
+    if (proof.kind === 'persisted') {
+      const offered: DriverCommandView = {
+        id: `cmd-transit-${order.id}`,
+        orderId: order.id,
+        label: 'Đã lấy hàng — bắt đầu giao',
+        targetStatus: 'IN_TRANSIT',
+      };
+      return {
+        primaryTask: { kind: 'advance-lifecycle', command: offered },
+        offeredLifecycleCommand: offered,
+      };
+    }
+    // No pickup photo yet: the order cannot leave the pickup point, so the
+    // primary task is the capture itself rather than the status transition.
+    const uploadCommand: DriverCommandView = {
+      id: `cmd-select-pickup-proof-${order.id}`,
       orderId: order.id,
-      label: 'Đã lấy hàng — bắt đầu giao',
-      targetStatus: 'IN_TRANSIT',
+      label: 'Chụp ảnh xác nhận đã lấy hàng',
     };
     return {
-      primaryTask: { kind: 'advance-lifecycle', command: offered },
-      offeredLifecycleCommand: offered,
+      primaryTask: { kind: 'upload-proof', command: uploadCommand },
+      offeredLifecycleCommand: null,
     };
   }
   if (status === 'IN_TRANSIT') {
@@ -1242,8 +1279,27 @@ export function createDriverHttpAdapter(
           if (
             error.code === 'PROOF_REQUIRED' ||
             error.code === 'DELIVERY_PROOF_REQUIRED' ||
+            error.code === 'PICKUP_PROOF_REQUIRED' ||
             (error.statusCode === 400 && error.message.toLowerCase().includes('proof'))
           ) {
+            // Which evidence is missing depends on the leg the server refused,
+            // so the recovery task must point at that same leg.
+            const isPickupLeg = targetStatus === 'IN_TRANSIT';
+            const requiredProof = isPickupLeg
+              ? {
+                  label: 'Cần ảnh xác nhận đã lấy hàng',
+                  message: 'Chụp ảnh hàng hóa tại điểm lấy để xác nhận đã lấy thành công.',
+                  commandLabel: 'Chụp ảnh xác nhận đã lấy hàng',
+                  commandId: `cmd-select-pickup-proof-${orderId}`,
+                  notice: 'Cần tải ảnh xác nhận đã lấy hàng trước khi bắt đầu giao.',
+                }
+              : {
+                  label: 'Cần ảnh xác nhận trước khi hoàn tất',
+                  message: 'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.',
+                  commandLabel: 'Thêm ảnh xác nhận giao hàng',
+                  commandId: `cmd-select-proof-${orderId}`,
+                  notice: 'Cần tải ảnh xác nhận trước khi hoàn tất giao hàng.',
+                };
             try {
               const currentOrder = await activeClient.get<MappedDriverOrderResponse>(
                 `/orders/${orderId}`,
@@ -1255,20 +1311,20 @@ export function createDriverHttpAdapter(
                   scenarioId: 'D-DETAIL-PROOF-REQUIRED',
                   proof: {
                     kind: 'required',
-                    label: 'Cần ảnh xác nhận trước khi hoàn tất',
-                    message: 'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.',
+                    label: requiredProof.label,
+                    message: requiredProof.message,
                     fileLabel: null,
                   },
                   primaryTask: {
                     kind: 'upload-proof',
                     command: {
-                      id: `cmd-select-proof-${orderId}`,
+                      id: requiredProof.commandId,
                       orderId,
-                      label: 'Thêm ảnh xác nhận giao hàng',
+                      label: requiredProof.commandLabel,
                     },
                   },
                   offeredLifecycleCommand: null,
-                  notice: 'Cần tải ảnh xác nhận trước khi hoàn tất giao hàng.',
+                  notice: requiredProof.notice,
                 });
               }
             } catch {
@@ -1547,6 +1603,32 @@ export async function uploadDeliveryProof(
   orderId: string,
   file: ProofFileMetadata,
 ): Promise<DriverProofView> {
+  return uploadProofForLeg(client, orderId, file, 'delivery');
+}
+
+/**
+ * Uploads the pickup evidence. The API keeps this separate from the delivery
+ * proof so a leg can only ever be confirmed by its own photo.
+ */
+export async function uploadPickupProof(
+  client: DriverHttpClient,
+  orderId: string,
+  file: ProofFileMetadata,
+): Promise<DriverProofView> {
+  return uploadProofForLeg(client, orderId, file, 'pickup');
+}
+
+/** True when the command id was minted for the pickup leg. */
+export function isPickupProofCommand(commandId: string): boolean {
+  return commandId.includes('pickup-proof');
+}
+
+async function uploadProofForLeg(
+  client: DriverHttpClient,
+  orderId: string,
+  file: ProofFileMetadata,
+  leg: 'pickup' | 'delivery',
+): Promise<DriverProofView> {
   const validOrderId = parseDriverOrderId(orderId);
   if (!validOrderId) {
     return deepFreeze<DriverProofView>({
@@ -1561,6 +1643,9 @@ export async function uploadDeliveryProof(
   if (!validation.valid && validation.view) {
     return deepFreeze<DriverProofView>(validation.view);
   }
+
+  const isPickup = leg === 'pickup';
+  const fallbackFileName = isPickup ? 'xac-nhan-lay-hang.jpg' : 'xac-nhan-giao-hang.jpg';
 
   try {
     const form = new FormData();
@@ -1578,15 +1663,17 @@ export async function uploadDeliveryProof(
     );
 
     const response = await client.postForm<{ id: string; type?: string }>(
-      `/orders/${validOrderId}/media/delivery-proof`,
+      `/orders/${validOrderId}/media/${isPickup ? 'pickup-proof' : 'delivery-proof'}`,
       form,
     );
 
     return deepFreeze<DriverProofView>({
       kind: 'persisted',
-      label: 'Ảnh xác nhận đã tải lên',
+      label: isPickup
+        ? 'Ảnh xác nhận đã lấy hàng đã tải lên'
+        : 'Ảnh xác nhận đã tải lên',
       message: 'Proof đã có trong snapshot phản hồi từ hệ thống.',
-      fileLabel: file.name || 'xac-nhan-giao-hang.jpg',
+      fileLabel: file.name || fallbackFileName,
       mediaId: response.id,
     });
   } catch {
@@ -1636,7 +1723,7 @@ export function createDriverProofAdapter(
       return file;
     },
 
-    async uploadProof(commandId: string): Promise<DriverProofView> {
+    async uploadProof(commandId: string, capturedFile?: ProofFileInput): Promise<DriverProofView> {
       const orderId =
         extractOrderIdFromCommand(commandId) ?? parseDriverOrderId(commandId);
       if (!orderId) {
@@ -1648,14 +1735,21 @@ export function createDriverProofAdapter(
         });
       }
 
-      const file = locallySelectedFile ?? options?.selectedFileProvider?.() ?? {
-        name: 'xac-nhan-giao-hang.jpg',
-        mimeType: 'image/jpeg',
-        size: 1024 * 500,
-        uri: '',
-      };
+      const file = capturedFile ?? locallySelectedFile ?? options?.selectedFileProvider?.();
+      if (!file) {
+        // Nothing was captured, so there is nothing to upload. Report it rather
+        // than posting a fabricated placeholder file to the server.
+        return deepFreeze<DriverProofView>({
+          kind: 'required',
+          label: 'Chưa có ảnh xác nhận',
+          message: 'Hãy chụp ảnh bằng chứng trước khi tải lên.',
+          fileLabel: null,
+        });
+      }
 
-      const result = await uploadDeliveryProof(getClient(), orderId, file);
+      const result = isPickupProofCommand(commandId)
+        ? await uploadPickupProof(getClient(), orderId, file)
+        : await uploadDeliveryProof(getClient(), orderId, file);
       return result;
     },
   };

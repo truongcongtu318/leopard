@@ -37,6 +37,7 @@ import { DriverApplicationService } from './driver-application.service.js';
 import { DriverDocumentService } from './driver-document.service.js';
 import { ApplyDriverDto } from './dto/apply-driver.dto.js';
 import { RequestWithdrawalDto } from './dto/request-withdrawal.dto.js';
+import { topupWalletSchema, type TopupWalletDto } from './dto/topup-wallet.dto.js';
 import { UpdateBankAccountDto } from './dto/update-bank-account.dto.js';
 import { ReportOrderIncidentDto } from './dto/report-order-incident.dto.js';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
@@ -245,6 +246,17 @@ export class DriversController {
     @Body() dto: RequestWithdrawalDto,
   ) {
     return this.driversService.requestWithdrawal(actor, dto);
+  }
+
+  @Post('wallet/topup')
+  @RequireRoles('DRIVER')
+  @HttpCode(HttpStatus.CREATED)
+  topupWallet(
+    @CurrentUser() actor: AuthenticatedActor,
+    @Body() body: unknown,
+  ) {
+    const dto = topupWalletSchema.parse(body);
+    return this.driversService.createTopup(actor, dto);
   }
 
   @Get('wallet/withdrawals')

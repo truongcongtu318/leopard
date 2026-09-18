@@ -41,9 +41,22 @@ export type DriverTrackingPort = Readonly<{
   openForegroundLocationSettings: () => Promise<void>;
 }>;
 
+export type ProofFileInput = Readonly<{
+  uri: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  file?: File | Blob;
+}>;
+
 export type DriverProofPort = Readonly<{
   selectProof: () => Promise<Readonly<{ name: string; mimeType: string; size: number }> | null>;
-  uploadProof: (commandId: string) => Promise<DriverProofView>;
+  /**
+   * Uploads a proof file the caller already captured. Passing the file in keeps
+   * the upload from opening a picker of its own, which previously made the
+   * driver choose a second image after already taking one.
+   */
+  uploadProof: (commandId: string, file?: ProofFileInput) => Promise<DriverProofView>;
 }>;
 
 // Wave 4 leaves every network, Socket, picker, and location implementation outside UI files.

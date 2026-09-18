@@ -3,10 +3,14 @@ import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import {
+  Box,
+  Card,
   GestureBottomSheet,
-  RealInteractiveMap,
+  HStack,
+  LeopardMapView,
   ScreenState,
   SkeletonCard,
+  VStack,
   colors,
   iosContinuousCurve,
   leopardPalette,
@@ -197,7 +201,7 @@ export function DriverOrdersScreen({
     <View style={styles.screenRoot}>
       {/* ── Layer 0: full-bleed live map ── */}
       <View style={styles.mapLayer} testID="driver-map-canvas">
-        <RealInteractiveMap
+        <LeopardMapView
           destination={
             activeTrip
               ? {
@@ -311,20 +315,20 @@ export function DriverOrdersScreen({
           </Svg>
 
           {view.kind === 'loading' ? (
-            <View style={styles.sheetSectionGap}>
-              <View style={styles.sheetHeader}>
+            <VStack space="sm" style={styles.sheetSectionGap}>
+              <Box style={styles.sheetHeader}>
                 <Text accessibilityRole="header" style={styles.sheetTitle}>
                   Đang tải bảng đơn
                 </Text>
                 <Text style={styles.sheetSubtitle}>LEOPARD đang kết nối điều phối...</Text>
-              </View>
+              </Box>
               <SkeletonCard />
               <SkeletonCard />
-            </View>
+            </VStack>
           ) : null}
 
           {view.kind === 'permission-denied' || view.kind === 'error' ? (
-            <View style={styles.boundaryBox}>
+            <Box style={styles.boundaryBox}>
               <ScreenState
                 actionLabel={view.kind === 'error' ? 'Thử tải lại danh sách' : undefined}
                 message={view.message}
@@ -332,7 +336,7 @@ export function DriverOrdersScreen({
                 state={view.kind}
                 title={view.title}
               />
-            </View>
+            </Box>
           ) : null}
 
           {isContent ? (

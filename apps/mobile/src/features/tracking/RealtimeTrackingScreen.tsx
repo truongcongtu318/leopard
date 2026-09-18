@@ -21,7 +21,7 @@ import {
   IconRoleDriver,
   IconSpeedTruck,
   IconStar,
-  RealInteractiveMap,
+  LeopardMapView,
   colors,
   control,
   customerPalette,
@@ -67,7 +67,14 @@ export type TripBookingDetails = Readonly<{
   distanceRemainingKm: number;
   etaMinutes: number;
   etaLabel: string;
-  status: 'LOADING' | 'IN_TRANSIT' | 'ARRIVED' | 'DELIVERED';
+  status:
+    | 'ACCEPTED'
+    | 'PICKING_UP'
+    | 'LOADING'
+    | 'IN_TRANSIT'
+    | 'ARRIVED'
+    | 'RETURNING'
+    | 'DELIVERED';
   hasDeliveryProof: boolean;
   isSimulated?: boolean;
   isDemo?: boolean;
@@ -97,6 +104,18 @@ type TrackingStatusPresentation = Readonly<{
 }>;
 
 const TRACKING_STATUS: Record<TripBookingDetails['status'], TrackingStatusPresentation> = {
+  ACCEPTED: {
+    label: 'Tài xế đã nhận đơn',
+    bg: colors.info.background,
+    text: colors.info.text,
+    dot: colors.brand.background,
+  },
+  PICKING_UP: {
+    label: 'Đang đến lấy hàng',
+    bg: colors.info.background,
+    text: colors.info.text,
+    dot: colors.brand.background,
+  },
   LOADING: {
     label: 'Đang bốc hàng',
     bg: colors.warning.background,
@@ -114,6 +133,12 @@ const TRACKING_STATUS: Record<TripBookingDetails['status'], TrackingStatusPresen
     bg: colors.success.background,
     text: colors.success.text,
     dot: colors.success.border,
+  },
+  RETURNING: {
+    label: 'Đang hoàn hàng',
+    bg: colors.danger.background,
+    text: colors.danger.text,
+    dot: colors.danger.border,
   },
   DELIVERED: {
     label: 'Hoàn thành giao',
@@ -167,7 +192,7 @@ const TrackingMapLayer = React.memo(function TrackingMapLayer({
   return (
     <View pointerEvents="box-none" style={styles.mapArea} testID="realtime-map-area">
       <View style={styles.mapCanvas}>
-        <RealInteractiveMap
+        <LeopardMapView
           destination={memoizedDestination}
           height="100%"
           mode="tracking"

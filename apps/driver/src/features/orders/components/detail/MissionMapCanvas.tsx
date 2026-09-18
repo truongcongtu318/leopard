@@ -2,11 +2,12 @@ import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   IconClock,
+  IconExternalLink,
+  IconLocationPin,
   IconRoute,
-  RealInteractiveMap,
+  LeopardMapView,
   colors,
   leopardPalette,
-  postMapMessageToFrames,
   radius,
   typeScale,
   type MapCoordinate,
@@ -34,6 +35,20 @@ export type MissionMapCanvasProps = Readonly<{
   onNavigationWarning?: (proceed: () => void) => void;
   fillContainer?: boolean;
   truckLocation?: MapCoordinate;
+  /** Real device heading in degrees, when the GPS fix provides one. */
+  truckHeading?: number | null;
+  /**
+   * Cargo at a glance, surfaced on the map header instead of a separate card
+   * over the sheet. The driver still sees what is being carried without the
+   * sheet losing a third of its height.
+   */
+  cargoSummary?: string | null;
+  cargoWeightKg?: number | null;
+  /**
+   * 'overview' frames the whole A → B route (with every stop).
+   * 'turn-by-turn' locks a 3D driving camera onto the vehicle, like Google Maps.
+   */
+  navMode?: 'overview' | 'turn-by-turn';
   testID?: string;
   // Legacy string labels for backward compatibility
   originLabel?: string;
@@ -141,16 +156,16 @@ export function MissionMapCanvas({
   onNavigationWarning,
   fillContainer = false,
   truckLocation,
+  truckHeading,
+  cargoSummary,
+  cargoWeightKg,
+  navMode = 'overview',
   testID = 'route-map-schematic',
   originLabel,
   destinationLabel,
 }: MissionMapCanvasProps) {
-  const [viewMode, setViewMode] = React.useState<'overview' | 'driving'>('overview');
-
-  const handleSetViewMode = (mode: 'overview' | 'driving') => {
-    setViewMode(mode);
-    postMapMessageToFrames({ type: 'LEOPARD_MAP_SET_VIEW_MODE', mode });
-  };
+  // Turn-by-turn mirrors how Google Maps behaves once navigation starts.
+  const isTurnByTurn = navMode === 'turn-by-turn';
 
   const resolvedOrigin = origin ?? { label: originLabel ?? 'Điểm lấy hàng' };
   const resolvedDestination = destination ?? {
@@ -222,7 +237,7 @@ export function MissionMapCanvas({
       !isNaN(resolvedTarget.lng),
   );
 
-  // Map stops for RealInteractiveMap with progress and sequence
+  // Map stops for LeopardMapView with progress and sequence
   const mapStops = React.useMemo(
     () =>
       stops.map((s, idx) => ({
@@ -303,23 +318,121 @@ export function MissionMapCanvas({
   const isTripEnded = tracking.kind === 'unavailable' || tracking.kind === 'not-started';
   const showLiveOverlays = !isTripEnded;
 
+  // Only real cargo is worth a header line; an empty order shows nothing rather
+  // than a placeholder that pushes the map down for no reason.
+  const cargoLabel = React.useMemo(() => {
+    const summary = cargoSummary?.trim();
+    if (!summary) return null;
+    const weight =
+      typeof cargoWeightKg === 'number' && cargoWeightKg > 0
+        ? ` · ${cargoWeightKg} kg`
+        : '';
+    return `${summary}${weight}`;
+  }, [cargoSummary, cargoWeightKg]);
+
+  // Heading for the 3D camera. The device's real heading wins; when the GPS fix
+  // has none (standing still), fall back to the bearing towards the active
+  // target so the camera still looks down the road ahead.
+  const followBearing = React.useMemo(() => {
+    if (!isTurnByTurn) return 0;
+    if (typeof truckHeading === 'number' && truckHeading >= 0) return truckHeading;
+
+    const from = truckLocation ?? resolvedOrigin.coords;
+    const to =
+      resolvedTarget && resolvedTarget.lat != null && resolvedTarget.lng != null
+        ? { lat: resolvedTarget.lat, lng: resolvedTarget.lng }
+        : resolvedDestination.coords;
+    if (!from || !to) return 0;
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const y = Math.sin(toRad(to.lng - from.lng)) * Math.cos(toRad(to.lat));
+    const x =
+      Math.cos(toRad(from.lat)) * Math.sin(toRad(to.lat)) -
+      Math.sin(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.cos(toRad(to.lng - from.lng));
+    return (Math.atan2(y, x) * 180) / Math.PI;
+  }, [
+    isTurnByTurn,
+    resolvedDestination.coords,
+    resolvedOrigin.coords,
+    resolvedTarget,
+    truckHeading,
+    truckLocation,
+  ]);
+
   return (
     <View
       style={[styles.mapCanvasContainer, fillContainer ? styles.mapCanvasContainerFill : null]}
       testID={testID}
     >
-      <RealInteractiveMap
+      {/* Dual-resolution Vietmap Vector GL engine (same renderer as the customer app) */}
+      <LeopardMapView
+        bearing={followBearing}
         destination={resolvedDestination}
+        followTruckLocation={showLiveOverlays && isTurnByTurn}
         height="100%"
-        mode={isTripEnded ? 'route' : 'tracking'}
+        interactive={!isTripEnded}
+        mode={isTripEnded || !isTurnByTurn ? 'route' : 'tracking'}
         origin={resolvedOrigin}
+        pitch={showLiveOverlays && isTurnByTurn ? 55 : 0}
         routeCoords={effectiveRouteCoords}
         routeResolutionPolicy="PROVIDED_ONLY"
         routeSegments={effectiveRouteSegments}
         stops={mapStops}
         truckEtaLabel=""
         truckLocation={truckLocation}
+        zoom={showLiveOverlays && isTurnByTurn ? 17 : 13.5}
       />
+
+      {/* Cargo at a glance, pinned to the map header. Sits above the mode card
+          (top: 56) so it never competes with navigation guidance. */}
+      {showLiveOverlays && cargoLabel ? (
+        <View pointerEvents="none" style={styles.cargoHeaderChip} testID="cargo-header-chip">
+          <Text numberOfLines={1} style={styles.cargoHeaderText}>
+            📦 {cargoLabel}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Overview: make the A → B frame explicit, just like a route preview. */}
+      {showLiveOverlays && !isTurnByTurn ? (
+        <View pointerEvents="none" style={styles.overviewFrameBadge} testID="badge-route-overview">
+          <IconLocationPin color={leopardPalette.primary} size={12} />
+          <Text numberOfLines={1} style={styles.overviewFrameText}>
+            {`Toàn cảnh · ${resolvedOrigin.label} ➔ ${resolvedDestination.label}`}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Turn-by-turn: Google-Maps-style guidance card with a one-tap handoff. */}
+      {showLiveOverlays && isTurnByTurn ? (
+        <View pointerEvents="box-none" style={styles.turnByTurnHudWrap} testID="turn-by-turn-hud">
+          <View style={styles.turnByTurnCard}>
+            <View style={styles.turnByTurnManeuver}>
+              <IconRoute color="#FFFFFF" size={22} />
+            </View>
+            <View style={styles.turnByTurnBody}>
+              <Text numberOfLines={1} style={styles.turnByTurnTitle}>
+                {resolvedTarget?.label ? `Đến ${resolvedTarget.label}` : 'Bám theo lộ trình'}
+              </Text>
+              <Text numberOfLines={1} style={styles.turnByTurnSubtitle}>
+                {etaText}
+              </Text>
+            </View>
+            <Pressable
+              accessibilityHint="Mở Google Maps để dẫn đường turn-by-turn bằng giọng nói"
+              accessibilityLabel="Mở Google Maps chỉ đường turn-by-turn"
+              accessibilityRole="button"
+              onPress={() =>
+                openExternalNavigation({ target: resolvedTarget, vehicleType, onWarning: onNavigationWarning })
+              }
+              style={({ pressed }) => [styles.turnByTurnCta, pressed ? styles.pressed : null]}
+              testID="btn-turn-by-turn-google-maps"
+            >
+              <IconExternalLink color={leopardPalette.primary} size={16} />
+              <Text style={styles.turnByTurnCtaText}>Google Maps</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
 
       {/* Chuyến đã kết thúc: bản đồ tĩnh, chỉ còn pill ETA tóm tắt ở đáy */}
       {showLiveOverlays ? (
@@ -539,6 +652,109 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 46,
     zIndex: 10,
+  },
+  cargoHeaderChip: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    borderColor: colors.neutral.border,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    left: 12,
+    maxWidth: '72%',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    position: 'absolute',
+    top: 12,
+    zIndex: 20,
+  },
+  cargoHeaderText: {
+    ...typeScale.caption1,
+    color: leopardPalette.textSlateDark,
+    fontWeight: '700',
+  },
+  overviewFrameBadge: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    borderColor: colors.neutral.border,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    left: 12,
+    maxWidth: '86%',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    position: 'absolute',
+    top: 56,
+    zIndex: 20,
+  },
+  overviewFrameText: {
+    ...typeScale.caption1,
+    color: leopardPalette.textSlateDark,
+    fontWeight: '700',
+  },
+  turnByTurnHudWrap: {
+    left: 12,
+    position: 'absolute',
+    right: 12,
+    top: 56,
+    zIndex: 20,
+  },
+  turnByTurnCard: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(11, 37, 69, 0.94)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: radius.card,
+    borderWidth: 1,
+    elevation: 6,
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+  },
+  turnByTurnManeuver: {
+    alignItems: 'center',
+    backgroundColor: leopardPalette.accentYellow,
+    borderRadius: radius.control,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  turnByTurnBody: {
+    flex: 1,
+    gap: 2,
+  },
+  turnByTurnTitle: {
+    ...typeScale.subheadline,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  turnByTurnSubtitle: {
+    ...typeScale.caption1,
+    color: 'rgba(255, 255, 255, 0.78)',
+    fontWeight: '600',
+  },
+  turnByTurnCta: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.control,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  turnByTurnCtaText: {
+    ...typeScale.caption1,
+    color: leopardPalette.primary,
+    fontWeight: '700',
   },
   srOnly: {
     height: 1,

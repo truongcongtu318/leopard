@@ -143,6 +143,8 @@ export function mapPointToTrackingView(
     driverLabel,
     lastUpdatedLabel,
     summary: `Bản đồ lộ trình; vị trí tài xế cập nhật lúc ${updatedTime}.`,
+    point,
+    coords: { lat: point.latitude, lng: point.longitude },
   });
 }
 
@@ -189,6 +191,8 @@ export function mapTrackingStateToView(options: {
       message:
         'Đang kết nối lại; vị trí hiện tại chưa được gọi là trực tiếp.',
       summary: 'Bản đồ lộ trình đang kết nối lại.',
+      point: latestPoint ?? undefined,
+      coords: latestPoint ? { lat: latestPoint.latitude, lng: latestPoint.longitude } : undefined,
     });
   }
 
@@ -207,6 +211,8 @@ export function mapTrackingStateToView(options: {
       summary: updatedTime
         ? `Bản đồ lộ trình dùng vị trí gần nhất lúc ${updatedTime}.`
         : 'Bản đồ lộ trình; mất kết nối.',
+      point: latestPoint ?? undefined,
+      coords: latestPoint ? { lat: latestPoint.latitude, lng: latestPoint.longitude } : undefined,
     });
   }
 
@@ -231,6 +237,12 @@ export class CustomerTrackingSocketManager {
   private socket: SocketLike | null = null;
   private connectionState: TrackingConnectionState = 'idle';
   private activeOrderId: string | null = null;
+  /**
+   * Every order room this socket currently listens to. The detail screen tracks
+   * one order; the orders list tracks all of its active ones, and every one of
+   * them must survive a reconnect.
+   */
+  private joinedOrderIds = new Set<string>();
   private driverLabel = 'Tài xế Nguyễn Minh An';
   private latestPoints = new Map<string, TrackingPoint>();
   private latestCapturedAtMap = new Map<string, number>();
@@ -319,8 +331,10 @@ export class CustomerTrackingSocketManager {
   }
 
   public disconnect(): void {
-    if (this.activeOrderId && this.socket?.connected) {
-      this.socket.emit('tracking:leave-order', { orderId: this.activeOrderId });
+    if (this.socket?.connected) {
+      for (const orderId of this.joinedOrderIds) {
+        this.socket.emit('tracking:leave-order', { orderId });
+      }
     }
     if (this.socket) {
       this.socket.disconnect();
@@ -337,10 +351,93 @@ export class CustomerTrackingSocketManager {
     }
 
     this.activeOrderId = validId;
+    this.joinedOrderIds.add(validId);
 
     if (this.socket?.connected) {
-      this.socket.emit('tracking:join-order', { orderId: validId });
+      this.emitJoinOrder(validId);
     }
+  }
+
+  /**
+   * Joins several order rooms at once and drops the ones no longer listed.
+   * The orders list uses this to keep every in-flight card's status live.
+   */
+  public joinOrders(orderIds: readonly string[]): void {
+    const next = new Set<string>();
+    for (const raw of orderIds) {
+      const validId = parseCustomerOrderId(raw);
+      if (validId) next.add(validId);
+    }
+
+    for (const joined of this.joinedOrderIds) {
+      if (next.has(joined)) continue;
+      if (this.socket?.connected) {
+        this.socket.emit('tracking:leave-order', { orderId: joined });
+      }
+    }
+
+    this.joinedOrderIds = next;
+    this.activeOrderId = next.values().next().value ?? null;
+
+    if (!this.socket?.connected) return;
+    for (const orderId of next) {
+      this.emitJoinOrder(orderId);
+    }
+  }
+
+  /**
+   * Emits the join and adopts the `latestPoint` the server replays in the ack.
+   * Without this the map stays empty until the driver's *next* GPS tick, which
+   * on a parked driver can be tens of seconds of unexplained blankness.
+   */
+  private emitJoinOrder(orderId: string): void {
+    this.socket?.emit('tracking:join-order', { orderId }, (ack: unknown) => {
+      if (!ack || typeof ack !== 'object') return;
+      const payload = ack as { ok?: boolean; latestPoint?: unknown };
+      if (!payload.ok || !payload.latestPoint) return;
+      this.adoptReplayedPoint(orderId, payload.latestPoint);
+    });
+  }
+
+  private adoptReplayedPoint(orderId: string, raw: unknown): void {
+    if (!raw || typeof raw !== 'object') return;
+    const candidate = raw as Partial<TrackingPoint>;
+    if (
+      typeof candidate.latitude !== 'number' ||
+      typeof candidate.longitude !== 'number'
+    ) {
+      return;
+    }
+
+    const capturedAt =
+      typeof candidate.capturedAt === 'string'
+        ? candidate.capturedAt
+        : new Date().toISOString();
+    const capturedTime = new Date(capturedAt).getTime();
+    const currentLatestTime = this.latestCapturedAtMap.get(orderId) ?? 0;
+    if (!isNaN(capturedTime) && capturedTime < currentLatestTime) return;
+
+    const point: TrackingPoint = {
+      id: candidate.id ?? `replayed-${capturedAt}`,
+      orderId,
+      driverId: candidate.driverId ?? 'driver',
+      clientPointId: candidate.clientPointId ?? `replayed-${capturedAt}`,
+      latitude: candidate.latitude,
+      longitude: candidate.longitude,
+      heading: candidate.heading ?? null,
+      speed: candidate.speed ?? null,
+      accuracyM: candidate.accuracyM ?? null,
+      capturedAt,
+      createdAt: candidate.createdAt,
+    };
+
+    if (!isNaN(capturedTime)) this.latestCapturedAtMap.set(orderId, capturedTime);
+    this.latestPoints.set(orderId, point);
+    this.notifyPointListeners({
+      orderId,
+      point,
+      trackingView: mapPointToTrackingView(point, this.driverLabel),
+    });
   }
 
   public leaveOrder(orderId?: string): void {
@@ -351,8 +448,9 @@ export class CustomerTrackingSocketManager {
       this.socket.emit('tracking:leave-order', { orderId: targetId });
     }
 
+    this.joinedOrderIds.delete(targetId);
     if (this.activeOrderId === targetId) {
-      this.activeOrderId = null;
+      this.activeOrderId = this.joinedOrderIds.values().next().value ?? null;
     }
   }
 
@@ -512,15 +610,14 @@ export class CustomerTrackingSocketManager {
     if (refreshed && this.socket) {
       this.socket.disconnect();
       await this.connect();
-      if (this.activeOrderId) {
-        this.joinOrder(this.activeOrderId);
-      }
+      this.rejoinAllRooms();
     }
   }
 
   public destroy(): void {
     this.disconnect();
     this.activeOrderId = null;
+    this.joinedOrderIds.clear();
     this.listeners.clear();
     this.latestPoints.clear();
     this.latestCapturedAtMap.clear();
@@ -530,6 +627,12 @@ export class CustomerTrackingSocketManager {
       this.socket.removeAllListeners();
     }
     this.socket = null;
+  }
+
+  private rejoinAllRooms(): void {
+    for (const orderId of this.joinedOrderIds) {
+      this.emitJoinOrder(orderId);
+    }
   }
 
   private setConnectionState(newState: TrackingConnectionState): void {
@@ -543,9 +646,7 @@ export class CustomerTrackingSocketManager {
   private attachSocketListeners(socket: SocketLike): void {
     socket.on('connect', () => {
       this.setConnectionState('connected');
-      if (this.activeOrderId) {
-        socket.emit('tracking:join-order', { orderId: this.activeOrderId });
-      }
+      this.rejoinAllRooms();
     });
 
     socket.on('disconnect', () => {
@@ -562,8 +663,8 @@ export class CustomerTrackingSocketManager {
 
     socket.on('reconnect', () => {
       this.setConnectionState('connected');
+      this.rejoinAllRooms();
       if (this.activeOrderId) {
-        socket.emit('tracking:join-order', { orderId: this.activeOrderId });
         for (const listener of this.listeners) {
           listener.onReconnected?.(this.activeOrderId);
         }

@@ -2,12 +2,17 @@ import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  Card,
+  HStack,
   IconClock,
   IconPhone,
   IconRoute,
   IconShieldAlert,
   IconSpeedTruck,
   StatusBadge,
+  VStack,
   colors,
   iosContinuousCurve,
   leopardPalette,
@@ -52,32 +57,32 @@ export function DriverActiveTripCard({
   const navHint = isPickup ? 'Chỉ đường tới điểm lấy' : 'Chỉ đường tới điểm giao';
 
   return (
-    <View style={styles.outerContainer} testID="driver-active-trip-slab">
-      <View style={styles.cardHeader}>
-        <View style={styles.headerLeft}>
-          <View style={styles.tripIconChip}>
+    <Card style={styles.outerContainer} testID="driver-active-trip-slab">
+      <HStack style={styles.cardHeader}>
+        <HStack space="xs" style={styles.headerLeft}>
+          <Box style={styles.tripIconChip}>
             <IconSpeedTruck color={leopardPalette.primary} size={16} />
-          </View>
-          <View>
+          </Box>
+          <Box>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               Chuyến đang thực hiện
             </Text>
             <Text style={styles.activeReference}>{trip.reference}</Text>
-          </View>
-        </View>
-        <View style={styles.headerRight}>
-          <View style={styles.liveBadge}>
-            <View style={styles.livePulseDot} />
+          </Box>
+        </HStack>
+        <HStack space="xs" style={styles.headerRight}>
+          <Box style={styles.liveBadge}>
+            <Box style={styles.livePulseDot} />
             <Text style={styles.liveBadgeText}>Đang chạy</Text>
-          </View>
+          </Box>
           <StatusBadge domain="order" status={trip.status} />
-        </View>
-      </View>
+        </HStack>
+      </HStack>
 
       {/* 4-Stage Mission Progress Stepper */}
-      <View style={styles.missionProgressSection}>
+      <Box style={styles.missionProgressSection}>
         <MissionStepper status={trip.status} />
-      </View>
+      </Box>
 
       {/* Route Spine: Point A -> Track -> Point B */}
       <View style={styles.routeSpineBox}>
@@ -174,7 +179,7 @@ export function DriverActiveTripCard({
       >
         <Text style={styles.primaryActionText}>Tiếp tục chuyến →</Text>
       </Pressable>
-    </View>
+    </Card>
   );
 }
 

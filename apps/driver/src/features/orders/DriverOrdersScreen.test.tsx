@@ -7,12 +7,12 @@ import { DriverOrdersScreen } from './DriverOrdersScreen';
 import { createDriverListFixture } from './fixtures';
 
 describe('DriverOrdersScreen - Map-First Field Cockpit Overhaul', () => {
-  it('renders full-bleed RealInteractiveMap Layer 0 without static mountain background image', async () => {
+  it('renders the full-bleed Vietmap LeopardMapView Layer 0 without a static mountain background image', async () => {
     const screen = await render(
       <DriverOrdersScreen view={createDriverListFixture('D-LIST-REQUESTED')} />,
     );
 
-    // Layer 0: RealInteractiveMap rendered full-bleed
+    // Layer 0: LeopardMapView (Vietmap Vector GL) rendered full-bleed
     expect(screen.getByTestId('driver-map-canvas')).toBeTruthy();
 
     // Verification: Static mountain background image MUST NOT exist

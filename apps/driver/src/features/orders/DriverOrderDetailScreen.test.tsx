@@ -5,8 +5,38 @@ import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';
 import { createDriverDetailFixture } from './fixtures';
 import type { DriverAssignedDetailView } from './model';
 
+// The POD flow captures from the real device camera and stamps the driver's
+// real GPS position, so both native modules are stubbed here.
+jest.mock('expo-location', () => ({
+  Accuracy: { High: 6, Balanced: 3 },
+  requestForegroundPermissionsAsync: async () => ({ status: 'granted' }),
+  getCurrentPositionAsync: async () => ({
+    coords: { latitude: 10.7626, longitude: 106.6602 },
+  }),
+  watchPositionAsync: async () => ({ remove: () => {} }),
+}));
+
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: async () => ({ granted: true }),
+  requestMediaLibraryPermissionsAsync: async () => ({ granted: true }),
+  launchCameraAsync: async () => ({
+    canceled: false,
+    assets: [
+      {
+        uri: 'file:///var/mobile/cargo-proof.jpg',
+        fileName: 'cargo-proof.jpg',
+        mimeType: 'image/jpeg',
+        fileSize: 180_000,
+      },
+    ],
+  }),
+  launchImageLibraryAsync: async () => ({ canceled: true }),
+  CameraType: { back: 'back' },
+  MediaTypeOptions: { Images: 'Images' },
+}));
+
 describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
-  it('Stage 1: ACCEPTED shows pickup info, sender contact, and slide-to-action to PICKING_UP', async () => {
+  it('Stage 1: ACCEPTED shows sender contact and slide-to-action to PICKING_UP', async () => {
     const onExecuteTask = jest.fn();
     const base = createDriverDetailFixture('D-DETAIL-ACCEPTED') as DriverAssignedDetailView;
     const view: DriverAssignedDetailView = {
@@ -40,8 +70,10 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
       <DriverOrderDetailScreen onExecuteTask={onExecuteTask} view={view} />,
     );
 
-    // Shows pickup address
-    expect(screen.getByText('Kho Gốc Tân Bình, 123 Lý Thường Kiệt')).toBeTruthy();
+    // The pickup address is no longer repeated in the sheet as text — the map
+    // HUD carries it — and the removed glance card leaves no address block.
+    expect(screen.queryByTestId('active-leg-glance-card')).toBeNull();
+    expect(screen.queryByText('Kho Gốc Tân Bình, 123 Lý Thường Kiệt')).toBeNull();
 
     // Contact button for sender
     expect(screen.getByLabelText('Gọi cho người nhận')).toBeTruthy();
@@ -60,7 +92,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     await screen.unmount();
   });
 
-  it('Stage 2: PICKING_UP shows cargo specs checklist, preloading photo capture, and slide-to-action to IN_TRANSIT', async () => {
+  it('Stage 2: PICKING_UP shows cargo in the map header and slide-to-action to IN_TRANSIT', async () => {
     const onExecuteTask = jest.fn();
     const base = createDriverDetailFixture('D-DETAIL-PICKING-UP') as DriverAssignedDetailView;
     const view: DriverAssignedDetailView = {
@@ -86,18 +118,18 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
       <DriverOrderDetailScreen onExecuteTask={onExecuteTask} view={view} />,
     );
 
-    // Cargo specs checklist
-    const checklist = screen.getByTestId('cargo-specs-checklist');
-    expect(checklist).toBeTruthy();
-    expect(within(checklist).getByText('20 bao xi măng Hà Tiên')).toBeTruthy();
-    expect(within(checklist).getByText(/1000\s*kg/)).toBeTruthy();
-    expect(within(checklist).getByText('Phí bốc xếp:')).toBeTruthy();
+    // Cargo moved out of the sheet into a compact map-header chip, so the sheet
+    // no longer repeats the destination address or the loading fee.
+    const cargoChip = screen.getByTestId('cargo-header-chip');
+    expect(cargoChip).toBeTruthy();
+    expect(within(cargoChip).getByText(/20 bao xi măng Hà Tiên/)).toBeTruthy();
+    expect(within(cargoChip).getByText(/1000\s*kg/)).toBeTruthy();
+    expect(screen.queryByTestId('active-leg-glance-card')).toBeNull();
+    expect(screen.queryByText('Phí bốc xếp:')).toBeNull();
 
-    // Pre-loading cargo photo capture button to prevent dispute
-    const preloadingPhotoBtn = screen.getByTestId('btn-preloading-cargo-photo');
-    expect(preloadingPhotoBtn).toBeTruthy();
-    await fireEvent.press(preloadingPhotoBtn);
-    expect(screen.getByText(/Đã chụp ảnh kiểm hàng/i)).toBeTruthy();
+    // No inline capture button: proof is driven by the swipe action, so the map
+    // keeps its space and there is no bogus "already captured" claim.
+    expect(screen.queryByTestId('btn-preloading-cargo-photo')).toBeNull();
 
     // SlideToAction for Stage 2
     const slider = screen.getByTestId('btn-advance-leg-slide');
@@ -113,7 +145,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     await screen.unmount();
   });
 
-  it('Stage 3: IN_TRANSIT shows dropoff address, ETA label, contact recipient, and slide-to-action to DELIVERED', async () => {
+  it('Stage 3: IN_TRANSIT shows ETA label, contact recipient, and slide-to-action to DELIVERED', async () => {
     const onExecuteTask = jest.fn();
     const base = createDriverDetailFixture('D-DETAIL-IN-TRANSIT') as DriverAssignedDetailView;
     const view: DriverAssignedDetailView = {
@@ -147,8 +179,10 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
       <DriverOrderDetailScreen onExecuteTask={onExecuteTask} view={view} />,
     );
 
-    // Dropoff address
-    expect(screen.getByText('Công trình Landmark 81, Bình Thạnh')).toBeTruthy();
+    // The dropoff address is no longer repeated in the sheet as text; the map
+    // HUD carries it, so the leg title and slide action are the sheet's job.
+    expect(screen.queryByTestId('active-leg-glance-card')).toBeNull();
+    expect(screen.queryByText('Công trình Landmark 81, Bình Thạnh')).toBeNull();
 
     // ETA label
     expect(screen.getByText(/phút|ETA/i)).toBeTruthy();
@@ -169,7 +203,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     await screen.unmount();
   });
 
-  it('Stage 4: EpodPanel supports cargo photo, recipient name input, signature, payment reminder, and completion slider', async () => {
+  it('runs the delivery POD in a dedicated modal, not an inline signature panel', async () => {
     const onExecuteTask = jest.fn();
     const base = createDriverDetailFixture('D-DETAIL-IN-TRANSIT') as DriverAssignedDetailView;
     const view: DriverAssignedDetailView = {
@@ -186,42 +220,14 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
       <DriverOrderDetailScreen onExecuteTask={onExecuteTask} view={view} />,
     );
 
-    // EpodPanel container
-    expect(screen.getByTestId('epod-verification-container')).toBeTruthy();
-
-    // Payment collection reminder in EpodPanel
-    const paymentReminder = screen.getByTestId('epod-payment-reminder');
-    expect(paymentReminder).toBeTruthy();
-    expect(within(paymentReminder).getByText(/350.000 ₫/)).toBeTruthy();
-
-    // Recipient name input
-    const nameInput = screen.getByTestId('epod-recipient-name-input');
-    expect(nameInput).toBeTruthy();
-    await fireEvent.changeText(nameInput, 'Anh Tuấn - Chỉ huy trưởng');
-    expect(screen.getByDisplayValue('Anh Tuấn - Chỉ huy trưởng')).toBeTruthy();
-
-    // Photo capture
-    await fireEvent.press(screen.getByTestId('btn-capture-cargo-photo'));
-    expect(screen.getByTestId('camera-watermark-overlay')).toBeTruthy();
-
-    // Signature pad
-    await fireEvent.press(screen.getByTestId('epod-signature-pad'));
-    expect(screen.getByText('Đủ điều kiện')).toBeTruthy();
-
-    // Action SlideToAction with label "Vuốt hoàn tất cuốc xe" and colorVariant success
-    const epodSlider = screen.getByTestId('btn-epod-complete-delivery');
-    expect(epodSlider).toBeTruthy();
-    expect(screen.getByText('Vuốt hoàn tất cuốc xe')).toBeTruthy();
-
-    await fireEvent(epodSlider, 'accessibilityAction', {
-      nativeEvent: { actionName: 'activate' },
-    });
-    expect(onExecuteTask).toHaveBeenCalled();
+    // The placeholder e-POD panel is gone; the POD form is its own modal.
+    expect(screen.queryByTestId('epod-verification-container')).toBeNull();
+    expect(screen.queryByTestId('epod-signature-pad')).toBeNull();
 
     await screen.unmount();
   });
 
-  it('Stage 4 non-COD shows "Đã thanh toán qua VietQR" reminder', async () => {
+  it('shows the VietQR settlement banner in the delivery modal for prepaid orders', async () => {
     const base = createDriverDetailFixture('D-DETAIL-IN-TRANSIT') as DriverAssignedDetailView;
     const view: DriverAssignedDetailView = {
       ...base,
@@ -234,7 +240,12 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     };
 
     const screen = await render(<DriverOrderDetailScreen view={view} />);
-    expect(screen.getByText('Đã thanh toán qua VietQR')).toBeTruthy();
+
+    // There is no inline POD panel and no intermediate modal any more: the
+    // swipe opens the camera and the review sheet follows the capture.
+    expect(screen.queryByTestId('modal-delivery-verification')).toBeNull();
+    expect(screen.queryByTestId('delivery-verification-view')).toBeNull();
+
     await screen.unmount();
   });
 

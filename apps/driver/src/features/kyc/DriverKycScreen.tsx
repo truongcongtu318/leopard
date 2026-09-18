@@ -11,7 +11,12 @@ import {
 } from 'react-native';
 
 import {
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
+  HStack,
   IconCameraProof,
   IconCheck,
   IconChevronRight,
@@ -23,6 +28,7 @@ import {
   IconSpeedTruck,
   ScreenScaffold,
   ScreenState,
+  VStack,
   colors,
   customerPalette,
   driverPrimitives,
@@ -116,61 +122,63 @@ export function DriverKycScreen({
         ) : (
           <>
             {/* ── 1. Hero KYC Status Card (Midnight Navy Brand Hero) ── */}
-            <View style={styles.heroCard}>
-              <View style={styles.heroHeaderRow}>
-                <View style={styles.heroIconBadge}>
+            <Card style={styles.heroCard}>
+              <HStack style={styles.heroHeaderRow}>
+                <Box style={styles.heroIconBadge}>
                   <IconSecurityShield color="#34D399" size={24} />
-                </View>
-                <View style={styles.heroTitleCol}>
+                </Box>
+                <VStack style={styles.heroTitleCol}>
                   <Text style={styles.heroTitle}>Hồ sơ đối tác đã nộp</Text>
                   <Text style={styles.heroSub}>
                     {isKycComplete
                       ? 'Đã xác minh đầy đủ giấy tờ hợp lệ'
                       : 'Đang kiểm duyệt và bổ sung hồ sơ'}
                   </Text>
-                </View>
-                <View
+                </VStack>
+                <Badge
+                  action={isKycComplete ? 'success' : 'warning'}
+                  size="sm"
                   style={[
                     styles.heroStatusPill,
                     isKycComplete ? styles.heroStatusPillOk : styles.heroStatusPillWarning,
                   ]}
                 >
-                  <Text
+                  <Badge.Text
                     style={[
                       styles.heroStatusPillText,
                       isKycComplete ? styles.heroStatusPillTextOk : styles.heroStatusPillTextWarning,
                     ]}
                   >
                     {isKycComplete ? 'Đã duyệt' : 'Chưa đủ'}
-                  </Text>
-                </View>
-              </View>
+                  </Badge.Text>
+                </Badge>
+              </HStack>
 
-              <View style={styles.heroDivider} />
+              <Divider style={styles.heroDivider} />
 
-              <View style={styles.heroStatsRow}>
-                <View style={styles.heroStatItem}>
+              <HStack style={styles.heroStatsRow}>
+                <VStack style={styles.heroStatItem}>
                   <Text style={styles.heroStatValue}>{documents.length} / 4</Text>
                   <Text style={styles.heroStatLabel}>Giấy tờ đã nộp</Text>
-                </View>
-                <View style={styles.heroStatDivider} />
-                <View style={styles.heroStatItem}>
+                </VStack>
+                <Divider orientation="vertical" style={styles.heroStatDivider} />
+                <VStack style={styles.heroStatItem}>
                   <Text style={styles.heroStatValue}>{isKycComplete ? 'Hợp lệ' : 'Cần bổ sung'}</Text>
                   <Text style={styles.heroStatLabel}>Trạng thái pháp lý</Text>
-                </View>
-                <View style={styles.heroStatDivider} />
-                <View style={styles.heroStatItem}>
+                </VStack>
+                <Divider orientation="vertical" style={styles.heroStatDivider} />
+                <VStack style={styles.heroStatItem}>
                   <Text style={styles.heroStatValue}>Tự động</Text>
                   <Text style={styles.heroStatLabel}>Gia hạn hồ sơ</Text>
-                </View>
-              </View>
-            </View>
+                </VStack>
+              </HStack>
+            </Card>
 
             {/* ── 2. Checklist Giấy tờ bắt buộc (Apple Inset Grouped) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionTitle}>Trạng thái giấy tờ bắt buộc</Text>
 
-              <View
+              <Card
                 style={styles.checklistCard}
                 testID="kyc-document-checklist"
               >
@@ -178,46 +186,46 @@ export function DriverKycScreen({
                   const hasType = uploadedTypes.has(type);
                   return (
                     <React.Fragment key={type}>
-                      {index > 0 ? <View style={styles.rowDivider} /> : null}
-                      <View style={styles.checklistRow}>
-                        <View style={styles.checklistLeft}>
+                      {index > 0 ? <Divider style={styles.rowDivider} /> : null}
+                      <HStack style={styles.checklistRow}>
+                        <HStack style={styles.checklistLeft}>
                           {hasType ? (
-                            <View style={styles.checkIconBadge}>
+                            <Box style={styles.checkIconBadge}>
                               <IconCheck color="#16A34A" size={13} strokeWidth={2.5} />
-                            </View>
+                            </Box>
                           ) : (
-                            <View style={styles.missingIconBadge}>
+                            <Box style={styles.missingIconBadge}>
                               <IconClose color="#DC2626" size={13} strokeWidth={2.5} />
-                            </View>
+                            </Box>
                           )}
                           <Text style={[styles.checklistLabel, !hasType && styles.checklistLabelMissing]}>
                             {DOCUMENT_TITLE[type]}
                           </Text>
-                        </View>
+                        </HStack>
                         <Text style={hasType ? styles.badgeTextOk : styles.badgeTextMissing}>
                           {hasType ? 'Đã có' : 'Thiếu'}
                         </Text>
-                      </View>
+                      </HStack>
                     </React.Fragment>
                   );
                 })}
-              </View>
-            </View>
+              </Card>
+            </VStack>
 
             {/* ── 3. Danh sách Giấy tờ đã nộp (Apple Inset Grouped với xem ảnh) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionTitle}>Giấy tờ đã tải lên</Text>
 
               {documents.length === 0 ? (
-                <View style={styles.emptyDocBox}>
+                <Card style={styles.emptyDocBox}>
                   <IconSecurityShield color={colors.neutral.mutedText} size={28} />
                   <Text style={styles.emptyDocText}>Chưa có giấy tờ nào được nộp.</Text>
-                </View>
+                </Card>
               ) : (
-                <View style={styles.docListGroupCard}>
+                <Card style={styles.docListGroupCard}>
                   {documents.map((doc, index) => (
                     <React.Fragment key={doc.id}>
-                      {index > 0 ? <View style={styles.rowDividerWithMargin} /> : null}
+                      {index > 0 ? <Divider style={styles.rowDividerWithMargin} /> : null}
                       <Pressable
                         accessibilityHint="Nhấn để xem chi tiết ảnh tài liệu"
                         accessibilityLabel={`Xem giấy tờ ${doc.title}`}
@@ -225,51 +233,51 @@ export function DriverKycScreen({
                         onPress={() => setSelectedDoc(doc)}
                         style={({ pressed }) => [styles.docItemRow, pressed ? styles.itemPressed : null]}
                       >
-                        <View style={styles.docIconBox}>{getDocIcon(doc.title)}</View>
+                        <Box style={styles.docIconBox}>{getDocIcon(doc.title)}</Box>
 
-                        <View style={styles.docContentCol}>
+                        <VStack style={styles.docContentCol}>
                           <Text style={styles.docTitle}>{doc.title}</Text>
                           <Text style={styles.docSub}>
                             {doc.createdAt ? `Ngày nộp: ${formatDocDate(doc.createdAt)} · ` : ''}Đã kiểm duyệt
                           </Text>
-                        </View>
+                        </VStack>
 
-                        <View style={styles.docTrailingRow}>
-                          <View style={styles.verifiedMiniBadge}>
+                        <HStack style={styles.docTrailingRow}>
+                          <Badge action="success" size="sm" style={styles.verifiedMiniBadge}>
                             <IconCheck color="#16A34A" size={11} strokeWidth={2.5} />
-                            <Text style={styles.verifiedMiniText}>Đã duyệt</Text>
-                          </View>
+                            <Badge.Text style={styles.verifiedMiniText}>Đã duyệt</Badge.Text>
+                          </Badge>
                           <IconChevronRight color={driverPrimitives.colors.gray400} size={15} />
-                        </View>
+                        </HStack>
                       </Pressable>
                     </React.Fragment>
                   ))}
-                </View>
+                </Card>
               )}
-            </View>
+            </VStack>
 
             {/* ── 4. Cập nhật & Bổ sung giấy tờ (Help Card) ── */}
-            <View style={styles.sectionBlock}>
-              <View style={styles.updateCard}>
-                <View style={styles.updateHeaderRow}>
-                  <View style={styles.updateIconWrap}>
+            <VStack style={styles.sectionBlock}>
+              <Card style={styles.updateCard}>
+                <HStack style={styles.updateHeaderRow}>
+                  <Box style={styles.updateIconWrap}>
                     <IconCameraProof color={colors.brand.primary} size={20} />
-                  </View>
-                  <View style={styles.updateTextCol}>
+                  </Box>
+                  <VStack style={styles.updateTextCol}>
                     <Text style={styles.updateTitle}>Cập nhật giấy tờ mới?</Text>
                     <Text style={styles.updateDesc}>
                       Khi giấy tờ sắp hết hạn hoặc bạn đổi phương tiện mới, hãy gửi bản chụp tài liệu mới để kiểm duyệt.
                     </Text>
-                  </View>
-                </View>
+                  </VStack>
+                </HStack>
 
                 <Button
                   label="Gửi giấy tờ bổ sung / cập nhật"
                   onPress={handleUpdatePress}
                   variant="secondary"
                 />
-              </View>
-            </View>
+              </Card>
+            </VStack>
           </>
         )}
       </ScrollView>

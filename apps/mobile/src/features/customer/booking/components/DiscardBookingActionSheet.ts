@@ -5,6 +5,9 @@ export interface ConfirmDiscardParams {
   onContinue?: () => void;
 }
 
+const TITLE = 'Bỏ đơn đang nhập?';
+const MESSAGE = 'Thông tin lộ trình và người nhận sẽ không được lưu.';
+
 export function showDiscardBookingActionSheet({
   onDiscard,
   onContinue,
@@ -12,8 +15,8 @@ export function showDiscardBookingActionSheet({
   if (Platform.OS === 'ios') {
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        title: 'Bỏ đơn đang nhập?',
-        message: 'Thông tin lộ trình và người nhận sẽ không được lưu.',
+        title: TITLE,
+        message: MESSAGE,
         options: ['Bỏ đơn', 'Tiếp tục nhập'],
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
@@ -26,23 +29,49 @@ export function showDiscardBookingActionSheet({
         }
       },
     );
-  } else {
-    Alert.alert(
-      'Bỏ đơn đang nhập?',
-      'Thông tin lộ trình và người nhận sẽ không được lưu.',
-      [
-        {
-          text: 'Tiếp tục nhập',
-          style: 'cancel',
-          onPress: onContinue,
-        },
-        {
-          text: 'Bỏ đơn',
-          style: 'destructive',
-          onPress: onDiscard,
-        },
-      ],
-      { cancelable: true },
-    );
+    return;
   }
+
+  // `Alert.alert` is a no-op in react-native-web: it renders nothing and never
+  // fires its callbacks, so the confirm never appeared and the back button
+  // looked broken. Web gets a real confirm dialog instead.
+  if (Platform.OS === 'web') {
+    const canConfirm =
+      typeof globalThis !== 'undefined' &&
+      typeof (globalThis as { confirm?: unknown }).confirm === 'function';
+
+    if (!canConfirm) {
+      // Never trap the driver on the screen: without a dialog, honour the tap.
+      onDiscard();
+      return;
+    }
+
+    const discard = (globalThis as unknown as { confirm: (m: string) => boolean }).confirm(
+      `${TITLE}\n${MESSAGE}`,
+    );
+    if (discard) {
+      onDiscard();
+    } else if (onContinue) {
+      onContinue();
+    }
+    return;
+  }
+
+  Alert.alert(
+    TITLE,
+    MESSAGE,
+    [
+      {
+        text: 'Tiếp tục nhập',
+        style: 'cancel',
+        onPress: onContinue,
+      },
+      {
+        text: 'Bỏ đơn',
+        style: 'destructive',
+        onPress: onDiscard,
+      },
+    ],
+    { cancelable: true },
+  );
 }

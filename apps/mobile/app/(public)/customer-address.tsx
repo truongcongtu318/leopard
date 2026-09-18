@@ -24,6 +24,7 @@ import {
   IconTag,
   IconUser,
   IconWarehouse,
+  LeopardMapView,
   ScreenScaffold,
   colors,
   customerPalette,
@@ -323,118 +324,6 @@ export default function CustomerAddAddressScreen() {
     }
   };
 
-  // Interactive Leaflet/OpenStreetMap HTML template
-  const mapHtml = useMemo(() => {
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .leaflet-control-attribution { font-size: 9px !important; background: rgba(255,255,255,0.85) !important; padding: 2px 4px !important; }
-    .pulse-pin-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .pulse-pin-pulse {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(11, 37, 69, 0.2);
-      animation: pinPulse 1.8s ease-out infinite;
-    }
-    .pulse-pin-core {
-      position: relative;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: ${customerPalette.primary};
-      border: 3px solid #FFFFFF;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-    }
-    .pulse-pin-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #FFFFFF;
-    }
-    @keyframes pinPulse {
-      0% { transform: scale(0.5); opacity: 0.95; }
-      100% { transform: scale(1.6); opacity: 0; }
-    }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <script>
-    var lat = ${coords.lat};
-    var lng = ${coords.lng};
-    var map = L.map('map', {
-      center: [lat, lng],
-      zoom: 16,
-      zoomControl: false
-    });
-
-    var primaryTiles = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=vi', {
-      maxZoom: 20,
-      subdomains: ['0', '1', '2', '3'],
-      attribution: '© Google Maps'
-    }).addTo(map);
-
-    primaryTiles.on('tileerror', function() {
-      if (!window._cartoFallback) {
-        window._cartoFallback = true;
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', {
-          maxZoom: 19,
-          subdomains: ['a', 'b', 'c', 'd'],
-          attribution: '© CARTO'
-        }).addTo(map);
-      }
-    });
-
-    var customIcon = L.divIcon({
-      className: 'custom-pin',
-      html: '<div class="pulse-pin-wrap"><div class="pulse-pin-pulse"></div><div class="pulse-pin-core"><div class="pulse-pin-dot"></div></div></div>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
-    });
-
-    var marker = L.marker([lat, lng], {
-      icon: customIcon,
-      draggable: true
-    }).addTo(map);
-
-    function notify(newLat, newLng) {
-      try {
-        window.parent.postMessage({ type: 'LEOPARD_MAP_PIN_MOVED', lat: newLat, lng: newLng }, '*');
-      } catch (e) {}
-    }
-
-    marker.on('dragend', function(e) {
-      var pos = e.target.getLatLng();
-      notify(pos.lat, pos.lng);
-    });
-
-    map.on('click', function(e) {
-      marker.setLatLng(e.latlng);
-      notify(e.latlng.lat, e.latlng.lng);
-    });
-  </script>
-</body>
-</html>`;
-  }, [coords.lat, coords.lng]);
-
   return (
     <ScreenScaffold
       headerLeading={
@@ -473,27 +362,19 @@ export default function CustomerAddAddressScreen() {
           {/* ================= 1. COMPACT MAP & LOCATION CARD ================= */}
           <View style={styles.mapContainerCard}>
             <View style={styles.mapGraphic}>
-              {Platform.OS === 'web' ? (
-                React.createElement('iframe', {
-                  key: `osm-map-${coords.lat.toFixed(5)}-${coords.lng.toFixed(5)}`,
-                  srcDoc: mapHtml,
-                  style: {
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                  },
-                  title: 'Bản đồ thực tế OpenStreetMap',
-                })
-              ) : (
-                <View style={styles.nativeMapFallback}>
-                  <View style={styles.mapRoadH} />
-                  <View style={styles.mapRoadV} />
-                  <View style={styles.mapPinPulse} />
-                  <View style={styles.mapPinWrap}>
-                    <IconLocationPin color={customerPalette.primary} size={28} strokeWidth={2} />
-                  </View>
-                </View>
-              )}
+              <LeopardMapView
+                height="100%"
+                initialPinCoords={coords}
+                interactive
+                mode="pin"
+                onLocationChange={(newCoords) => {
+                  setCoords(newCoords);
+                  void reverseGeocodeCoords(newCoords).then((addr) => {
+                    if (addr) setSelectedAddress(addr);
+                  });
+                }}
+                testID="ca-map-view"
+              />
 
               {/* Floating GPS button */}
               <Pressable

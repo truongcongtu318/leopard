@@ -4,7 +4,12 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useRouter } from 'expo-router';
 
 import {
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
+  HStack,
   IconBank,
   IconChevronRight,
   IconSupport247,
@@ -13,6 +18,7 @@ import {
   NavigableMetricCard,
   ScreenScaffold,
   ScreenState,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -32,6 +38,8 @@ export type DriverWalletScreenProps = Readonly<{
   withdrawalError: string | null;
   onRequestWithdrawal: (input: WithdrawalRequestInput) => void;
   onRetry: () => void;
+  onTopupWallet?: (amountVnd: number) => Promise<any>;
+  isSubmittingTopup?: boolean;
 }>;
 
 const STATUS_LABELS: Readonly<Record<WithdrawalHistoryItem['status'], string>> = {
@@ -51,11 +59,17 @@ export function DriverWalletScreen({
   isSubmittingWithdrawal,
   onRetry,
   onRequestWithdrawal,
+  onTopupWallet,
+  isSubmittingTopup,
   summary,
   withdrawalError,
 }: DriverWalletScreenProps) {
   const router = useRouter();
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showTopupModal, setShowTopupModal] = useState(false);
+  const [topupQrData, setTopupQrData] = useState<any>(null);
+  const [topupAmount, setTopupAmount] = useState<number>(100000);
+  const [customTopupText, setCustomTopupText] = useState('');
   const [amountText, setAmountText] = useState('');
   const [bankName, setBankName] = useState(summary.bankName ?? '');
   const [bankAccountNumber, setBankAccountNumber] = useState(summary.bankAccountNumber ?? '');
@@ -114,89 +128,103 @@ export function DriverWalletScreen({
         ) : (
           <>
             {/* ── 1. Balance Bento Card (Apple White Minimal) ── */}
-            <View style={styles.walletCard} testID="driver-wallet-balance-card">
-              <View style={styles.walletHeader}>
-                <View style={styles.walletHeaderLeft}>
-                  <View style={styles.walletIconBox}>
+            <Card style={styles.walletCard} testID="driver-wallet-balance-card">
+              <HStack style={styles.walletHeader}>
+                <HStack style={styles.walletHeaderLeft}>
+                  <Box style={styles.walletIconBox}>
                     <IconWallet color={driverPrimitives.colors.gray700} size={20} />
-                  </View>
-                  <View style={styles.walletTitleCol}>
+                  </Box>
+                  <VStack style={styles.walletTitleCol}>
                     <Text style={styles.balanceLabel}>Ví tiền mặt (Số dư khả dụng)</Text>
                     <Text style={styles.balanceSubLabel}>
                       Yêu cầu rút tiền — Admin xác nhận trong giờ hành chính
                     </Text>
-                  </View>
-                </View>
-              </View>
+                  </VStack>
+                </HStack>
+              </HStack>
 
               <Text style={styles.balanceAmount}>{formatCurrency(summary.availableBalanceVnd)}</Text>
 
-              <View style={styles.balanceFooter}>
-                <View style={styles.balanceStat}>
+              <HStack style={styles.balanceFooter}>
+                <VStack style={styles.balanceStat}>
                   <Text style={styles.balanceStatLabel}>Đang chờ duyệt</Text>
                   <Text style={styles.balanceStatValue}>
                     {formatCurrency(summary.pendingWithdrawalVnd)}
                   </Text>
-                </View>
-                <View style={styles.balanceStatDivider} />
-                <View style={styles.balanceStat}>
+                </VStack>
+                <Divider orientation="vertical" style={styles.balanceStatDivider} />
+                <VStack style={styles.balanceStat}>
                   <Text style={styles.balanceStatLabel}>Tổng đã kiếm</Text>
                   <Text style={styles.balanceStatValue}>
                     {formatCurrency(summary.lifetimeDeliveredVnd)}
                   </Text>
-                </View>
-              </View>
+                </VStack>
+              </HStack>
 
-              <Pressable
-                accessibilityLabel="Yêu cầu rút tiền"
-                accessibilityRole="button"
-                onPress={handleOpenModal}
-                style={({ pressed }) => [styles.withdrawBtn, pressed ? styles.withdrawBtnPressed : null]}
-                testID="btn-request-withdrawal"
-              >
-                <Text style={styles.withdrawBtnText}>Yêu cầu rút tiền</Text>
-              </Pressable>
-            </View>
+              <HStack style={{ gap: 8, marginTop: 12 }}>
+                <Pressable
+                  accessibilityLabel="Nạp tiền ví"
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setTopupQrData(null);
+                    setShowTopupModal(true);
+                  }}
+                  style={({ pressed }) => [styles.topupBtn, pressed ? styles.withdrawBtnPressed : null]}
+                  testID="btn-topup-wallet"
+                >
+                  <Text style={styles.topupBtnText}>Nạp tiền ví</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityLabel="Yêu cầu rút tiền"
+                  accessibilityRole="button"
+                  onPress={handleOpenModal}
+                  style={({ pressed }) => [styles.withdrawBtn, pressed ? styles.withdrawBtnPressed : null, { flex: 1 }]}
+                  testID="btn-request-withdrawal"
+                >
+                  <Text style={styles.withdrawBtnText}>Yêu cầu rút tiền</Text>
+                </Pressable>
+              </HStack>
+            </Card>
 
             {/* ── 2. Linked Bank Account Card (Apple Inset Grouped) ── */}
-            <View style={styles.bentoCard} testID="driver-linked-bank-card">
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.cardHeaderLeft}>
-                  <View style={styles.bankIconChip}>
+            <Card style={styles.bentoCard} testID="driver-linked-bank-card">
+              <HStack style={styles.cardHeaderRow}>
+                <HStack style={styles.cardHeaderLeft}>
+                  <Box style={styles.bankIconChip}>
                     <IconBank color={driverPrimitives.colors.gray700} size={18} />
-                  </View>
-                  <View>
+                  </Box>
+                  <VStack>
                     <Text style={styles.bentoCardTitle}>Tài khoản liên kết</Text>
                     <Text style={styles.bentoCardSub}>Nhận tiền thanh toán và rút số dư</Text>
-                  </View>
-                </View>
-              </View>
+                  </VStack>
+                </HStack>
+              </HStack>
 
               {summary.bankAccountNumber ? (
-                <View style={styles.bankDetailRow}>
-                  <View style={styles.bankInfoCol}>
+                <HStack style={styles.bankDetailRow}>
+                  <VStack style={styles.bankInfoCol}>
                     <Text style={styles.bankNameText}>{summary.bankName ?? 'Ngân hàng'}</Text>
                     <Text style={styles.bankAccountNumText}>{summary.bankAccountNumber}</Text>
                     {summary.bankAccountName ? (
                       <Text style={styles.bankHolderText}>{summary.bankAccountName.toUpperCase()}</Text>
                     ) : null}
-                  </View>
-                </View>
+                  </VStack>
+                </HStack>
               ) : (
                 <Text style={styles.unlinkedText}>Chưa liên kết tài khoản ngân hàng</Text>
               )}
-            </View>
+            </Card>
 
             {/* ── 3. Transaction History Section ── */}
-            <View style={styles.historySection}>
+            <VStack style={styles.historySection}>
               <Text style={styles.sectionHeading}>Lịch sử giao dịch</Text>
 
               {history.length === 0 ? (
-                <View style={styles.emptyHistoryCard}>
+                <Card style={styles.emptyHistoryCard}>
                   <Text style={styles.emptyHistoryText}>Chưa có giao dịch rút tiền nào</Text>
-                </View>
+                </Card>
               ) : (
-                <View style={styles.txGroupCard}>
+                <Card style={styles.txGroupCard}>
                   {history.map((item, index) => {
                     const isPayout = item.type === 'ORDER_PAYOUT';
                     const isFee = item.type === 'PLATFORM_FEE';
@@ -212,29 +240,29 @@ export function DriverWalletScreen({
 
                     return (
                       <React.Fragment key={item.id}>
-                        <View style={styles.txItemRow}>
-                          <View style={styles.txLeft}>
-                            <View style={styles.txIconChip}>
+                        <HStack style={styles.txItemRow}>
+                          <HStack style={styles.txLeft}>
+                            <Box style={styles.txIconChip}>
                               {isPayout ? (
                                 <IconWallet color={driverPrimitives.colors.gray700} size={18} />
                               ) : (
                                 <IconTxPayment color={driverPrimitives.colors.gray700} size={18} />
                               )}
-                            </View>
-                            <View style={styles.txInfo}>
-                              <View style={styles.txTitleRow}>
+                            </Box>
+                            <VStack style={styles.txInfo}>
+                              <HStack style={styles.txTitleRow}>
                                 <Text style={styles.txTitle}>{itemTitle}</Text>
-                                <View style={styles.txIndicatorBadge}>
-                                  <Text style={styles.txIndicatorText}>{badgeLabel}</Text>
-                                </View>
-                              </View>
+                                <Badge action={isPayout ? 'success' : 'muted'} size="sm" style={styles.txIndicatorBadge}>
+                                  <Badge.Text style={styles.txIndicatorText}>{badgeLabel}</Badge.Text>
+                                </Badge>
+                              </HStack>
                               <Text style={styles.txTime}>
                                 {new Date(item.createdAt).toLocaleString('vi-VN')}
                               </Text>
-                            </View>
-                          </View>
+                            </VStack>
+                          </HStack>
 
-                          <View style={styles.txRight}>
+                          <VStack style={styles.txRight}>
                             <Text style={styles.txAmount}>
                               {amountPrefix}
                               {formatCurrency(item.amountVnd)}
@@ -242,15 +270,15 @@ export function DriverWalletScreen({
                             <Text style={styles.txStatus}>
                               {STATUS_LABELS[item.status] ?? item.status}
                             </Text>
-                          </View>
-                        </View>
-                        {index < history.length - 1 ? <View style={styles.txDivider} /> : null}
+                          </VStack>
+                        </HStack>
+                        {index < history.length - 1 ? <Divider style={styles.txDivider} /> : null}
                       </React.Fragment>
                     );
                   })}
-                </View>
+                </Card>
               )}
-            </View>
+            </VStack>
           </>
         )}
       </ScrollView>
@@ -337,6 +365,129 @@ export function DriverWalletScreen({
                 variant="secondary"
               />
             </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── Top-up Modal (payOS VietQR) ── */}
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setShowTopupModal(false)}
+        transparent
+        visible={showTopupModal}
+      >
+        <Pressable onPress={() => setShowTopupModal(false)} style={styles.modalBackdrop}>
+          <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalSheet}>
+            <View style={styles.modalDragHandle} />
+            <Text style={styles.modalTitle}>Nạp tiền vào ví tài xế</Text>
+            <Text style={styles.modalSubtitle}>
+              Cổng thanh toán tự động VietQR payOS
+            </Text>
+
+            {!topupQrData ? (
+              <>
+                <Text style={[styles.inputLabel, { marginTop: 12 }]}>Chọn số tiền nạp</Text>
+                <HStack style={{ gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                  {[50000, 100000, 200000, 500000].map((amt) => (
+                    <Pressable
+                      key={amt}
+                      onPress={() => {
+                        setTopupAmount(amt);
+                        setCustomTopupText('');
+                      }}
+                      style={[
+                        styles.topupPill,
+                        topupAmount === amt && !customTopupText ? styles.topupPillActive : null,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.topupPillText,
+                          topupAmount === amt && !customTopupText ? styles.topupPillTextActive : null,
+                        ]}
+                      >
+                        {formatCurrency(amt)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </HStack>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Hoặc nhập số tiền khác (tối thiểu 50.000 ₫)</Text>
+                  <TextInput
+                    keyboardType="numeric"
+                    onChangeText={(t) => {
+                      setCustomTopupText(t);
+                      const parsed = parseInt(t.replace(/\D/g, ''), 10);
+                      if (!Number.isNaN(parsed)) setTopupAmount(parsed);
+                    }}
+                    placeholder="VD: 150000"
+                    placeholderTextColor={driverPrimitives.colors.gray400}
+                    style={styles.textInput}
+                    value={customTopupText}
+                  />
+                </View>
+
+                <View style={styles.modalActionButtons}>
+                  <Button
+                    disabled={isSubmittingTopup || topupAmount < 50000}
+                    isLoading={isSubmittingTopup}
+                    label={isSubmittingTopup ? 'Đang tạo mã...' : `Nạp ${formatCurrency(topupAmount)}`}
+                    onPress={async () => {
+                      if (onTopupWallet) {
+                        const res = await onTopupWallet(topupAmount);
+                        if (res?.qrPayload) setTopupQrData(res);
+                      }
+                    }}
+                    size="driver-primary"
+                    variant="primary"
+                  />
+                  <Button
+                    disabled={isSubmittingTopup}
+                    label="Hủy"
+                    onPress={() => setShowTopupModal(false)}
+                    size="driver-primary"
+                    variant="secondary"
+                  />
+                </View>
+              </>
+            ) : (
+              <VStack style={{ alignItems: 'center', gap: 16, paddingVertical: 12 }}>
+                <Text style={{ ...typeScale.headline, color: '#059669', textAlign: 'center' }}>
+                  Quét mã VietQR để nạp tiền
+                </Text>
+                <Text style={{ ...typeScale.subheadline, color: driverPrimitives.colors.gray700 }}>
+                  Số tiền: {formatCurrency(topupQrData.amountVnd)}
+                </Text>
+                <View
+                  style={{
+                    backgroundColor: '#fff',
+                    padding: 16,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: '#E2E8F0',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ ...typeScale.caption1, color: driverPrimitives.colors.gray500, marginBottom: 8 }}>
+                    Chuyển khoản chính xác số tiền bên trên
+                  </Text>
+                  <Text style={{ ...typeScale.caption2, color: driverPrimitives.colors.gray400, textAlign: 'center' }}>
+                    Hệ thống sẽ tự động gạch nợ và cộng số dư ví sau vài giây
+                  </Text>
+                </View>
+                <Button
+                  label="Đã hoàn tất chuyển khoản"
+                  onPress={() => {
+                    setShowTopupModal(false);
+                    setTopupQrData(null);
+                    onRetry();
+                  }}
+                  size="driver-primary"
+                  variant="primary"
+                />
+              </VStack>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -461,6 +612,41 @@ const styles = StyleSheet.create({
     color: driverPrimitives.colors.white,
     ...typeScale.callout,
     fontWeight: '600',
+  },
+
+  topupBtn: {
+    alignItems: 'center',
+    backgroundColor: '#059669',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    height: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  topupBtnText: {
+    color: driverPrimitives.colors.white,
+    ...typeScale.callout,
+    fontWeight: '600',
+  },
+  topupPill: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  topupPillActive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#059669',
+  },
+  topupPillText: {
+    ...typeScale.footnote,
+    color: driverPrimitives.colors.gray700,
+    fontWeight: '600',
+  },
+  topupPillTextActive: {
+    color: '#059669',
   },
 
   /* Linked Bank Account Card */

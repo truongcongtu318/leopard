@@ -13,37 +13,23 @@ import type { RouteCoordinate } from '@leopard/shared';
 
 import { colors, radius, spacing, typography, typeScale } from '../theme/tokens';
 import { IconLocationPin, IconSpeedTruck } from './icons/CoreIcons';
+import type {
+  MapCoordinate,
+  MapStop,
+  NearbyDriver,
+  RoutePolylineSegment,
+  RouteResolutionPolicy,
+} from '../maps/types';
 
-export type MapCoordinate = {
-  lat: number;
-  lng: number;
+export type {
+  MapCoordinate,
+  MapStop,
+  NearbyDriver,
+  RoutePolylineSegment,
+  RouteResolutionPolicy,
 };
-
-export type MapStop = {
-  id: string;
-  label: string;
-  coords?: MapCoordinate;
-  progress?: 'PENDING' | 'ARRIVED' | 'IN_SERVICE' | 'COMPLETED';
-  sequence?: number;
-};
-
-export type RoutePolylineSegment = Readonly<{
-  coords: readonly RouteCoordinate[];
-  kind: 'completed' | 'active' | 'pending';
-}>;
 
 export type RealInteractiveMapMode = 'route' | 'tracking' | 'location' | 'pin' | 'preview';
-
-export type RouteResolutionPolicy = 'PROVIDED_ONLY' | 'ALLOW_CLIENT_PREVIEW';
-
-export type NearbyDriver = Readonly<{
-  id: string;
-  lat: number;
-  lng: number;
-  vehicleType?: string;
-  distanceM?: number;
-  licensePlate?: string;
-}>;
 
 export type RealInteractiveMapProps = Readonly<{
   mode?: RealInteractiveMapMode;
@@ -387,7 +373,7 @@ export function buildLeafletHtml({
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #map { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F1F5F9; }
-    .leaflet-control-attribution { font-size: 9px !important; background: rgba(255,255,255,0.75) !important; padding: 2px 4px !important; }
+    .leaflet-control-attribution { display: none !important; }
     
     /* Pin Marker Styles */
     .pin-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
@@ -428,15 +414,18 @@ export function buildLeafletHtml({
 <body>
   <div id="map"></div>
   <div class="map-action-bar">
+    <button class="map-btn" id="btn-zoom-in" title="Phóng to">+</button>
+    <button class="map-btn" id="btn-zoom-out" title="Thu nhỏ">−</button>
     <button class="map-btn" id="btn-fit" title="Căn chỉnh lộ trình">⛶</button>
   </div>
   <script>
     var config = ${pointsJson};
     var map = L.map('map', {
+      attributionControl: false,
       zoomControl: false,
       dragging: ${interactive ? 'true' : 'false'},
       touchZoom: ${interactive ? 'true' : 'false'},
-      scrollWheelZoom: false
+      scrollWheelZoom: ${interactive ? 'true' : 'false'}
     });
     if (${interactive && mode === 'pin' ? 'true' : 'false'}) {
       L.control.zoom({ position: 'topright' }).addTo(map);
@@ -742,7 +731,15 @@ export function buildLeafletHtml({
 
       function handleMapControlMsg(event) {
         if (!event.data) return;
-        if (event.data.type === 'LEOPARD_MAP_SET_VIEW_MODE') {
+        if (event.data.type === 'LEOPARD_MAP_ZOOM_IN') {
+          map.zoomIn();
+        } else if (event.data.type === 'LEOPARD_MAP_ZOOM_OUT') {
+          map.zoomOut();
+        } else if (event.data.type === 'LEOPARD_MAP_FIT_BOUNDS') {
+          if (bounds.length > 0) {
+            map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+          }
+        } else if (event.data.type === 'LEOPARD_MAP_SET_VIEW_MODE') {
           if (event.data.mode === 'overview') {
             if (bounds.length > 0) {
               map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
@@ -788,13 +785,30 @@ export function buildLeafletHtml({
       }
     }
 
-    document.getElementById('btn-fit').addEventListener('click', function() {
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
-      } else if (config.mode === 'pin') {
-        map.setView([config.pin.lat, config.pin.lng], 16);
-      }
-    });
+    var btnZoomIn = document.getElementById('btn-zoom-in');
+    if (btnZoomIn) {
+      btnZoomIn.addEventListener('click', function() {
+        map.zoomIn();
+      });
+    }
+
+    var btnZoomOut = document.getElementById('btn-zoom-out');
+    if (btnZoomOut) {
+      btnZoomOut.addEventListener('click', function() {
+        map.zoomOut();
+      });
+    }
+
+    var btnFit = document.getElementById('btn-fit');
+    if (btnFit) {
+      btnFit.addEventListener('click', function() {
+        if (bounds.length > 0) {
+          map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
+        } else if (config.mode === 'pin') {
+          map.setView([config.pin.lat, config.pin.lng], 16);
+        }
+      });
+    }
   </script>
 </body>
 </html>`;

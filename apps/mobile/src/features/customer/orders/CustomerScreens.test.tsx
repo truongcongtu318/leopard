@@ -1,11 +1,17 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
+import type { OrderStatus } from '@leopard/shared';
 import {
   createCustomerDetailFixture,
   createCustomerListFixture,
 } from './fixtures';
-import { CustomerOrderDetailScreen } from './CustomerOrderDetailScreen';
+import {
+  CustomerOrderDetailScreen,
+  describeDriverPosition,
+  describeDriverStage,
+  resolveTruckLocation,
+} from './CustomerOrderDetailScreen';
 import { CustomerOrdersScreen } from './CustomerOrdersScreen';
 
 jest.setTimeout(25000);
@@ -309,5 +315,98 @@ describe('CustomerOrderDetailScreen', () => {
     expect(onSendInvoiceEmail).toHaveBeenCalledTimes(1);
     expect(onSendInvoiceEmail).toHaveBeenCalledWith('invoice-1', 'khach@example.com');
     await screen.unmount();
+  });
+
+  it('follows the driver stage when the order status advances', async () => {
+    const base = createCustomerDetailFixture('C-DETAIL-SUCCESS');
+    if (base.kind !== 'content') throw new Error('expected content fixture');
+
+    const stages: readonly [OrderStatus, string][] = [
+      ['ACCEPTED', 'Tài xế đã nhận đơn, đang chuẩn bị di chuyển'],
+      ['PICKING_UP', 'Tài xế đang đến điểm lấy hàng'],
+      ['IN_TRANSIT', 'Tài xế đang trên đường giao hàng'],
+    ];
+
+    for (const [status, expected] of stages) {
+      const screen = await render(
+        <CustomerOrderDetailScreen
+          view={{ ...base, order: { ...base.order, status } }}
+        />,
+      );
+      // The driver card composes the label with the vehicle, e.g.
+      // "Xe Tải 1.25T · Tài xế đang đến điểm lấy hàng".
+      expect(screen.getAllByText(new RegExp(expected)).length).toBeGreaterThanOrEqual(1);
+      await screen.unmount();
+    }
+  });
+
+  it('describes every driver-movable order status in the customer vocabulary', () => {
+    expect(describeDriverStage('ACCEPTED')).toContain('đã nhận đơn');
+    expect(describeDriverStage('PICKING_UP')).toContain('điểm lấy hàng');
+    expect(describeDriverStage('IN_TRANSIT')).toContain('giao hàng');
+    expect(describeDriverStage('RETURNING')).toContain('hoàn trả');
+    expect(describeDriverStage('INCIDENT_CANCELLED')).toContain('sự cố');
+    expect(describeDriverStage('REQUESTED')).toBe('Đang điều phối tài xế');
+  });
+
+  it('reads the latest driver coordinate from either tracking shape', () => {
+    expect(
+      resolveTruckLocation({
+        kind: 'fresh',
+        driverLabel: 'Tài xế',
+        lastUpdatedLabel: '',
+        summary: '',
+        coords: { lat: 10.1, lng: 106.1 },
+      }),
+    ).toEqual({ lat: 10.1, lng: 106.1 });
+
+    expect(
+      resolveTruckLocation({
+        kind: 'fresh',
+        driverLabel: 'Tài xế',
+        lastUpdatedLabel: '',
+        summary: '',
+        point: {
+          id: 'p1',
+          orderId: 'o1',
+          driverId: 'd1',
+          clientPointId: 'c1',
+          latitude: 10.2,
+          longitude: 106.2,
+          capturedAt: '2026-08-15T14:32:00.000Z',
+        },
+      }),
+    ).toEqual({ lat: 10.2, lng: 106.2 });
+
+    expect(
+      resolveTruckLocation({
+        kind: 'no-location',
+        driverLabel: 'Tài xế',
+        message: 'Chưa có vị trí tài xế.',
+      }),
+    ).toBeUndefined();
+  });
+
+  it('names the route point the driver is nearest to', () => {
+    const waypoints = [
+      { id: 'a', name: 'Điểm lấy hàng (A)', label: 'Kho Tân Bình', coords: { lat: 10.795, lng: 106.652 } },
+      { id: 's1', name: 'Điểm dừng 1', label: 'Kho Quận 7', coords: { lat: 10.73, lng: 106.72 } },
+      { id: 'b', name: 'Điểm giao hàng (B)', label: 'Cảng Cát Lái', coords: { lat: 10.764, lng: 106.796 } },
+    ] as const;
+
+    const atPickup = describeDriverPosition({ lat: 10.7955, lng: 106.6525 }, waypoints);
+    expect(atPickup?.name).toBe('Điểm lấy hàng (A)');
+    expect(atPickup?.distanceLabel).toMatch(/m$/);
+
+    const nearDestination = describeDriverPosition({ lat: 10.7655, lng: 106.7955 }, waypoints);
+    expect(nearDestination?.name).toBe('Điểm giao hàng (B)');
+    expect(nearDestination?.label).toBe('Cảng Cát Lái');
+
+    // No coordinate and no waypoint coordinates must both degrade to null
+    // rather than inventing a location.
+    expect(describeDriverPosition(undefined, waypoints)).toBeNull();
+    expect(
+      describeDriverPosition({ lat: 10.7, lng: 106.7 }, [{ id: 'a', name: 'A', label: 'A' }]),
+    ).toBeNull();
   });
 });

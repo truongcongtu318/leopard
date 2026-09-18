@@ -2,8 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
-  IconChevronRight,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   radius,
   spacing,
@@ -14,6 +14,8 @@ import { useSafeInsets } from '../safe-insets';
 export interface BookingFixedBottomBarProps {
   totalFare: number;
   isValid: boolean;
+  /** False until a real routed distance produced a real fare. */
+  hasFare?: boolean;
   onPressBook: () => void;
   onPressDetails: () => void;
   isLoading?: boolean;
@@ -22,31 +24,53 @@ export interface BookingFixedBottomBarProps {
 export function BookingFixedBottomBar({
   totalFare,
   isValid,
+  hasFare = true,
   onPressBook,
   onPressDetails,
   isLoading = false,
 }: BookingFixedBottomBarProps) {
   const insets = useSafeInsets();
 
+  const handleBook = () => {
+    if (isValid && !isLoading) {
+      haptic.medium();
+      onPressBook();
+    }
+  };
+
+  const handleDetails = () => {
+    haptic.light();
+    onPressDetails();
+  };
+
   return (
     <View
       style={[
         styles.fixedContainer,
-        { paddingBottom: Math.max(insets.bottom, 16) },
+        { paddingBottom: Math.max(insets.bottom, spacing.md) },
       ]}
     >
       <View style={styles.topRow}>
-        <View style={styles.fareGroup}>
+        <View
+          accessibilityLabel={
+            hasFare ? `Tổng cước: ${totalFare.toLocaleString('vi-VN')} đồng` : 'Đang tính cước'
+          }
+          accessible={true}
+          style={styles.fareGroup}
+        >
           <Text style={styles.fareLabel}>Tổng cước:</Text>
+          {/* No fare yet means the route estimate has not resolved; showing the
+              base fare here would quote a price the trip may not cost. */}
           <Text style={styles.fareValue}>
-            {totalFare.toLocaleString('vi-VN')} đ
+            {hasFare ? `${totalFare.toLocaleString('vi-VN')} đ` : 'Đang tính…'}
           </Text>
         </View>
 
         <Pressable
+          accessibilityLabel="Xem chi tiết cước vận chuyển"
           accessibilityRole="button"
           hitSlop={8}
-          onPress={onPressDetails}
+          onPress={handleDetails}
           style={({ pressed }) => [styles.detailsBtn, pressed && styles.btnPressed]}
         >
           <Text style={styles.detailsBtnText}>Chi tiết ⌵</Text>
@@ -57,7 +81,7 @@ export function BookingFixedBottomBar({
         accessibilityRole="button"
         accessibilityState={{ disabled: !isValid || isLoading }}
         disabled={!isValid || isLoading}
-        onPress={isValid && !isLoading ? onPressBook : undefined}
+        onPress={handleBook}
         style={({ pressed }) => [
           styles.ctaButton,
           !isValid && styles.ctaButtonDisabled,
@@ -74,60 +98,57 @@ export function BookingFixedBottomBar({
 
 const styles = StyleSheet.create({
   fixedContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(60, 60, 67, 0.15)',
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    borderTopColor: 'rgba(60, 60, 67, 0.14)',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
     boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.06)',
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   fareGroup: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 8,
+    gap: spacing.xs,
   },
   fareLabel: {
     ...typeScale.subheadline,
-    fontSize: 14,
-    color: '#8E8E93',
+    color: customerPalette.textSubtle,
   },
   fareValue: {
     ...typeScale.title2,
-    fontSize: 24,
     fontWeight: '700',
-    color: '#000000',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
-    letterSpacing: -0.3,
   },
   detailsBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 14,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: customerPalette.primaryBg,
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
   },
   btnPressed: {
-    opacity: 0.7,
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
   detailsBtnText: {
     ...typeScale.footnote,
-    fontSize: 13,
     fontWeight: '600',
     color: customerPalette.primary,
   },
   ctaButton: {
     height: 52,
     backgroundColor: customerPalette.primary,
-    borderRadius: 16,
+    borderRadius: radius.cardLg,
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 4px 12px rgba(11, 37, 69, 0.28)',
+    boxShadow: '0 4px 14px rgba(11, 37, 69, 0.25)',
     ...iosContinuousCurve,
   },
   ctaButtonDisabled: {
@@ -140,10 +161,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     ...typeScale.headline,
-    fontSize: 17,
-    fontWeight: '600',
     color: '#FFFFFF',
-    letterSpacing: -0.2,
   },
   ctaTextDisabled: {
     color: '#94A3B8',

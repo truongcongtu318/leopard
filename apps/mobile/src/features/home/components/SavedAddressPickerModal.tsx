@@ -9,7 +9,20 @@ import {
   View,
 } from 'react-native';
 
-import { typeScale, colors, customerPalette, leopardPalette, IconLocationPin, IconTrash } from '@leopard/mobile-core';
+import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
+  IconLocationPin,
+  IconTrash,
+  VStack,
+  colors,
+  customerPalette,
+  leopardPalette,
+  typeScale,
+} from '@leopard/mobile-core';
 import type { SavedAddress } from '../../customer/addresses/address-store';
 
 export type SavedAddressPickerModalProps = Readonly<{
@@ -42,21 +55,21 @@ export function SavedAddressPickerModal({
       transparent
       visible={visible}
     >
-      <View style={styles.modalOverlay}>
+      <Box style={styles.modalOverlay}>
         <Pressable
           accessibilityLabel="Đóng sổ địa chỉ"
           onPress={onClose}
           style={styles.modalBackdrop}
         />
-        <View style={styles.bottomSheetCard}>
-          <View style={styles.bottomSheetHandle} />
-          <View style={styles.bottomSheetHeader}>
-            <View>
+        <Card style={styles.bottomSheetCard}>
+          <Box style={styles.bottomSheetHandle} />
+          <HStack style={styles.bottomSheetHeader}>
+            <VStack>
               <Text style={styles.bottomSheetTitle}>Sổ địa chỉ đã lưu</Text>
               <Text style={styles.bottomSheetSub}>
                 Chọn địa chỉ cho {target === 'pickup' ? 'điểm lấy hàng' : 'điểm giao hàng'}
               </Text>
-            </View>
+            </VStack>
             <Pressable
               accessibilityLabel="Đóng modal sổ địa chỉ"
               hitSlop={8}
@@ -65,7 +78,7 @@ export function SavedAddressPickerModal({
             >
               <Text style={styles.modalCloseBtnText}>✕</Text>
             </Pressable>
-          </View>
+          </HStack>
 
           <ScrollView
             contentContainerStyle={styles.savedAddressListScroll}
@@ -73,17 +86,17 @@ export function SavedAddressPickerModal({
             style={styles.savedAddressScrollArea}
           >
             {addressList.length === 0 ? (
-              <View style={styles.emptyContainer}>
+              <VStack style={styles.emptyContainer}>
                 <Text style={styles.emptyTitle}>Chưa có địa chỉ nào trong sổ</Text>
                 <Text style={styles.emptySubtitle}>
                   Thêm địa chỉ mới hoặc ghim vị trí trên bản đồ để sử dụng.
                 </Text>
-              </View>
+              </VStack>
             ) : (
               addressList.map((addr) => {
                 const isSelected = currentAddress === addr.address;
                 return (
-                  <View
+                  <Card
                     key={addr.id}
                     style={[
                       styles.savedAddressItemRow,
@@ -100,7 +113,7 @@ export function SavedAddressPickerModal({
                       ]}
                       testID={`pickup-chip-${addr.id}`}
                     >
-                      <View
+                      <Box
                         style={[
                           styles.savedAddrIconSquircle,
                           isSelected ? styles.savedAddrIconSquircleActive : null,
@@ -110,24 +123,24 @@ export function SavedAddressPickerModal({
                           color={isSelected ? colors.info.text : customerPalette.textSubtle}
                           size={18}
                         />
-                      </View>
-                      <View style={styles.savedAddrTextCol}>
-                        <View style={styles.savedAddrLabelRow}>
+                      </Box>
+                      <VStack style={styles.savedAddrTextCol}>
+                        <HStack style={styles.savedAddrLabelRow}>
                           <Text style={styles.savedAddrLabelTitle}>{addr.label}</Text>
                           {addr.isDefault ? (
-                            <View style={styles.defaultBadge}>
-                              <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                            </View>
+                            <Badge action="warning" size="sm" style={styles.defaultBadge}>
+                              <Badge.Text style={styles.defaultBadgeText}>Mặc định</Badge.Text>
+                            </Badge>
                           ) : null}
-                        </View>
+                        </HStack>
                         <Text numberOfLines={2} style={styles.savedAddrFullText}>
                           {addr.address}
                         </Text>
-                      </View>
+                      </VStack>
                       {isSelected ? (
-                        <View style={styles.checkCircle}>
+                        <Box style={styles.checkCircle}>
                           <Text style={styles.checkCircleText}>✓</Text>
-                        </View>
+                        </Box>
                       ) : null}
                     </Pressable>
                     {onDeleteAddress ? (
@@ -145,13 +158,13 @@ export function SavedAddressPickerModal({
                         <IconTrash color={leopardPalette.inputPlaceholder} size={15} />
                       </Pressable>
                     ) : null}
-                  </View>
+                  </Card>
                 );
               })
             )}
           </ScrollView>
 
-          <View style={styles.bottomSheetFooter}>
+          <VStack space="xs" style={styles.bottomSheetFooter}>
             <Pressable
               accessibilityLabel="Ghim vị trí trên bản đồ"
               accessibilityRole="button"
@@ -172,9 +185,9 @@ export function SavedAddressPickerModal({
                 <Text style={styles.bottomSheetManageBtnText}>+ Thêm địa chỉ mới</Text>
               </Pressable>
             ) : null}
-          </View>
-        </View>
-      </View>
+          </VStack>
+        </Card>
+      </Box>
     </Modal>
   );
 }

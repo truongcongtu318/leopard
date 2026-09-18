@@ -62,12 +62,20 @@ export class UpdateOrderStatusService {
       }
 
       const hasDeliveryProof = await this.proofReader.hasDeliveryProof(orderId);
+      // Only the pickup → transit leg demands pickup evidence; asking on every
+      // transition would fail unrelated legs that never carry a pickup photo.
+      const needsPickupProof =
+        order.status === 'PICKING_UP' && dto.status === 'IN_TRANSIT';
+      const hasPickupProof = needsPickupProof
+        ? await this.proofReader.hasPickupProof(orderId)
+        : true;
 
       assertOrderTransition({
         from: order.status,
         to: dto.status,
         actorRole: actor.role,
         hasDeliveryProof,
+        hasPickupProof,
       });
 
       const now = new Date();

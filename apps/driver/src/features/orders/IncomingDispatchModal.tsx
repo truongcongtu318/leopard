@@ -13,14 +13,19 @@ import {
 import { DriverModalSurface } from '../../navigation/DriverModalSurface';
 
 import {
+  Badge,
+  Box,
+  Card,
+  HStack,
   IconClock,
   IconClose,
   IconLocationPin,
   IconOrders,
   IconRoute,
   IconSpeedTruck,
-  RealInteractiveMap,
+  LeopardMapView,
   SlideToAction,
+  VStack,
   colors,
   driverHapticMatrix,
   iosContinuousCurve,
@@ -121,7 +126,7 @@ const HeroMapSection = memo(function HeroMapSection({
 }: HeroMapSectionProps) {
   return (
     <View style={styles.modalMapCanvas} testID="dispatch-modal-map">
-      <RealInteractiveMap
+      <LeopardMapView
         destination={{ label: dropoffAddress, coords: dropoffCoords }}
         height="100%"
         mode="route"
@@ -149,18 +154,18 @@ const FareCardSection = memo(function FareCardSection({
   isUrgent,
 }: FareCardSectionProps) {
   return (
-    <View style={[styles.fareBezelOuter, isUrgent ? styles.fareBezelOuterUrgent : null]}>
+    <Card style={[styles.fareBezelOuter, isUrgent ? styles.fareBezelOuterUrgent : null]}>
       <View style={[styles.fareBezelInner, isUrgent ? styles.fareBezelInnerUrgent : null]}>
-        <View style={styles.fareHeaderRow}>
+        <HStack style={styles.fareHeaderRow}>
           <Text style={styles.fareCaption}>Cước thực nhận dự kiến</Text>
-          <View style={styles.fareNetPill}>
-            <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
-          </View>
-        </View>
+          <Badge action="warning" variant="solid" style={styles.fareNetPill}>
+            <Badge.Text style={styles.fareNetPillText}>Thu nhập ròng</Badge.Text>
+          </Badge>
+        </HStack>
         <Text style={styles.fareAmount}>{fareAmount}</Text>
         <Text style={styles.fareSub}>Thực nhận sau chiết khấu</Text>
       </View>
-    </View>
+    </Card>
   );
 });
 
@@ -180,7 +185,7 @@ const RouteSpineSection = memo(function RouteSpineSection({
   tripDistText,
 }: RouteSpineSectionProps) {
   return (
-    <View style={styles.routeBezelOuter}>
+    <Card style={styles.routeBezelOuter}>
       <View style={styles.routeBezelInner}>
         <View style={styles.routeSpineColumn}>
           <View style={styles.spineOriginCircle}>
@@ -194,29 +199,31 @@ const RouteSpineSection = memo(function RouteSpineSection({
 
         <View style={styles.routeAddressesColumn}>
           <View style={styles.addressBlock}>
-            <View style={styles.addressTitleRow}>
+            <HStack style={styles.addressTitleRow}>
               <Text style={styles.addressTypeLabel}>Điểm lấy hàng</Text>
               {pickupBadgeText ? (
-                <View style={styles.pickupDistBadge}>
-                  <IconLocationPin color={leopardPalette.primary} size={12} />
-                  <Text style={styles.pickupDistText}>{pickupBadgeText}</Text>
-                </View>
+                <Badge action="info" variant="solid" style={styles.pickupDistBadge}>
+                  <HStack space="hairline">
+                    <IconLocationPin color={leopardPalette.primary} size={12} />
+                    <Badge.Text style={styles.pickupDistText}>{pickupBadgeText}</Badge.Text>
+                  </HStack>
+                </Badge>
               ) : null}
-            </View>
+            </HStack>
             <Text numberOfLines={2} style={styles.addressNameText}>
               {pickupDisplay}
             </Text>
           </View>
 
           {tripDistText ? (
-            <View style={styles.transitMetaRow}>
+            <HStack space="xs" style={styles.transitMetaRow}>
               <IconRoute color={colors.neutral.subtleText} size={13} />
               <Text style={styles.transitMetaText}>
                 {etaLabel
                   ? `Lộ trình ${tripDistText} · Khoảng ${etaLabel}`
                   : `Lộ trình ${tripDistText}`}
               </Text>
-            </View>
+            </HStack>
           ) : null}
 
           <View style={styles.addressBlock}>
@@ -227,7 +234,7 @@ const RouteSpineSection = memo(function RouteSpineSection({
           </View>
         </View>
       </View>
-    </View>
+    </Card>
   );
 });
 
@@ -253,20 +260,20 @@ const CargoBentoSection = memo(function CargoBentoSection({
   vehicleLabel,
 }: CargoBentoSectionProps) {
   return (
-    <View style={styles.cargoBentoOuter} testID="cargo-bento-card">
+    <Card style={styles.cargoBentoOuter} testID="cargo-bento-card">
       <View style={styles.cargoBentoInner}>
-        <View style={styles.cargoHeaderRow}>
-          <View style={styles.cargoTitleRow}>
+        <HStack style={styles.cargoHeaderRow}>
+          <HStack space="xs" style={styles.cargoTitleRow}>
             <IconOrders color={leopardPalette.primary} size={15} />
             <Text style={styles.cargoHeaderTitle}>Thông tin hàng hóa</Text>
-          </View>
+          </HStack>
           {vehicleLabel ? (
             <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
               <IconSpeedTruck color={leopardPalette.primary} size={14} />
               <Text style={styles.specChipText}>{vehicleLabel}</Text>
             </View>
           ) : null}
-        </View>
+        </HStack>
 
         <View style={styles.cargoBodyRow}>
           <View style={styles.cargoInfoColumn}>
@@ -275,7 +282,7 @@ const CargoBentoSection = memo(function CargoBentoSection({
             </Text>
 
             {(cargoWeightKg !== undefined || cargoDimensions) ? (
-              <View style={styles.cargoSpecsRow}>
+              <HStack space="xs" style={styles.cargoSpecsRow}>
                 {cargoWeightKg !== undefined ? (
                   <View style={styles.cargoSpecPill}>
                     <Text style={styles.cargoSpecValue}>{cargoWeightKg} kg</Text>
@@ -286,13 +293,13 @@ const CargoBentoSection = memo(function CargoBentoSection({
                     <Text style={styles.cargoSpecValue}>{cargoDimensions}</Text>
                   </View>
                 ) : null}
-              </View>
+              </HStack>
             ) : null}
 
             {loadingBadgeLabel ? (
-              <View style={styles.loadingFeeBadge}>
-                <Text style={styles.loadingFeeBadgeText}>{loadingBadgeLabel}</Text>
-              </View>
+              <Badge action="warning" variant="solid" style={styles.loadingFeeBadge}>
+                <Badge.Text style={styles.loadingFeeBadgeText}>{loadingBadgeLabel}</Badge.Text>
+              </Badge>
             ) : null}
           </View>
 
@@ -315,12 +322,12 @@ const CargoBentoSection = memo(function CargoBentoSection({
         </View>
 
         {specialNotes ? (
-          <View style={styles.notesBox}>
+          <Box style={styles.notesBox}>
             <Text style={styles.notesText}>{specialNotes}</Text>
-          </View>
+          </Box>
         ) : null}
       </View>
-    </View>
+    </Card>
   );
 });
 

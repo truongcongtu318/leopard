@@ -4,7 +4,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -13,9 +12,15 @@ import { useRouter } from 'expo-router';
 import appJson from '../../../app.json';
 
 import {
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconChevronRight,
   IconWarningShield,
   ScreenScaffold,
+  Switch,
+  VStack,
   colors,
   driverPrimitives,
   iconSize,
@@ -124,28 +129,27 @@ export function DriverSettingsScreen() {
       >
         {/* ── 1. Báo hiệu & điều phối ── */}
         <Text style={styles.sectionLabel}>Báo hiệu & điều phối</Text>
-        <View style={styles.groupedCard}>
+        <Card style={styles.groupedCard}>
           {/* Tự động nhận đơn */}
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Tự động nhận đơn</Text>
               <Text style={styles.settingDesc}>Tự động nhận cuốc mới trong bán kính cài đặt</Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Bật tắt tự động nhận đơn"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setAutoAccept}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={autoAccept}
             />
-          </View>
+          </HStack>
 
           {/* Bán kính tự động quét cuốc */}
           {autoAccept && (
-            <View style={styles.subConfigBox}>
+            <Box style={styles.subConfigBox}>
               <Text style={styles.subConfigLabel}>Bán kính tự động quét cuốc:</Text>
-              <View style={styles.segmentedControl}>
+              <HStack style={styles.segmentedControl}>
                 {[2, 5, 10].map((radiusKm) => {
                   const isSelected = autoAcceptRadius === radiusKm;
                   return (
@@ -171,75 +175,72 @@ export function DriverSettingsScreen() {
                     </Pressable>
                   );
                 })}
-              </View>
-            </View>
+              </HStack>
+            </Box>
           )}
 
           {/* Âm báo chuyến mới */}
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Âm báo chuyến mới</Text>
               <Text style={styles.settingDesc}>Phát chuông thông báo khi có đơn điều phối đến</Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Bật tắt âm báo chuyến mới"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setAlertSound}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={alertSound}
             />
-          </View>
+          </HStack>
 
           {/* Rung khi có đơn mới */}
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Rung khi có đơn mới</Text>
               <Text style={styles.settingDesc}>Rung thiết bị liên tục khi nhận được tín hiệu cuốc xe</Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Bật tắt rung khi có đơn mới"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setVibrateOnOffer}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={vibrateOnOffer}
             />
-          </View>
+          </HStack>
 
           {/* Tự động nghỉ sau chuyến này */}
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.textWrap}>
+          <HStack style={[styles.settingRow, styles.settingRowLast]}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Tự động nghỉ sau chuyến này</Text>
               <Text style={styles.settingDesc}>
                 Tự động chuyển về trạng thái Nghỉ (Offline) ngay khi hoàn tất đơn hiện tại
               </Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Tự động nghỉ sau chuyến này"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setAutoOfflineOnComplete}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={autoOfflineOnComplete}
             />
-          </View>
-        </View>
+          </HStack>
+        </Card>
 
         {/* ── 2. Bản đồ & dẫn đường xe tải ── */}
         <Text style={styles.sectionLabel}>Bản đồ & dẫn đường xe tải</Text>
-        <View style={styles.groupedCard}>
+        <Card style={styles.groupedCard}>
           {/* Lựa chọn app bản đồ */}
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Ứng dụng dẫn đường mặc định</Text>
               <Text style={styles.settingDesc}>
                 {defaultNav === 'vietmap'
                   ? 'Vietmap Navigation (Tối ưu cho xe tải & biển cấm giờ)'
                   : 'Google Maps Navigation'}
               </Text>
-            </View>
-            <View style={styles.segmentedControlCompact}>
+            </VStack>
+            <HStack style={styles.segmentedControlCompact}>
               <Pressable
                 accessibilityLabel="Chọn bản đồ Vietmap"
                 accessibilityRole="button"
@@ -278,99 +279,95 @@ export function DriverSettingsScreen() {
                   Google
                 </Text>
               </Pressable>
-            </View>
-          </View>
+            </HStack>
+          </HStack>
 
           {/* Tự động mở dẫn đường */}
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Tự động mở dẫn đường</Text>
               <Text style={styles.settingDesc}>
                 Tự động chuyển tiếp sang bản đồ khi bắt đầu lấy hàng hoặc giao hàng
               </Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Tự động mở dẫn đường"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setAutoOpenNav}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={autoOpenNav}
             />
-          </View>
+          </HStack>
 
           {/* Tránh đường cấm tải trọng */}
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.textWrap}>
+          <HStack style={[styles.settingRow, styles.settingRowLast]}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Cảnh báo đường cấm tải trọng xe</Text>
               <Text style={styles.settingDesc}>
                 Cảnh báo giới hạn tải trọng cầu đường và khung giờ giới nghiêm xe tải
               </Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Cảnh báo đường cấm tải"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setAvoidTruckRestrictions}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={avoidTruckRestrictions}
             />
-          </View>
-        </View>
+          </HStack>
+        </Card>
 
         {/* ── 3. Màn hình & tối ưu pin ── */}
         <Text style={styles.sectionLabel}>Màn hình & tối ưu pin</Text>
-        <View style={styles.groupedCard}>
+        <Card style={styles.groupedCard}>
           {/* Giữ màn hình luôn sáng */}
-          <View style={styles.settingRow}>
-            <View style={styles.textWrap}>
+          <HStack style={styles.settingRow}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Giữ màn hình luôn sáng khi online</Text>
               <Text style={styles.settingDesc}>
                 Ngăn thiết bị tự động khóa màn hình trong lúc chờ nhận đơn và điều phối
               </Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Giữ màn hình luôn sáng"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setKeepScreenAwake}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={keepScreenAwake}
             />
-          </View>
+          </HStack>
 
           {/* Chế độ tiết kiệm pin */}
-          <View style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.textWrap}>
+          <HStack style={[styles.settingRow, styles.settingRowLast]}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Chế độ tiết kiệm pin thực địa</Text>
               <Text style={styles.settingDesc}>
                 Tối ưu tần suất cập nhật bản đồ và hiệu ứng chuyển động khi pin dưới 20%
               </Text>
-            </View>
+            </VStack>
             <Switch
               accessibilityLabel="Chế độ tiết kiệm pin"
-              ios_backgroundColor={SWITCH_TRACK_COLOR.false}
               onValueChange={setBatterySaver}
               thumbColor={colors.neutral.surface}
               trackColor={SWITCH_TRACK_COLOR}
               value={batterySaver}
             />
-          </View>
-        </View>
+          </HStack>
+        </Card>
 
         {/* ── 4. Trợ giúp & hỗ trợ ── */}
         <Text style={styles.sectionLabel}>Trợ giúp & hỗ trợ</Text>
-        <View style={styles.groupedCard}>
+        <Card style={styles.groupedCard}>
           <Pressable
             accessibilityLabel="Tổng đài hỗ trợ đối tác"
             accessibilityRole="button"
             onPress={handleSupportCall}
             style={({ pressed }) => [styles.settingRow, pressed ? styles.rowPressed : null]}
           >
-            <View style={styles.textWrap}>
+            <VStack style={styles.textWrap}>
               <Text style={styles.settingTitle}>Tổng đài điều hành LEOPARD Driver</Text>
               <Text style={styles.settingDesc}>Hỗ trợ xử lý sự cố đơn hàng và đối soát 24/7</Text>
-            </View>
+            </VStack>
             <IconChevronRight color={colors.neutral.subtleText} size={iconSize.sm} />
           </Pressable>
 
@@ -384,13 +381,13 @@ export function DriverSettingsScreen() {
             <IconWarningShield color={colors.danger.text} size={iconSize.md} />
             <Text style={styles.sosButtonText}>Gọi cứu hộ khẩn cấp SOS (24/7)</Text>
           </Pressable>
-        </View>
+        </Card>
 
         {/* Footer Build info */}
-        <View style={styles.footerSection}>
+        <VStack style={styles.footerSection}>
           <Text style={styles.footerVersion}>LEOPARD Driver Cockpit · v{APP_VERSION}</Text>
           <Text style={styles.footerCopyright}>Bản quyền thuộc LEOPARD Freight Logistics Platform</Text>
-        </View>
+        </VStack>
       </ScrollView>
     </ScreenScaffold>
   );

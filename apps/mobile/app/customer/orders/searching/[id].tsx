@@ -77,9 +77,12 @@ export default function OrderSearchingScreen({
     origin?: string;
     destination?: string;
     vehicleType?: string;
+    vehicleName?: string;
   }>();
 
   const id = propOrderId || params.id || '';
+  const [fetchedVehicleLabel, setFetchedVehicleLabel] = useState<string | null>(null);
+
   if (!id) {
     return (
       <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
@@ -101,7 +104,7 @@ export default function OrderSearchingScreen({
   }
   const origin = params.origin || 'Kho Tân Bình, TP.HCM';
   const destination = params.destination || 'KCN Vĩnh Lộc, Bình Chánh';
-  const vehicleLabel = formatVehicleLabel(params.vehicleType);
+  const vehicleLabel = params.vehicleName || fetchedVehicleLabel || formatVehicleLabel(params.vehicleType);
 
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -157,6 +160,9 @@ export default function OrderSearchingScreen({
       try {
         const detail = await port.getOrderDetailView(id);
         if (!mounted || detail.kind !== 'content') return;
+        if (detail.order.requestedVehicleLabel) {
+          setFetchedVehicleLabel(detail.order.requestedVehicleLabel);
+        }
         if (detail.order.status !== 'REQUESTED') {
           clearInterval(interval);
           const driver =

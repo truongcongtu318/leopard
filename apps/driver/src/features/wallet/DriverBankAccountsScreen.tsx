@@ -9,15 +9,22 @@ import {
 import Svg, { Path } from 'react-native-svg';
 
 import {
+  Alert,
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
+  IconBank,
+  IconSecurityShield,
+  ScreenScaffold,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
   leopardPalette,
   radius,
   spacing,
-  IconBank,
-  IconSecurityShield,
-  ScreenScaffold,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -61,60 +68,62 @@ export function DriverBankAccountsScreen({
         style={styles.scrollWrap}
       >
         {/* Security Notice */}
-        <View style={styles.securityNoticeCard}>
-          <View style={styles.securityNoticeIconWrap}>
-            <IconSecurityShield color={colors.brand.primary} size={18} />
-          </View>
-          <View style={styles.securityNoticeTextCol}>
-            <Text style={styles.securityNoticeTitle}>Rút tiền tức thì 24/7 qua Napas247</Text>
-            <Text style={styles.securityNoticeSub}>
-              Tài khoản liên kết phải trùng khớp họ tên với hồ sơ đối tác đã định danh KYC để
-              đảm bảo an toàn tài chính.
-            </Text>
-          </View>
-        </View>
+        <Card style={styles.securityNoticeCard}>
+          <HStack style={{ alignItems: 'flex-start', gap: spacing.xs }}>
+            <Box style={styles.securityNoticeIconWrap}>
+              <IconSecurityShield color={colors.brand.primary} size={18} />
+            </Box>
+            <VStack style={styles.securityNoticeTextCol}>
+              <Text style={styles.securityNoticeTitle}>Rút tiền tức thì 24/7 qua Napas247</Text>
+              <Text style={styles.securityNoticeSub}>
+                Tài khoản liên kết phải trùng khớp họ tên với hồ sơ đối tác đã định danh KYC để
+                đảm bảo an toàn tài chính.
+              </Text>
+            </VStack>
+          </HStack>
+        </Card>
 
         {/* Linked Bank Account (BE) */}
-        <View style={styles.accountSection}>
+        <VStack style={styles.accountSection}>
           <Text style={styles.sectionTitle}>
             Tài khoản đã liên kết ({hasLinkedAccount ? 1 : 0})
           </Text>
 
           {hasLinkedAccount ? (
-            <View style={styles.bankCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardHeaderLeft}>
-                  <View style={[styles.bankIconWrap, styles.bankIconWrapDefault]}>
+            <Card style={styles.bankCard}>
+              <HStack style={styles.cardHeader}>
+                <HStack style={styles.cardHeaderLeft}>
+                  <Box style={[styles.bankIconWrap, styles.bankIconWrapDefault]}>
                     <IconBank color={colors.brand.primary} size={22} />
-                  </View>
-                  <View>
+                  </Box>
+                  <VStack>
                     <Text style={styles.bankName}>{bankName}</Text>
                     <Text style={styles.accountNumber}>{bankAccountNumber}</Text>
-                  </View>
-                </View>
-              </View>
+                  </VStack>
+                </HStack>
+              </HStack>
 
-              <View style={styles.cardDivider} />
+              <Divider style={styles.cardDivider} />
 
-              <View style={styles.cardFooter}>
-                <View>
+              <HStack style={styles.cardFooter}>
+                <VStack>
                   <Text style={styles.holderLabel}>Chủ tài khoản</Text>
                   <Text style={styles.holderName}>{bankAccountName ?? '—'}</Text>
-                </View>
-                <View style={styles.napasBadge}>
-                  <Text style={styles.napasBadgeText}>Napas247</Text>
-                </View>
-              </View>
-            </View>
+                </VStack>
+                <Badge action="info" size="sm" style={styles.napasBadge}>
+                  <Badge.Text style={styles.napasBadgeText}>Napas247</Badge.Text>
+                </Badge>
+              </HStack>
+            </Card>
           ) : (
-            <View style={styles.bankCard}>
+            <Card style={styles.bankCard}>
               <Text style={styles.emptyText}>Chưa liên kết tài khoản ngân hàng</Text>
               <Text style={styles.emptySub}>
                 Tài khoản thụ hưởng được lưu trong hồ sơ ví của bạn. Liên hệ điều hành để cập nhật.
               </Text>
-            </View>
+            </Card>
           )}
-        </View>
+        </VStack>
       </ScrollView>
     </ScreenScaffold>
   );

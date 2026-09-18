@@ -6,25 +6,30 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
 import {
+  Box,
+  Card,
+  Divider,
+  HStack,
+  IconAlertTriangle,
+  IconChevron,
+  IconSecurityShield,
+  IconShield,
+  Switch,
+  VStack,
   colors,
   customerPalette,
   layout,
   radius,
   sessionStore,
   spacing,
-  typography,
-  IconAlertTriangle,
-  IconChevron,
-  IconSecurityShield,
-  IconShield,
   typeScale,
+  typography,
 } from '@leopard/mobile-core';
 import { getDefaultHttpClient } from '../orders/adapter';
 
@@ -55,9 +60,9 @@ export function CustomerSecurityScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <Box style={styles.container}>
       {/* Top Header with Back button */}
-      <View style={styles.header}>
+      <HStack style={styles.header}>
         <Pressable
           accessibilityLabel="Quay lại"
           accessibilityRole="button"
@@ -68,8 +73,8 @@ export function CustomerSecurityScreen() {
           <IconChevron color={colors.neutral.titleText} direction="left" size="lg" />
         </Pressable>
         <Text style={styles.headerTitle}>Bảo mật tài khoản</Text>
-        <View style={styles.headerRightSpacer} />
-      </View>
+        <Box style={styles.headerRightSpacer} />
+      </HStack>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -77,15 +82,15 @@ export function CustomerSecurityScreen() {
       >
         {/* SECTION 1: SINH TRẮC HỌC */}
         <Text style={styles.sectionLabel}>Sinh trắc học</Text>
-        <View style={styles.doubleBezelOuter}>
-          <View style={styles.doubleBezelInner}>
-            <View style={styles.switchRow}>
-              <View style={styles.switchInfo}>
+        <Card style={styles.doubleBezelOuter}>
+          <Box style={styles.doubleBezelInner}>
+            <HStack style={styles.switchRow}>
+              <VStack style={styles.switchInfo}>
                 <Text style={styles.switchTitle}>Đăng nhập bằng FaceID / Vân tay</Text>
                 <Text style={styles.switchSubtext}>
                   Sử dụng cảm biến sinh trắc học thiết bị để mở khóa ứng dụng và duyệt lệnh nhanh.
                 </Text>
-              </View>
+              </VStack>
               <Switch
                 accessibilityLabel="Bật hoặc tắt FaceID hoặc Vân tay"
                 onValueChange={setBiometricEnabled}
@@ -94,29 +99,29 @@ export function CustomerSecurityScreen() {
                 trackColor={{ false: colors.neutral.subtleBorder, true: customerPalette.primary }}
                 value={biometricEnabled}
               />
-            </View>
-          </View>
-        </View>
+            </HStack>
+          </Box>
+        </Card>
 
         {/* SECTION 3: APPLE GUIDELINE 5.1.1 ACCOUNT DELETION */}
         <Text style={styles.sectionLabelDanger}>Quản lý dữ liệu & tài khoản</Text>
-        <View style={[styles.doubleBezelOuter, styles.dangerOuter]}>
-          <View style={styles.doubleBezelInner}>
-            <View style={styles.dangerHeaderRow}>
-              <View style={styles.dangerIconBadge}>
+        <Card style={[styles.doubleBezelOuter, styles.dangerOuter]}>
+          <Box style={styles.doubleBezelInner}>
+            <HStack style={styles.dangerHeaderRow}>
+              <Box style={styles.dangerIconBadge}>
                 <IconAlertTriangle color={colors.danger.text} size="md" />
-              </View>
-              <View style={styles.dangerHeaderWrap}>
+              </Box>
+              <VStack style={styles.dangerHeaderWrap}>
                 <Text style={styles.dangerHeading}>Quyền riêng tư & Xóa tài khoản</Text>
                 <Text style={styles.dangerLegalNotice}>
                   Tuân thủ điều khoản Apple App Store Review Guideline 5.1.1 (Data Collection and
                   Storage). Người dùng có toàn quyền yêu cầu xóa vĩnh viễn tài khoản và mọi dữ liệu
                   liên quan khỏi máy chủ LEOPARD.
                 </Text>
-              </View>
-            </View>
+              </VStack>
+            </HStack>
 
-            <View style={styles.dangerDivider} />
+            <Divider style={styles.dangerDivider} />
 
             <Pressable
               accessibilityRole="button"
@@ -128,8 +133,8 @@ export function CustomerSecurityScreen() {
             >
               <Text style={styles.deleteAccountButtonText}>Xóa tài khoản vĩnh viễn</Text>
             </Pressable>
-          </View>
-        </View>
+          </Box>
+        </Card>
       </ScrollView>
 
       {/* CONFIRMATION MODAL (APPLE GUIDELINE 5.1.1) */}
@@ -139,12 +144,12 @@ export function CustomerSecurityScreen() {
         transparent
         visible={deleteModalVisible}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCardOuter}>
-            <View style={styles.modalCardInner}>
-              <View style={styles.modalWarningIconBox}>
+        <Box style={styles.modalBackdrop}>
+          <Card style={styles.modalCardOuter}>
+            <VStack style={styles.modalCardInner}>
+              <Box style={styles.modalWarningIconBox}>
                 <IconAlertTriangle color={colors.danger.text} size="xl" />
-              </View>
+              </Box>
 
               <Text style={styles.modalTitle}>Xác nhận xóa tài khoản vĩnh viễn?</Text>
 
@@ -154,7 +159,7 @@ export function CustomerSecurityScreen() {
                 theo quy định Apple 5.1.1.
               </Text>
 
-              <View style={styles.modalActions}>
+              <HStack space="xs" style={styles.modalActions}>
                 <Pressable
                   accessibilityRole="button"
                   disabled={isDeleting}
@@ -180,12 +185,12 @@ export function CustomerSecurityScreen() {
                     {isDeleting ? 'Đang xóa...' : 'Tôi hiểu và xác nhận xóa'}
                   </Text>
                 </Pressable>
-              </View>
-            </View>
-          </View>
-        </View>
+              </HStack>
+            </VStack>
+          </Card>
+        </Box>
       </Modal>
-    </View>
+    </Box>
   );
 }
 

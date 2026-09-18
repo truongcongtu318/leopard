@@ -11,7 +11,12 @@ import {
 } from 'react-native';
 
 import {
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
+  HStack,
   IconAlertTriangle,
   IconChevron,
   IconClose,
@@ -19,6 +24,7 @@ import {
   IconPhone,
   IconSecurityShield,
   ScreenScaffold,
+  VStack,
   colors,
   customerPalette,
   haptic,
@@ -99,22 +105,22 @@ export function SupportSosScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── 1. HOTLINE 24/7 HERO CARD ── */}
-        <View style={styles.hotlineCard}>
-          <View style={styles.hotlineHeader}>
-            <View style={styles.hotlineBadge}>
-              <View style={styles.livePulseDot} />
-              <Text style={styles.hotlineBadgeText}>Trực tuyến 24/7</Text>
-            </View>
-            <View style={styles.hotlineIconBadge}>
+        <Card style={styles.hotlineCard}>
+          <HStack style={styles.hotlineHeader}>
+            <Badge action="success" size="sm" style={styles.hotlineBadge}>
+              <Box style={styles.livePulseDot} />
+              <Badge.Text style={styles.hotlineBadgeText}>Trực tuyến 24/7</Badge.Text>
+            </Badge>
+            <Box style={styles.hotlineIconBadge}>
               <IconPhone color="#FFFFFF" size={16} />
-            </View>
-          </View>
+            </Box>
+          </HStack>
 
-          <View style={styles.hotlineBody}>
+          <VStack style={styles.hotlineBody}>
             <Text style={styles.hotlineTitle}>Tổng đài điều hành</Text>
             <Text style={styles.hotlineNumber}>1900 6868</Text>
             <Text style={styles.hotlineDesc}>Hỗ trợ xử lý đơn hàng, điều phối xe và cước phí</Text>
-          </View>
+          </VStack>
 
           <Pressable
             accessibilityLabel="Gọi hotline tổng đài 1900 6868"
@@ -125,21 +131,21 @@ export function SupportSosScreen() {
             <IconPhone color="#FFFFFF" size={16} />
             <Text style={styles.callActionBtnText}>Gọi ngay</Text>
           </Pressable>
-        </View>
+        </Card>
 
         {/* ── 2. SOS EMERGENCY ACTION (COMPACT) ── */}
-        <View style={styles.sosCard}>
-          <View style={styles.sosRow}>
-            <View style={styles.sosIconBadge}>
+        <Card style={styles.sosCard}>
+          <HStack style={styles.sosRow}>
+            <Box style={styles.sosIconBadge}>
               <IconAlertTriangle color={colors.danger.text} size="md" />
-            </View>
-            <View style={styles.sosContentCol}>
+            </Box>
+            <VStack style={styles.sosContentCol}>
               <Text style={styles.sosTitle}>Báo cáo khẩn cấp (SOS)</Text>
               <Text style={styles.sosDesc}>
                 Hỗ trợ xử lý tai nạn, va chạm hoặc sự cố nghiêm trọng trên đường.
               </Text>
-            </View>
-          </View>
+            </VStack>
+          </HStack>
 
           <Pressable
             accessibilityLabel="Kích hoạt trợ giúp SOS khẩn cấp"
@@ -150,12 +156,12 @@ export function SupportSosScreen() {
             <IconAlertTriangle color="#FFFFFF" size={16} />
             <Text style={styles.sosActionBtnText}>Kích hoạt trợ giúp SOS khẩn cấp</Text>
           </Pressable>
-        </View>
+        </Card>
 
         {/* ── 3. FAQ ACCORDION (APPLE INSET GROUPED TABLE) ── */}
-        <View style={styles.sectionGroup}>
+        <VStack style={styles.sectionGroup}>
           <Text style={styles.sectionLabel}>Câu hỏi thường gặp</Text>
-          <View style={styles.groupedCard}>
+          <Card style={styles.groupedCard}>
             {faqs.map((faq, index) => {
               const isExpanded = expandedFaq === faq.id;
               const isLast = index === faqs.length - 1;
@@ -174,7 +180,7 @@ export function SupportSosScreen() {
                       pressed ? styles.rowPressed : null,
                     ]}
                   >
-                    <View style={styles.faqHeader}>
+                    <HStack style={styles.faqHeader}>
                       <Text style={[styles.faqQuestion, isExpanded ? styles.faqQuestionActive : null]}>
                         {faq.q}
                       </Text>
@@ -183,43 +189,43 @@ export function SupportSosScreen() {
                         direction={isExpanded ? 'up' : 'down'}
                         size="sm"
                       />
-                    </View>
+                    </HStack>
                     {isExpanded ? (
-                      <View style={styles.faqAnswerContainer}>
+                      <Box style={styles.faqAnswerContainer}>
                         <Text style={styles.faqAnswer}>{faq.a}</Text>
-                      </View>
+                      </Box>
                     ) : null}
                   </Pressable>
-                  {!isLast && <View style={styles.rowDivider} />}
+                  {!isLast && <Divider style={styles.rowDivider} />}
                 </View>
               );
             })}
-          </View>
-        </View>
+          </Card>
+        </VStack>
 
         {/* ── 4. LEGAL & PRIVACY POLICIES ── */}
-        <View style={styles.sectionGroup}>
+        <VStack style={styles.sectionGroup}>
           <Text style={styles.sectionLabel}>Điều khoản dịch vụ & chính sách bảo mật</Text>
-          <View style={styles.groupedCard}>
+          <Card style={styles.groupedCard}>
             <Pressable
               accessibilityLabel="Xem Điều khoản dịch vụ vận chuyển"
               accessibilityRole="button"
               onPress={openTerms}
               style={({ pressed }) => [styles.legalRow, pressed ? styles.rowPressed : null]}
             >
-              <View style={styles.legalRowLeft}>
-                <View style={[styles.legalIconBadge, { backgroundColor: customerPalette.primaryBg }]}>
+              <HStack style={styles.legalRowLeft}>
+                <Box style={[styles.legalIconBadge, { backgroundColor: customerPalette.primaryBg }]}>
                   <IconFileText color={customerPalette.primary} size={18} />
-                </View>
-                <View style={styles.legalTextCol}>
+                </Box>
+                <VStack style={styles.legalTextCol}>
                   <Text style={styles.legalTitle}>Điều khoản dịch vụ vận chuyển LEOPARD</Text>
                   <Text style={styles.legalSubtitle}>Quy định quyền lợi, trách nhiệm bảo hiểm & cước phí</Text>
-                </View>
-              </View>
+                </VStack>
+              </HStack>
               <IconChevron color="#CBD5E1" direction="right" size="sm" />
             </Pressable>
 
-            <View style={styles.rowDividerIndent} />
+            <Divider style={styles.rowDividerIndent} />
 
             <Pressable
               accessibilityLabel="Xem Chính sách bảo mật dữ liệu"
@@ -227,19 +233,19 @@ export function SupportSosScreen() {
               onPress={openPrivacy}
               style={({ pressed }) => [styles.legalRow, pressed ? styles.rowPressed : null]}
             >
-              <View style={styles.legalRowLeft}>
-                <View style={[styles.legalIconBadge, { backgroundColor: customerPalette.primaryBg }]}>
+              <HStack style={styles.legalRowLeft}>
+                <Box style={[styles.legalIconBadge, { backgroundColor: customerPalette.primaryBg }]}>
                   <IconSecurityShield color={customerPalette.primary} size={18} />
-                </View>
-                <View style={styles.legalTextCol}>
+                </Box>
+                <VStack style={styles.legalTextCol}>
                   <Text style={styles.legalTitle}>Chính sách bảo mật & Quyền riêng tư</Text>
                   <Text style={styles.legalSubtitle}>Bảo mật vị trí GPS & Tiêu chuẩn Apple Guideline 5.1.1</Text>
-                </View>
-              </View>
+                </VStack>
+              </HStack>
               <IconChevron color="#CBD5E1" direction="right" size="sm" />
             </Pressable>
-          </View>
-        </View>
+          </Card>
+        </VStack>
       </ScrollView>
 
       {/* LEGAL MODAL */}

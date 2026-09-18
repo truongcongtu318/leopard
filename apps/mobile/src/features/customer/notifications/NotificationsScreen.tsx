@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
+  IconBell,
+  IconOrders,
+  IconTag,
+  IconTxPayment,
+  ScreenScaffold,
+  VStack,
   colors,
   control,
   customerPalette,
@@ -14,11 +25,6 @@ import {
   radius,
   spacing,
   typeScale,
-  IconBell,
-  IconOrders,
-  IconTag,
-  IconTxPayment,
-  ScreenScaffold,
 } from '@leopard/mobile-core';
 import { isOlderThanOneDay } from './adapter';
 import type { NotificationFilter, NotificationItemView, NotificationsContentView } from './model';
@@ -121,7 +127,7 @@ export function NotificationsScreen({
           </View>
         ) : null}
 
-        <View style={styles.filterWrap}>
+        <Box style={styles.filterWrap}>
           <ScrollView
             accessibilityLabel="Thanh lọc danh mục thông báo"
             contentContainerStyle={styles.filterStrip}
@@ -164,32 +170,36 @@ export function NotificationsScreen({
                     {opt.label}
                   </Text>
                   {count > 0 ? (
-                    <View style={[styles.filterBadge, active && styles.filterBadgeActive]}>
-                      <Text
+                    <Badge
+                      action={active ? 'info' : 'muted'}
+                      size="sm"
+                      style={[styles.filterBadge, active && styles.filterBadgeActive]}
+                    >
+                      <Badge.Text
                         style={[
                           styles.filterBadgeText,
                           active && styles.filterBadgeTextActive,
                         ]}
                       >
                         {count}
-                      </Text>
-                    </View>
+                      </Badge.Text>
+                    </Badge>
                   ) : null}
                 </Pressable>
               );
             })}
           </ScrollView>
-        </View>
+        </Box>
 
         <SectionList
           contentContainerStyle={styles.listContent}
           contentInsetAdjustmentBehavior="automatic"
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
-            <View style={styles.emptyBox}>
-              <View style={styles.emptyIconCircle}>
+            <VStack style={styles.emptyBox}>
+              <Box style={styles.emptyIconCircle}>
                 <IconBell color={colors.neutral.subtleText} size={32} />
-              </View>
+              </Box>
               <Text style={styles.emptyTitle}>Không có thông báo nào</Text>
               <Text style={styles.emptyMessage}>
                 {filter === 'unread'
@@ -210,7 +220,7 @@ export function NotificationsScreen({
                   <Text style={styles.resetFilterBtnText}>Xem tất cả thông báo</Text>
                 </Pressable>
               ) : null}
-            </View>
+            </VStack>
           }
           ListFooterComponent={
             canLoadMore ? (
@@ -235,45 +245,48 @@ export function NotificationsScreen({
             const meta = getItemMeta(item.type);
 
             return (
-              <Pressable
-                accessibilityHint={`${item.isRead ? '' : 'Chưa đọc. '}${item.body}. ${item.createdAtLabel}`}
-                accessibilityLabel={item.title}
-                accessibilityRole="button"
-                onPress={() => {
-                  haptic.light();
-                  onPressItem(item);
-                }}
-                style={({ pressed }) => [
+              <Card
+                style={[
                   styles.card,
                   !item.isRead ? styles.cardUnread : null,
-                  pressed ? styles.pressed : null,
                 ]}
               >
-                <View style={styles.cardHeader}>
-                  <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
-                    {meta.icon}
-                  </View>
+                <Pressable
+                  accessibilityHint={`${item.isRead ? '' : 'Chưa đọc. '}${item.body}. ${item.createdAtLabel}`}
+                  accessibilityLabel={item.title}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    haptic.light();
+                    onPressItem(item);
+                  }}
+                  style={({ pressed }) => (pressed ? styles.pressed : null)}
+                >
+                  <HStack style={styles.cardHeader}>
+                    <Box style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
+                      {meta.icon}
+                    </Box>
 
-                  <View style={styles.cardHeaderContent}>
-                    <View style={styles.cardMetaTopRow}>
-                      <View style={[styles.typeBadge, { backgroundColor: meta.bg }]}>
-                        <Text style={[styles.typeBadgeText, { color: meta.badgeColor }]}>
-                          {meta.badgeText}
-                        </Text>
-                      </View>
-                      <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
-                    </View>
+                    <VStack style={styles.cardHeaderContent}>
+                      <HStack style={styles.cardMetaTopRow}>
+                        <Badge action="muted" size="sm" style={[styles.typeBadge, { backgroundColor: meta.bg }]}>
+                          <Badge.Text style={[styles.typeBadgeText, { color: meta.badgeColor }]}>
+                            {meta.badgeText}
+                          </Badge.Text>
+                        </Badge>
+                        <Text style={styles.cardTime}>{item.createdAtLabel}</Text>
+                      </HStack>
 
-                    <Text numberOfLines={1} style={styles.cardTitle}>
-                      {item.title}
-                    </Text>
-                  </View>
+                      <Text numberOfLines={1} style={styles.cardTitle}>
+                        {item.title}
+                      </Text>
+                    </VStack>
 
-                  {!item.isRead ? <View style={styles.unreadDot} /> : null}
-                </View>
+                    {!item.isRead ? <Box style={styles.unreadDot} /> : null}
+                  </HStack>
 
-                <Text style={styles.cardBody}>{item.body}</Text>
-              </Pressable>
+                  <Text style={styles.cardBody}>{item.body}</Text>
+                </Pressable>
+              </Card>
             );
           }}
           renderSectionHeader={({ section: { title } }) => (

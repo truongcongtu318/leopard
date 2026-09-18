@@ -10,7 +10,21 @@ import {
 
 import { DriverModalSurface } from '../../navigation/DriverModalSurface';
 
-import { colors, leopardPalette, radius, spacing, typography, Button, IconShieldAlert, IconTrash } from '@leopard/mobile-core';
+import {
+  Box,
+  Button,
+  Card,
+  HStack,
+  IconShieldAlert,
+  IconTrash,
+  Textarea,
+  VStack,
+  colors,
+  leopardPalette,
+  radius,
+  spacing,
+  typography,
+} from '@leopard/mobile-core';
 
 export const INCIDENT_REASONS = [
   { id: 'VEHICLE_BREAKDOWN', label: 'Phương tiện gặp sự cố / Hỏng xe / Tai nạn' },
@@ -75,25 +89,25 @@ export function DriverIncidentModal({
       transparent
       visible={visible}
     >
-      <View style={styles.backdrop}>
-        <View style={styles.sheetContainer} testID="driver-incident-sheet">
-          <View style={styles.grabBar} />
+      <Box style={styles.backdrop}>
+        <Card style={styles.sheetContainer} testID="driver-incident-sheet">
+          <Box style={styles.grabBar} />
 
-          <View style={styles.headerRow}>
-            <View style={styles.iconCircle}>
+          <HStack style={styles.headerRow}>
+            <Box style={styles.iconCircle}>
               <IconShieldAlert color={colors.danger.text} size={22} />
-            </View>
-            <View style={styles.headerTextCol}>
+            </Box>
+            <VStack style={styles.headerTextCol}>
               <Text style={styles.title}>Báo cáo sự cố chuyến đi</Text>
               <Text style={styles.subtitle}>
                 {orderReference ? `Đơn hàng ${orderReference}` : 'Báo cáo khẩn cấp đến trung tâm điều hành'}
               </Text>
-            </View>
-          </View>
+            </VStack>
+          </HStack>
 
           <ScrollView style={styles.scrollArea}>
             <Text style={styles.sectionLabel}>LÝ DO SỰ CỐ</Text>
-            <View style={styles.reasonList}>
+            <VStack space="xs" style={styles.reasonList}>
               {INCIDENT_REASONS.map((reason) => {
                 const isSelected = selectedReason === reason.id;
                 return (
@@ -108,14 +122,14 @@ export function DriverIncidentModal({
                     ]}
                     testID={`incident-reason-${reason.id}`}
                   >
-                    <View
+                    <Box
                       style={[
                         styles.radioDotOuter,
                         isSelected ? styles.radioDotOuterSelected : null,
                       ]}
                     >
-                      {isSelected ? <View style={styles.radioDotInner} /> : null}
-                    </View>
+                      {isSelected ? <Box style={styles.radioDotInner} /> : null}
+                    </Box>
                     <Text
                       style={[
                         styles.reasonText,
@@ -127,27 +141,29 @@ export function DriverIncidentModal({
                   </Pressable>
                 );
               })}
-            </View>
+            </VStack>
 
             <Text style={styles.sectionLabel}>CHI TIẾT BỔ SUNG</Text>
-            <TextInput
-              accessibilityLabel="Mô tả chi tiết sự cố"
-              multiline
-              numberOfLines={3}
-              onChangeText={setNote}
-              placeholder="Mô tả thêm tình trạng thực tế tại hiện trường..."
-              placeholderTextColor="#94A3B8"
-              style={styles.textInput}
-              testID="input-incident-note"
-              value={note}
-            />
+            <Textarea isInvalid={Boolean(errorMessage)} style={styles.textareaWrap}>
+              <Textarea.Input
+                accessibilityLabel="Mô tả chi tiết sự cố"
+                multiline
+                numberOfLines={3}
+                onChangeText={setNote}
+                placeholder="Mô tả thêm tình trạng thực tế tại hiện trường..."
+                placeholderTextColor="#94A3B8"
+                style={styles.textInput}
+                testID="input-incident-note"
+                value={note}
+              />
+            </Textarea>
 
             {errorMessage ? (
               <Text style={styles.errorText}>{errorMessage}</Text>
             ) : null}
           </ScrollView>
 
-          <View style={styles.buttonRow}>
+          <HStack style={styles.buttonRow}>
             <Pressable
               accessibilityLabel="Đóng và hủy báo cáo sự cố"
               accessibilityRole="button"
@@ -172,9 +188,9 @@ export function DriverIncidentModal({
                 {isSubmitting ? 'Đang gửi...' : 'Gửi báo cáo sự cố'}
               </Text>
             </Pressable>
-          </View>
-        </View>
-      </View>
+          </HStack>
+        </Card>
+      </Box>
     </DriverModalSurface>
   );
 }
@@ -285,14 +301,15 @@ const styles = StyleSheet.create({
     color: '#991B1B',
     fontWeight: '600',
   },
-  textInput: {
-    borderWidth: 1,
+  textareaWrap: {
+    backgroundColor: colors.neutral.canvas,
     borderColor: colors.neutral.border,
     borderRadius: 12,
+  },
+  textInput: {
     padding: 12,
     fontSize: 14,
     color: colors.neutral.text,
-    backgroundColor: colors.neutral.canvas,
     minHeight: 80,
     textAlignVertical: 'top',
   },

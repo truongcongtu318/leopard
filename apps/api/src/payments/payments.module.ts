@@ -52,6 +52,6 @@ function buildPayOsProvider(source: NodeJS.ProcessEnv): PayOsPaymentProvider {
       inject: [PayOsPaymentProvider],
     },
   ],
-  exports: [PaymentsService, PaymentsRepository],
+  exports: [PaymentsService, PaymentsRepository, PaymentProvider],
 })
 export class PaymentsModule {}

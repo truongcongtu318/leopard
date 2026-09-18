@@ -3,6 +3,11 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconSecurityShield,
   IconSpeedTruck,
   IconStar,
@@ -10,6 +15,7 @@ import {
   ScreenScaffold,
   ScreenState,
   StarRating,
+  VStack,
   colors,
   customerPalette,
   driverPrimitives,
@@ -72,108 +78,108 @@ export function DriverPerformanceScreen({
         ) : (
           <>
             {/* ── 1. Executive Rating Bento Card (Midnight Navy Brand Hero) ── */}
-            <View style={styles.ratingHeroCard}>
-              <View style={styles.ratingScoreRow}>
+            <Card style={styles.ratingHeroCard}>
+              <HStack style={styles.ratingScoreRow}>
                 <Text style={styles.ratingBigNumber}>{ratingAvg.toFixed(2)}</Text>
                 <IconStar color={leopardPalette.accentYellow} filled size={28} />
-              </View>
+              </HStack>
 
-              <View style={styles.starsWrapper}>
+              <Box style={styles.starsWrapper}>
                 <StarRating
                   color={leopardPalette.accentYellow}
                   emptyColor="rgba(255, 255, 255, 0.25)"
                   rating={ratingAvg}
                   size={18}
                 />
-              </View>
+              </Box>
 
               <Text style={styles.ratingCountText}>{ratingCount} đánh giá</Text>
-            </View>
+            </Card>
 
             {/* ── 2. Operational Core KPIs Section (Apple Inset Grouped) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionLabel}>Chỉ số vận hành cốt lõi</Text>
 
-              <View style={styles.kpiCard}>
+              <Card style={styles.kpiCard}>
                 {/* Acceptance Rate Row */}
-                <View style={styles.metricRow}>
-                  <View style={styles.metricIconWrap}>
+                <HStack style={styles.metricRow}>
+                  <Box style={styles.metricIconWrap}>
                     <IconSpeedTruck color={driverPrimitives.colors.gray500} size={20} />
-                  </View>
-                  <View style={styles.metricInfoCol}>
+                  </Box>
+                  <VStack style={styles.metricInfoCol}>
                     <Text style={styles.metricTitle}>Tỷ lệ nhận cuốc</Text>
                     <Text style={styles.metricSub}>Tỷ lệ chấp nhận chuyến điều phối</Text>
-                  </View>
+                  </VStack>
                   <Text style={styles.metricValueText}>
                     {acceptancePct !== null && acceptancePct !== undefined
                       ? formatPct(acceptancePct)
                       : '—'}
                   </Text>
-                </View>
+                </HStack>
 
-                <View style={styles.metricDivider} />
+                <Divider style={styles.metricDivider} />
 
                 {/* Cancellation Rate Row */}
-                <View style={styles.metricRow}>
-                  <View style={styles.metricIconWrap}>
+                <HStack style={styles.metricRow}>
+                  <Box style={styles.metricIconWrap}>
                     <IconSecurityShield color={driverPrimitives.colors.gray500} size={20} />
-                  </View>
-                  <View style={styles.metricInfoCol}>
+                  </Box>
+                  <VStack style={styles.metricInfoCol}>
                     <Text style={styles.metricTitle}>Tỷ lệ hủy cuốc</Text>
                     <Text style={styles.metricSub}>Chủ động huỷ chuyến sau khi nhận</Text>
-                  </View>
+                  </VStack>
                   <Text style={styles.metricValueText}>
                     {cancellationPct !== null && cancellationPct !== undefined
                       ? formatPct(cancellationPct)
                       : '—'}
                   </Text>
-                </View>
-              </View>
-            </View>
+                </HStack>
+              </Card>
+            </VStack>
 
             {/* ── 3. Customer Reviews Feed (Apple Inset Grouped with Avatars) ── */}
-            <View style={styles.sectionBlock}>
+            <VStack style={styles.sectionBlock}>
               <Text style={styles.sectionLabel}>
                 Đánh giá từ khách hàng ({recentReviews.length})
               </Text>
 
               {recentReviews.length === 0 ? (
-                <View style={styles.emptyCard}>
+                <Card style={styles.emptyCard}>
                   <Text style={styles.emptyText}>Chưa có đánh giá nào từ khách hàng</Text>
-                </View>
+                </Card>
               ) : (
-                <View style={styles.reviewsGroupCard}>
+                <Card style={styles.reviewsGroupCard}>
                   {recentReviews.map((item, index) => (
                     <React.Fragment key={item.id}>
-                      <View style={styles.reviewItemRow}>
+                      <HStack style={styles.reviewItemRow}>
                         {/* Left: Avatar */}
-                        <View style={styles.reviewAvatarSquircle}>
+                        <Box style={styles.reviewAvatarSquircle}>
                           <IconUser color={driverPrimitives.colors.gray500} size={18} />
-                        </View>
+                        </Box>
 
                         {/* Right: Stars + Date + Comment */}
-                        <View style={styles.reviewContentCol}>
-                          <View style={styles.reviewHeaderRow}>
+                        <VStack style={styles.reviewContentCol}>
+                          <HStack style={styles.reviewHeaderRow}>
                             <StarRating rating={item.rating} size={13} />
                             <Text style={styles.reviewDateText}>
                               {formatReviewDate(item.createdAt)}
                             </Text>
-                          </View>
+                          </HStack>
 
                           {item.comment ? (
                             <Text style={styles.reviewCommentText}>{item.comment}</Text>
                           ) : null}
-                        </View>
-                      </View>
+                        </VStack>
+                      </HStack>
 
                       {index < recentReviews.length - 1 ? (
-                        <View style={styles.reviewSeparator} />
+                        <Divider style={styles.reviewSeparator} />
                       ) : null}
                     </React.Fragment>
                   ))}
-                </View>
+                </Card>
               )}
-            </View>
+            </VStack>
           </>
         )}
       </ScrollView>

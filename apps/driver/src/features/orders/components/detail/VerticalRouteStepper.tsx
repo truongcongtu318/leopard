@@ -7,7 +7,14 @@ import {
   View,
 } from 'react-native';
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconCheck,
+  Spinner,
+  VStack,
   colors,
   driverPrimitives,
   iosContinuousCurve,
@@ -79,52 +86,52 @@ export function VerticalRouteStepper({
   const activeStopIndex = sortedStops.findIndex((s) => s.progress !== 'COMPLETED');
 
   return (
-    <View style={styles.verticalRouteCard} testID={testID}>
+    <Card style={styles.verticalRouteCard} testID={testID}>
       {/* Node A (Điểm lấy hàng) */}
       {isPassedPickup ? (
-        <View style={styles.routeNodeACollapsed} testID="node-origin-completed">
-          <View style={styles.checkBadge}>
+        <HStack style={styles.routeNodeACollapsed} testID="node-origin-completed">
+          <Box style={styles.checkBadge}>
             <IconCheck color="#15803D" size={13} strokeWidth={2.5} />
-          </View>
-          <View style={styles.routeTextCol}>
+          </Box>
+          <VStack style={styles.routeTextCol}>
             <Text style={styles.routeNodeSubA}>Đã lấy hàng tại</Text>
             <Text numberOfLines={2} style={styles.routeNodeTitleA}>
               {resolvedOrigin.label}
             </Text>
-          </View>
-        </View>
+          </VStack>
+        </HStack>
       ) : (
-        <View style={styles.routeNodeAExpanded} testID="node-origin-active">
-          <View style={styles.badgeA}>
+        <HStack style={styles.routeNodeAExpanded} testID="node-origin-active">
+          <Box style={styles.badgeA}>
             <Text style={styles.badgeTextA}>A</Text>
-          </View>
-          <View style={styles.routeTextCol}>
-            <View style={styles.rowBetween}>
+          </Box>
+          <VStack style={styles.routeTextCol}>
+            <HStack style={styles.rowBetween}>
               <Text style={styles.routeNodeSubA}>Điểm lấy hàng (A)</Text>
               {isAtPickup ? (
-                <View style={styles.activeLegTag}>
-                  <Text style={styles.activeLegTagText}>Chặng hiện tại</Text>
-                </View>
+                <Badge action="success" size="sm" style={styles.activeLegTag}>
+                  <Badge.Text style={styles.activeLegTagText}>Chặng hiện tại</Badge.Text>
+                </Badge>
               ) : null}
-            </View>
+            </HStack>
             <Text style={styles.routeNodeTitleAExpanded}>
               {resolvedOrigin.label}
             </Text>
-          </View>
-        </View>
+          </VStack>
+        </HStack>
       )}
 
       {/* Vertical Spine from Origin to First Stop or Destination */}
-      <View style={styles.routeSpineRow}>
-        <View style={styles.spineDashedLine} />
+      <HStack style={styles.routeSpineRow}>
+        <Box style={styles.spineDashedLine} />
         {distanceLabel && stops.length === 0 ? (
-          <View style={styles.spineDistancePill}>
+          <Box style={styles.spineDistancePill}>
             <Text style={styles.spineDistanceText}>
               Lộ trình · {distanceLabel}
             </Text>
-          </View>
+          </Box>
         ) : null}
-      </View>
+      </HStack>
 
       {/* Intermediate Stops */}
       {sortedStops.map((stop, index) => {
@@ -137,67 +144,67 @@ export function VerticalRouteStepper({
 
         return (
           <React.Fragment key={stop.id || stop.stopId || `stop-${index}`}>
-            <View
+            <HStack
               style={styles.stopNodeContainer}
               testID={`stop-node-${stop.sequence}`}
             >
               {/* Stop Indicator Badge */}
               {stop.progress === 'COMPLETED' ? (
-                <View
+                <Box
                   style={styles.stopCheckBadge}
                   testID={`stop-badge-completed-${stop.sequence}`}
                 >
                   <IconCheck color="#15803D" size={12} strokeWidth={2.5} />
-                </View>
+                </Box>
               ) : stop.progress === 'IN_SERVICE' ? (
-                <View
+                <Box
                   style={styles.stopInServiceBadge}
                   testID={`stop-badge-inservice-${stop.sequence}`}
                 >
                   <Text style={styles.stopBadgeText}>{stop.sequence}</Text>
-                </View>
+                </Box>
               ) : stop.progress === 'ARRIVED' ? (
-                <View
+                <Box
                   style={styles.stopArrivedBadge}
                   testID={`stop-badge-arrived-${stop.sequence}`}
                 >
                   <Text style={styles.stopBadgeText}>{stop.sequence}</Text>
-                </View>
+                </Box>
               ) : (
-                <View
+                <Box
                   style={styles.stopPendingBadge}
                   testID={`stop-badge-pending-${stop.sequence}`}
                 >
                   <Text style={styles.stopPendingBadgeText}>
                     {stop.sequence}
                   </Text>
-                </View>
+                </Box>
               )}
 
               {/* Stop Details */}
-              <View style={styles.routeTextCol}>
-                <View style={styles.rowBetween}>
+              <VStack style={styles.routeTextCol}>
+                <HStack style={styles.rowBetween}>
                   <Text style={styles.stopSubTitle}>
                     Điểm dừng {stop.sequence}
                   </Text>
                   {stop.progress === 'COMPLETED' ? (
-                    <View style={styles.completedTag}>
-                      <Text style={styles.completedTagText}>Đã xong</Text>
-                    </View>
+                    <Badge action="success" size="sm" style={styles.completedTag}>
+                      <Badge.Text style={styles.completedTagText}>Đã xong</Badge.Text>
+                    </Badge>
                   ) : stop.progress === 'IN_SERVICE' ? (
-                    <View style={styles.inServiceTag}>
-                      <Text style={styles.inServiceTagText}>Đang xử lý</Text>
-                    </View>
+                    <Badge action="warning" size="sm" style={styles.inServiceTag}>
+                      <Badge.Text style={styles.inServiceTagText}>Đang xử lý</Badge.Text>
+                    </Badge>
                   ) : stop.progress === 'ARRIVED' ? (
-                    <View style={styles.arrivedTag}>
-                      <Text style={styles.arrivedTagText}>Đã đến</Text>
-                    </View>
+                    <Badge action="info" size="sm" style={styles.arrivedTag}>
+                      <Badge.Text style={styles.arrivedTagText}>Đã đến</Badge.Text>
+                    </Badge>
                   ) : isActionable ? (
-                    <View style={styles.activeLegTag}>
-                      <Text style={styles.activeLegTagText}>Điểm tiếp theo</Text>
-                    </View>
+                    <Badge action="success" size="sm" style={styles.activeLegTag}>
+                      <Badge.Text style={styles.activeLegTagText}>Điểm tiếp theo</Badge.Text>
+                    </Badge>
                   ) : null}
-                </View>
+                </HStack>
 
                 <Text style={styles.stopTitle}>
                   {stop.label || stop.address}
@@ -205,7 +212,7 @@ export function VerticalRouteStepper({
 
                 {/* Progress Action Button (only on actionable stop with next step) */}
                 {isActionable && nextAction && onRecordProgress ? (
-                  <View style={styles.stopActionWrap}>
+                  <Box style={styles.stopActionWrap}>
                     <Pressable
                       accessibilityHint={`Ghi nhận tiến trình ${nextAction.label} tại điểm dừng ${stop.sequence}`}
                       accessibilityLabel={`${nextAction.label} tại ${stop.label || stop.address}`}
@@ -226,56 +233,56 @@ export function VerticalRouteStepper({
                       testID={`btn-stop-progress-${stop.sequence}`}
                     >
                       {isBusy ? (
-                        <ActivityIndicator color={colors.neutral.surface} size="small" />
+                        <Spinner color={colors.neutral.surface} size="small" />
                       ) : (
                         <Text style={styles.stopActionBtnText}>
                           {nextAction.label}
                         </Text>
                       )}
                     </Pressable>
-                  </View>
+                  </Box>
                 ) : null}
-              </View>
-            </View>
+              </VStack>
+            </HStack>
 
             {/* Connecting spine line to next stop or destination */}
-            <View style={styles.routeSpineRow}>
-              <View style={styles.spineDashedLine} />
-            </View>
+            <HStack style={styles.routeSpineRow}>
+              <Box style={styles.spineDashedLine} />
+            </HStack>
           </React.Fragment>
         );
       })}
 
       {/* Node B (Điểm giao hàng) */}
-      <View style={styles.routeNodeB} testID="node-destination">
+      <HStack style={styles.routeNodeB} testID="node-destination">
         {status === 'DELIVERED' ? (
-          <View style={styles.checkBadge}>
+          <Box style={styles.checkBadge}>
             <IconCheck color="#15803D" size={13} strokeWidth={2.5} />
-          </View>
+          </Box>
         ) : (
-          <View style={styles.badgeB}>
+          <Box style={styles.badgeB}>
             <Text style={styles.badgeTextB}>B</Text>
-          </View>
+          </Box>
         )}
-        <View style={styles.routeTextCol}>
-          <View style={styles.rowBetween}>
+        <VStack style={styles.routeTextCol}>
+          <HStack style={styles.rowBetween}>
             <Text style={styles.routeNodeSubB}>
               {status === 'DELIVERED'
                 ? 'Đã giao hàng tại'
                 : 'Điểm giao hàng (B)'}
             </Text>
             {activeStopIndex === -1 && status === 'IN_TRANSIT' ? (
-              <View style={styles.activeLegTag}>
-                <Text style={styles.activeLegTagText}>Chặng hiện tại</Text>
-              </View>
+              <Badge action="success" size="sm" style={styles.activeLegTag}>
+                <Badge.Text style={styles.activeLegTagText}>Chặng hiện tại</Badge.Text>
+              </Badge>
             ) : null}
-          </View>
+          </HStack>
           <Text style={styles.routeNodeTitleB}>
             {resolvedDestination.label}
           </Text>
-        </View>
-      </View>
-    </View>
+        </VStack>
+      </HStack>
+    </Card>
   );
 }
 

@@ -2,6 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Card,
   IconCheck,
   IconVehicle3Wheel,
   IconVehicleHeavyTruck,
@@ -9,6 +11,7 @@ import {
   IconVehicleVan,
   colors,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   radius,
   spacing,
@@ -31,45 +34,73 @@ export function BookingVehicleSection({
   onViewDimensions,
   distanceKm,
 }: BookingVehicleSectionProps) {
+  const handleSelect = (id: VehicleTypeId) => {
+    haptic.selection();
+    onSelectVehicle(id);
+  };
+
+  const getBadgeAction = (id: VehicleTypeId): 'info' | 'warning' | 'muted' | 'success' => {
+    if (id === 'TRUCK_125T') return 'warning';
+    if (id === 'BIKE_3W') return 'info';
+    if (id === 'VAN_500KG') return 'muted';
+    return 'warning';
+  };
+
   const renderVehicleIcon = (id: VehicleTypeId, isSelected: boolean) => {
     const iconColor = isSelected ? customerPalette.primary : '#475569';
     switch (id) {
       case 'BIKE_3W':
-        return <IconVehicle3Wheel color={iconColor} size={28} />;
+        return <IconVehicle3Wheel color={iconColor} size={26} />;
       case 'VAN_500KG':
-        return <IconVehicleVan color={iconColor} size={28} />;
+        return <IconVehicleVan color={iconColor} size={26} />;
       case 'TRUCK_125T':
-        return <IconVehicleLightTruck color={iconColor} size={28} />;
+        return <IconVehicleLightTruck color={iconColor} size={26} />;
       case 'TRUCK_25T':
-        return <IconVehicleHeavyTruck color={iconColor} size={28} />;
+        return <IconVehicleHeavyTruck color={iconColor} size={26} />;
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>LOẠI XE (SẮP XẾP THEO TẢI TRỌNG)</Text>
+      <Text style={styles.sectionHeader}>Loại xe (sắp xếp theo tải trọng)</Text>
 
-      <View style={styles.insetGroupedCard}>
-        {VEHICLE_ORDER.map((id, index) => {
+      <View style={styles.vehicleListContainer}>
+        {VEHICLE_ORDER.map((id) => {
           const rate = VEHICLE_RATES[id];
           const isSelected = selectedVehicleId === id;
-          const fare = distanceKm ? getVehicleFare(id, distanceKm) : rate.baseFareVnd;
+          // No fare without a real routed distance. Falling back to the base
+          // fare quoted a price the trip had never been measured for.
+          const fare =
+            typeof distanceKm === 'number' && distanceKm > 0
+              ? getVehicleFare(id, distanceKm)
+              : null;
 
           return (
-            <React.Fragment key={id}>
-              {index > 0 && <View style={styles.separator} />}
+            <Card
+              key={id}
+              size="sm"
+              style={[
+                styles.vehicleCard,
+                isSelected ? styles.vehicleCardSelected : styles.vehicleCardUnselected,
+              ]}
+              variant={isSelected ? 'elevated' : 'outline'}
+            >
               <Pressable
+                accessibilityLabel={`${rate.name}, ${rate.tag}, thùng ${rate.dimensions}, tải trọng ${rate.capacityKg.toLocaleString('vi-VN')} kg${fare !== null ? `, cước ${fare.toLocaleString('vi-VN')} đồng` : ', đang tính cước'}${isSelected ? ', đã chọn' : ''}`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
-                onPress={() => onSelectVehicle(id)}
+                onPress={() => handleSelect(id)}
                 style={({ pressed }) => [
                   styles.vehicleRow,
-                  isSelected && styles.vehicleRowSelected,
                   pressed && styles.rowPressed,
                 ]}
               >
                 {/* Vehicle Silhouette Box */}
-                <View style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}>
+                <View
+                  accessibilityElementsHidden={true}
+                  importantForAccessibility="no"
+                  style={[styles.vehicleIconBox, isSelected && styles.vehicleIconBoxSelected]}
+                >
                   {renderVehicleIcon(id, isSelected)}
                 </View>
 
@@ -79,35 +110,45 @@ export function BookingVehicleSection({
                     <Text style={[styles.vehicleName, isSelected && styles.vehicleNameSelected]}>
                       {rate.name}
                     </Text>
-                    <View style={[styles.tagBadge, isSelected && styles.tagBadgeSelected]}>
-                      <Text style={[styles.tagBadgeText, isSelected && styles.tagBadgeTextSelected]}>
+                    <Badge action={getBadgeAction(id)} size="sm" style={styles.tagBadge}>
+                      <Badge.Text style={styles.tagBadgeText}>
                         {rate.tag}
-                      </Text>
-                    </View>
+                      </Badge.Text>
+                    </Badge>
                   </View>
                   <Text numberOfLines={1} style={styles.specsText}>
                     Thùng {rate.dimensions} · {rate.capacityKg.toLocaleString('vi-VN')} kg
                   </Text>
-                  <Text style={styles.etaText}>Tài xế đến trong ~{rate.etaMinutes} phút</Text>
                 </View>
 
-                {/* Giá cước & Checkmark thẳng hàng */}
+                {/* Giá cước & Checkmark */}
                 <View style={styles.rightCol}>
-                  <Text style={[styles.priceText, isSelected && styles.priceTextSelected]}>
-                    {fare.toLocaleString('vi-VN')} đ
+                  <Text selectable style={[styles.priceText, isSelected && styles.priceTextSelected]}>
+                    {fare !== null ? `${fare.toLocaleString('vi-VN')} đ` : 'Đang tính…'}
                   </Text>
-                  <View style={styles.checkSlot}>
-                    {isSelected ? <IconCheck color={customerPalette.primary} size={18} /> : null}
+                  <View
+                    accessibilityElementsHidden={true}
+                    importantForAccessibility="no"
+                    style={styles.checkSlot}
+                  >
+                    {isSelected ? (
+                      <View style={styles.checkCircle}>
+                        <IconCheck color="#FFFFFF" size={12} strokeWidth={2.5} />
+                      </View>
+                    ) : (
+                      <View style={styles.checkCircleEmpty} />
+                    )}
                   </View>
                 </View>
               </Pressable>
-            </React.Fragment>
+            </Card>
           );
         })}
       </View>
 
       {/* Footer link */}
       <Pressable
+        accessibilityLabel="Xem chi tiết kích thước thùng xe"
         accessibilityRole="button"
         hitSlop={8}
         onPress={onViewDimensions}
@@ -121,128 +162,143 @@ export function BookingVehicleSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.neutral.mutedText,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xs,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
   },
-  insetGroupedCard: {
+  vehicleListContainer: {
     marginHorizontal: spacing.md,
-    backgroundColor: customerPalette.surfaceWhite,
+    gap: spacing.xs,
+  },
+  vehicleCard: {
     borderRadius: radius.cardLg,
-    overflow: 'hidden',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
+    overflow: 'hidden',
+    padding: 0,
+  },
+  vehicleCardSelected: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: customerPalette.primary,
+    boxShadow: '0 4px 14px rgba(11, 37, 69, 0.1)',
+  },
+  vehicleCardUnselected: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
   },
   vehicleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     minHeight: 76,
-    backgroundColor: customerPalette.surfaceWhite,
-  },
-  vehicleRowSelected: {
-    backgroundColor: customerPalette.primaryBg,
   },
   rowPressed: {
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
   vehicleIconBox: {
-    width: 52,
-    height: 48,
-    borderRadius: radius.cardSm,
-    backgroundColor: colors.neutral.surfaceMuted,
+    width: 50,
+    height: 50,
+    borderRadius: radius.card,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
     ...iosContinuousCurve,
   },
   vehicleIconBoxSelected: {
-    backgroundColor: customerPalette.primaryBg,
+    backgroundColor: '#EEF4FF',
+    borderWidth: 1,
+    borderColor: 'rgba(11, 37, 69, 0.15)',
   },
   vehicleInfo: {
     flex: 1,
     justifyContent: 'center',
+    paddingRight: spacing.xs,
   },
   nameTagRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: spacing.xs,
-    marginBottom: spacing.hairline,
+    marginBottom: 2,
   },
   vehicleName: {
     ...typeScale.headline,
-    color: colors.neutral.text,
+    fontWeight: '600',
+    color: customerPalette.textSlateDark,
   },
   vehicleNameSelected: {
     color: customerPalette.primary,
+    fontWeight: '700',
   },
   tagBadge: {
-    backgroundColor: colors.neutral.surfaceMuted,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
-    borderRadius: radius.cardSm,
-  },
-  tagBadgeSelected: {
-    backgroundColor: customerPalette.primaryBg,
+    paddingVertical: 1,
   },
   tagBadgeText: {
     ...typeScale.caption2,
     fontWeight: '600',
-    color: customerPalette.textMutedSlate,
-  },
-  tagBadgeTextSelected: {
-    color: customerPalette.primary,
   },
   specsText: {
     ...typeScale.footnote,
-    color: customerPalette.textMutedSlate,
-  },
-  etaText: {
-    ...typeScale.caption1,
-    color: customerPalette.textSubtle,
-    marginTop: spacing.hairline,
+    color: '#64748B',
   },
   rightCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
     gap: spacing.xs,
-    marginLeft: spacing.xs,
+    paddingLeft: spacing.xxs,
   },
   priceText: {
-    ...typeScale.subheadline,
-    fontWeight: '600',
-    color: colors.neutral.text,
+    ...typeScale.headline,
+    fontWeight: '700',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
   },
   priceTextSelected: {
     color: customerPalette.primary,
-    fontWeight: '700',
   },
   checkSlot: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  separator: {
-    height: 0.5,
-    backgroundColor: colors.neutral.border,
-    marginLeft: 80,
+  checkCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkCircleEmpty: {
+    width: 20,
+    height: 20,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
   },
   footerLinkWrap: {
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
+    alignItems: 'center',
   },
   footerLinkText: {
-    ...typeScale.subheadline,
-    fontWeight: '500',
+    ...typeScale.footnote,
+    fontWeight: '600',
     color: customerPalette.primary,
   },
 });

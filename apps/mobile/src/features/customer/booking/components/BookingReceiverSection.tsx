@@ -5,6 +5,7 @@ import {
   IconUser,
   colors,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   radius,
   spacing,
@@ -36,6 +37,11 @@ export function BookingReceiverSection({
     onChangePhone(formatted.display);
   };
 
+  const handleOpenContacts = () => {
+    haptic.light();
+    if (onOpenContacts) onOpenContacts();
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>Người nhận</Text>
@@ -49,18 +55,23 @@ export function BookingReceiverSection({
               accessibilityLabel="Tên người nhận"
               onChangeText={onChangeName}
               placeholder="Họ và tên người nhận"
-              placeholderTextColor="#C7C7CC"
+              placeholderTextColor={customerPalette.offlineGray}
               style={styles.textInput}
               value={receiverName}
             />
             <Pressable
+              accessibilityHint="Mở danh bạ điện thoại để chọn người nhận"
               accessibilityLabel="Mở danh bạ"
               accessibilityRole="button"
               hitSlop={8}
-              onPress={onOpenContacts}
-              style={styles.contactBtn}
+              onPress={handleOpenContacts}
+              style={({ pressed }) => [styles.contactBtn, pressed && styles.btnPressed]}
             >
-              <View style={styles.contactIconCircle}>
+              <View
+                accessibilityElementsHidden={true}
+                importantForAccessibility="no"
+                style={styles.contactIconCircle}
+              >
                 <IconUser color={customerPalette.primary} size={18} />
               </View>
             </Pressable>
@@ -82,7 +93,7 @@ export function BookingReceiverSection({
               keyboardType="number-pad"
               onChangeText={handlePhoneChange}
               placeholder="90 000 0001"
-              placeholderTextColor="#C7C7CC"
+              placeholderTextColor={customerPalette.offlineGray}
               style={styles.phoneTextInput}
               value={receiverPhone}
             />
@@ -109,6 +120,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
@@ -118,7 +131,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   fieldLabel: {
-    ...typeScale.footnote,
+    ...typeScale.caption1,
     fontWeight: '500',
     color: customerPalette.textSubtle,
     marginBottom: spacing.xxs,
@@ -140,6 +153,10 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  btnPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.96 }],
   },
   contactIconCircle: {
     width: 32,
@@ -185,6 +202,6 @@ const styles = StyleSheet.create({
   errorText: {
     ...typeScale.caption1,
     color: colors.danger.text,
-    marginTop: 4,
+    marginTop: spacing.xxs,
   },
 });

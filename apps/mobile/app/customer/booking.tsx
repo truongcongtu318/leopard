@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BookingScreen } from '../../src/features/customer/booking/BookingScreen';
 import { addressStore } from '../../src/features/customer/addresses/address-store';
+import type { VehicleTypeId } from '../../src/features/customer/booking/booking-pricing';
 
 export default function CustomerBookingPage() {
   const router = useRouter();
@@ -12,51 +13,64 @@ export default function CustomerBookingPage() {
     dropoff?: string;
     dropoffLat?: string;
     dropoffLng?: string;
-    distanceKm?: string;
     focus?: 'pickup' | 'dropoff';
+    vehicleId?: VehicleTypeId;
   }>();
 
   const defaultAddr = addressStore.getDefaultAddress();
-  const pickup = params.pickup || defaultAddr?.address || 'Kho Tổng Đại Phát - 120 Song Hành, Q.12';
-  const dropoff = params.dropoff || 'Công trình Jamona City - Đào Trí, P. Phú Thuận, Q.7';
-  const distanceKm = params.distanceKm ? parseFloat(params.distanceKm) : 12.5;
+  const defaultCoords =
+    typeof defaultAddr?.latitude === 'number' && typeof defaultAddr?.longitude === 'number'
+      ? { lat: defaultAddr.latitude, lng: defaultAddr.longitude }
+      : undefined;
+
+  // No fallback address: only use pickup/dropoff if explicitly passed in params.
+  // Never auto-populate defaultAddr so entering booking always starts blank.
+  const pickup = params.pickup || '';
+  const pickupCoords =
+    params.pickupLat && params.pickupLng
+      ? { lat: parseFloat(params.pickupLat), lng: parseFloat(params.pickupLng) }
+      : undefined;
+
+  const dropoff = params.dropoff || '';
+  const dropoffCoords =
+    params.dropoffLat && params.dropoffLng
+      ? { lat: parseFloat(params.dropoffLat), lng: parseFloat(params.dropoffLng) }
+      : undefined;
 
   return (
     <BookingScreen
-      distanceKm={distanceKm}
       initialDropoff={dropoff}
-      initialDropoffLat={params.dropoffLat ? parseFloat(params.dropoffLat) : 10.7325}
-      initialDropoffLng={params.dropoffLng ? parseFloat(params.dropoffLng) : 106.7351}
-      initialPickup={pickup}
-      initialPickupLat={params.pickupLat ? parseFloat(params.pickupLat) : 10.8421}
-      initialPickupLng={params.pickupLng ? parseFloat(params.pickupLng) : 106.6192}
+      {...(dropoffCoords ? { initialDropoffLat: dropoffCoords.lat, initialDropoffLng: dropoffCoords.lng } : {})}
       initialFocusTarget={params.focus}
-      onBack={() => router.back()}
-      onOpenSearchAddress={() => router.push('/customer/search-address')}
-      onOrderCreated={(orderId, totalFare, paymentMethod) => {
+      initialPickup={pickup}
+      {...(pickupCoords ? { initialPickupLat: pickupCoords.lat, initialPickupLng: pickupCoords.lng } : {})}
+      initialVehicleId={params.vehicleId}
+      onBack={() => {
+        if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/customer/home');
+        }
+      }}
+      onOrderCreated={(orderId, totalFare, paymentMethod, vehicleType, vehicleName) => {
+        const shared = {
+          amount: String(totalFare),
+          pickup,
+          dropoff,
+          origin: pickup,
+          destination: dropoff,
+          ...(vehicleType ? { vehicleType } : {}),
+          ...(vehicleName ? { vehicleName } : {}),
+        };
         if (paymentMethod === 'CASH') {
           router.push({
             pathname: `/customer/orders/searching/${orderId}`,
-            params: {
-              amount: String(totalFare),
-              pickup,
-              dropoff,
-              origin: pickup,
-              destination: dropoff,
-              paymentMethod: 'CASH',
-            },
+            params: { ...shared, paymentMethod: 'CASH' },
           });
         } else {
           router.push({
             pathname: `/customer/orders/checkout/${orderId}`,
-            params: {
-              amount: String(totalFare),
-              pickup,
-              dropoff,
-              origin: pickup,
-              destination: dropoff,
-              paymentMethod: 'VIETQR',
-            },
+            params: { ...shared, paymentMethod: 'VIETQR' },
           });
         }
       }}

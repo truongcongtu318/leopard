@@ -52,6 +52,7 @@ enum StopType {
 
 enum MediaType {
   CARGO
+  PICKUP_PROOF
   DELIVERY_PROOF
 }
 
@@ -211,6 +212,7 @@ model User {
   driverApplications             DriverApplication[]
   verifiedVehicleRoutingProfiles VehicleRoutingProfile[] @relation("VehicleProfileVerifier")
   stopProgressActions            StopProgressEvent[]     @relation("StopProgressActor")
+  driverDeposits                 DriverDeposit[]         @relation("DriverDeposits")
 }
 
 model RefreshSession {
@@ -355,6 +357,7 @@ model Order {
   priceVnd            Int?
   etaSeconds          Int?
   proofMediaId        String?              @db.Uuid
+  pickupProofMediaId  String?              @db.Uuid
   incidentReason      String?
   incidentNote        String?
   incidentReportedAt  DateTime?            @db.Timestamptz(3)
@@ -594,6 +597,30 @@ model WithdrawalRequest {
 
   @@index([driverId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
+}
+
+enum DepositStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+model DriverDeposit {
+  id              String        @id @default(uuid()) @db.Uuid
+  driverId        String        @db.Uuid
+  amountVnd       Int
+  status          DepositStatus @default(PENDING)
+  payosOrderCode  BigInt        @unique
+  qrPayload       String?
+  clientRequestId String?
+  completedAt     DateTime?     @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime      @default(now()) @updatedAt @db.Timestamptz(3)
+
+  driver          User          @relation("DriverDeposits", fields: [driverId], references: [id], onDelete: Restrict)
+
+  @@index([driverId, createdAt(sort: Desc)])
 }
 
 model Notification {

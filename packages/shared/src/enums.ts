@@ -12,7 +12,7 @@ export type DriverAvailability = (typeof DriverAvailability)[number];
 export const StopType = ['PICKUP', 'STOP', 'DROPOFF'] as const;
 export type StopType = (typeof StopType)[number];
 
-export const MediaType = ['CARGO', 'DELIVERY_PROOF'] as const;
+export const MediaType = ['CARGO', 'PICKUP_PROOF', 'DELIVERY_PROOF'] as const;
 export type MediaType = (typeof MediaType)[number];
 
 export const ProviderSource = ['VIETMAP', 'DEMO', 'PAYOS', 'VIETQR', 'LOCAL', 'S3'] as const;

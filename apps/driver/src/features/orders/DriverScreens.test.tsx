@@ -1,11 +1,50 @@
-import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+
+// The swipe action now opens the real device camera and stamps the driver's
+// real GPS position, so both native modules are stubbed.
+const mockLaunchCameraAsync = jest.fn<() => Promise<unknown>>();
+const mockRequestCameraPermissionsAsync = jest.fn<() => Promise<{ granted: boolean }>>();
+
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: () => mockRequestCameraPermissionsAsync(),
+  requestMediaLibraryPermissionsAsync: async () => ({ granted: true }),
+  launchCameraAsync: () => mockLaunchCameraAsync(),
+  launchImageLibraryAsync: async () => ({ canceled: true }),
+  CameraType: { back: 'back' },
+  MediaTypeOptions: { Images: 'Images' },
+}));
+
+jest.mock('expo-location', () => ({
+  Accuracy: { High: 6, Balanced: 3 },
+  requestForegroundPermissionsAsync: async () => ({ status: 'granted' }),
+  getCurrentPositionAsync: async () => ({
+    coords: { latitude: 10.7626, longitude: 106.6602 },
+  }),
+  watchPositionAsync: async () => ({ remove: () => {} }),
+}));
 
 import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';
 import { DriverOrdersScreen } from './DriverOrdersScreen';
 import { createDriverDetailFixture, createDriverListFixture } from './fixtures';
 
 describe('DriverOrdersScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequestCameraPermissionsAsync.mockResolvedValue({ granted: true });
+    mockLaunchCameraAsync.mockResolvedValue({
+      canceled: false,
+      assets: [
+        {
+          uri: 'file:///var/mobile/cargo-proof.jpg',
+          fileName: 'cargo-proof.jpg',
+          mimeType: 'image/jpeg',
+          fileSize: 180_000,
+        },
+      ],
+    });
+  });
+
   it('puts availability and the active trip before public requested summaries', async () => {
     const onOpenOrder = jest.fn();
     const screen = await render(
@@ -139,19 +178,136 @@ describe('DriverOrderDetailScreen', () => {
     await screen.unmount();
   });
 
-  it('makes delivery proof the only primary task until proof persists', async () => {
-    const onSelectProof = jest.fn();
+  it('swipes into the camera and only advances after the proof upload succeeds', async () => {
+    const onExecuteTask = jest.fn();
+    // Mirrors the runtime contract: a successful upload reports the command the
+    // server now expects, which is the delivery command, not the proof task.
+    const onSelectProof = jest.fn(async () => ({
+      ok: true,
+      nextCommandId: 'cmd-deliver-22222222-2222-4222-8222-222222222001',
+    }));
     const screen = await render(
       <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
         onSelectProof={onSelectProof}
         view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
       />,
     );
 
-    expect(screen.getByText('Cần ảnh xác nhận trước khi hoàn tất')).toBeTruthy();
+    // Missing proof -> the swipe action asks for the capture, and DELIVERED is
+    // not offered yet.
+    expect(screen.getByText('Vuốt và chụp ảnh xác nhận')).toBeTruthy();
     expect(screen.queryByText('Xác nhận đã giao')).toBeNull();
-    await fireEvent.press(screen.getByRole('button', { name: 'Thêm ảnh xác nhận giao hàng' }));
-    expect(onSelectProof).toHaveBeenCalledTimes(1);
+
+    // Swiping opens the camera directly — no intermediate picker, no modal.
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+
+    // The review sheet shows the real captured photo.
+    const sheet = await screen.findByTestId('proof-capture-sheet');
+    expect(sheet).toBeTruthy();
+    expect(screen.getByTestId('proof-capture-photo').props.source).toEqual({
+      uri: 'file:///var/mobile/cargo-proof.jpg',
+    });
+
+    // Confirming uploads, then advances exactly once.
+    expect(onSelectProof).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
+
+    await waitFor(() => expect(onSelectProof).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(onExecuteTask).toHaveBeenCalledWith(
+        'cmd-deliver-22222222-2222-4222-8222-222222222001',
+      ),
+    );
+    await screen.unmount();
+  });
+
+  it('does not advance the order when the proof upload reports failure', async () => {
+    // The delivery must not be recorded as complete when its evidence did not
+    // reach the server.
+    const onExecuteTask = jest.fn();
+    const onSelectProof = jest.fn(async () => false);
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        onSelectProof={onSelectProof}
+        view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
+      />,
+    );
+
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+    await screen.findByTestId('proof-capture-sheet');
+    await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
+
+    await waitFor(() => expect(onSelectProof).toHaveBeenCalledTimes(1));
+    expect(onExecuteTask).not.toHaveBeenCalled();
+    // The photo is kept so the driver can retry instead of losing evidence.
+    expect(screen.getByTestId('proof-capture-sheet')).toBeTruthy();
+    await screen.unmount();
+  });
+
+  it('keeps the order unchanged when the driver cancels the camera', async () => {
+    mockLaunchCameraAsync.mockResolvedValueOnce({ canceled: true });
+    const onExecuteTask = jest.fn();
+    const onSelectProof = jest.fn(async () => true);
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        onSelectProof={onSelectProof}
+        view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
+      />,
+    );
+
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+
+    // No capture -> no review sheet, no upload, no transition.
+    await waitFor(() => expect(screen.queryByTestId('proof-capture-sheet')).toBeNull());
+    expect(onSelectProof).not.toHaveBeenCalled();
+    expect(onExecuteTask).not.toHaveBeenCalled();
+    await screen.unmount();
+  });
+
+  it('lets the driver retake, reopening the camera from the review sheet', async () => {
+    const onExecuteTask = jest.fn();
+    const onSelectProof = jest.fn(async () => true);
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        onSelectProof={onSelectProof}
+        view={createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED')}
+      />,
+    );
+
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+    await screen.findByTestId('proof-capture-sheet');
+
+    mockLaunchCameraAsync.mockResolvedValueOnce({
+      canceled: false,
+      assets: [
+        {
+          uri: 'file:///var/mobile/retaken-proof.jpg',
+          fileName: 'retaken-proof.jpg',
+          mimeType: 'image/jpeg',
+          fileSize: 190_000,
+        },
+      ],
+    });
+    await fireEvent.press(screen.getByTestId('btn-retake-proof'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('proof-capture-photo').props.source).toEqual({
+        uri: 'file:///var/mobile/retaken-proof.jpg',
+      }),
+    );
+    expect(onExecuteTask).not.toHaveBeenCalled();
     await screen.unmount();
   });
 
@@ -164,7 +320,6 @@ describe('DriverOrderDetailScreen', () => {
       />,
     );
 
-    expect(screen.getByText('Ảnh xác nhận đã tải lên')).toBeTruthy();
     expect(screen.getByTestId('route-map-schematic')).toBeTruthy();
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },

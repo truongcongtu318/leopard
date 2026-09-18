@@ -1,7 +1,15 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, IconRadarPulse, spacing } from '@leopard/mobile-core';
+import {
+  Badge,
+  Box,
+  HStack,
+  IconRadarPulse,
+  spacing,
+  VStack,
+  colors,
+} from '@leopard/mobile-core';
 
 export type DriverOrderFiltersProps = Readonly<{
   /** How many compatible orders the radar is currently offering. */
@@ -34,21 +42,21 @@ export function DriverOrderFilters({
       : `Đang quét bán kính ${radiusKm} km`;
 
   return (
-    <View style={styles.sectionHeader} testID="driver-load-board-header">
-      <View style={styles.headerInfo}>
-        <View style={styles.titleRow}>
+    <HStack style={styles.sectionHeader} testID="driver-load-board-header">
+      <VStack style={styles.headerInfo}>
+        <HStack style={styles.titleRow}>
           <Text accessibilityRole="header" style={styles.title}>
             Đơn có thể nhận
           </Text>
-          <View style={styles.radarPill}>
-            <View style={styles.radarDot} />
+          <Badge action="success" size="sm" style={styles.radarPill}>
+            <Box style={styles.radarDot} />
             <IconRadarPulse color="#16A34A" size={12} />
-          </View>
-        </View>
+          </Badge>
+        </HStack>
         <Text numberOfLines={1} style={styles.status}>
           {statusLine}
         </Text>
-      </View>
+      </VStack>
 
       {showDebugActions && onSimulateOffer && !hasActiveTrip ? (
         <Pressable
@@ -61,7 +69,7 @@ export function DriverOrderFilters({
           <Text style={styles.debugBtnText}>Thử nổ đơn</Text>
         </Pressable>
       ) : null}
-    </View>
+    </HStack>
   );
 }
 

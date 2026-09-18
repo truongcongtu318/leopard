@@ -3,17 +3,23 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
-  colors,
-  customerPalette,
-  spacing,
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
   FormField,
+  HStack,
   IconCamera,
   IconCheck,
   IconPlus,
   IconSecurityShield,
   ScreenScaffold,
+  VStack,
+  colors,
+  customerPalette,
   httpClient,
+  spacing,
   typeScale,
 } from '@leopard/mobile-core';
 
@@ -76,11 +82,11 @@ export function ReportIssueScreen(props?: ReportIssueScreenProps) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {submitted ? (
-          <View style={styles.successOuter}>
-            <View style={styles.successInner}>
-              <View style={styles.successIconBox}>
+          <Card style={styles.successOuter}>
+            <VStack style={styles.successInner}>
+              <Box style={styles.successIconBox}>
                 <IconSecurityShield color={colors.success.text} size={32} strokeWidth={2} />
-              </View>
+              </Box>
               <Text style={styles.successTitle}>Đã tiếp nhận sự cố</Text>
               <Text style={styles.ticketCode}>{ticketCode ?? '#TK-PENDING'}</Text>
               <Text style={styles.successMessage}>
@@ -90,14 +96,14 @@ export function ReportIssueScreen(props?: ReportIssueScreenProps) {
                 label="Quay lại chi tiết đơn hàng"
                 onPress={() => router.replace(orderId ? `/customer/orders/${orderId}` : '/customer/orders')}
               />
-            </View>
-          </View>
+            </VStack>
+          </Card>
         ) : (
           <>
             {/* ── Category Selector (Double-Bezel: 24px outer, 18px inner) ── */}
             <Text style={styles.sectionLabel}>CHỌN LOẠI SỰ CỐ</Text>
-            <View style={styles.categoryCardOuter}>
-              <View accessibilityRole="radiogroup" style={styles.categoryCardInner}>
+            <Card style={styles.categoryCardOuter}>
+              <VStack accessibilityRole="radiogroup" style={styles.categoryCardInner}>
                 {issueCategories.map((cat, index) => {
                   const isSelected = selectedCategory === cat.id;
                   const isLast = index === issueCategories.length - 1;
@@ -115,44 +121,46 @@ export function ReportIssueScreen(props?: ReportIssueScreenProps) {
                         pressed ? styles.pressed : null,
                       ]}
                     >
-                      <View style={[styles.radioCircle, isSelected ? styles.radioCircleSelected : null]}>
-                        {isSelected ? <View style={styles.radioDot} /> : null}
-                      </View>
+                      <Box style={[styles.radioCircle, isSelected ? styles.radioCircleSelected : null]}>
+                        {isSelected ? <Box style={styles.radioDot} /> : null}
+                      </Box>
                       <Text style={[styles.categoryText, isSelected ? styles.categoryTextSelected : null]}>
                         {cat.label}
                       </Text>
                     </Pressable>
                   );
                 })}
-              </View>
-            </View>
+              </VStack>
+            </Card>
 
             {/* ── Photo Upload Box (>= 44px touch target, Zero Emoji) ── */}
             <Text style={styles.sectionLabel}>HÌNH ẢNH MINH CHỨNG (NẾU CÓ)</Text>
-            <Pressable
-              accessibilityLabel="Đính kèm ảnh minh chứng sự cố"
-              accessibilityRole="button"
-              onPress={() => setHasPhoto(!hasPhoto)}
-              style={({ pressed }) => [
-                styles.photoUploadBox,
-                hasPhoto ? styles.photoUploadBoxAttached : null,
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <View style={styles.photoUploadIconBox}>
-                {hasPhoto ? (
-                  <IconCheck color={colors.success.text} size={24} strokeWidth={2.5} />
-                ) : (
-                  <IconCamera color={customerPalette.textSlateDark} size={24} strokeWidth={2} />
-                )}
-              </View>
-              <Text style={styles.photoUploadText}>
-                {hasPhoto
-                  ? 'Đã đính kèm ảnh minh chứng (Bấm để đổi ảnh)'
-                  : 'Tải lên hình ảnh kiện hàng bị sự cố'}
-              </Text>
-              <Text style={styles.photoUploadSub}>Hỗ trợ JPEG, PNG tối đa 10 MB</Text>
-            </Pressable>
+            <Card style={{ padding: 0 }}>
+              <Pressable
+                accessibilityLabel="Đính kèm ảnh minh chứng sự cố"
+                accessibilityRole="button"
+                onPress={() => setHasPhoto(!hasPhoto)}
+                style={({ pressed }) => [
+                  styles.photoUploadBox,
+                  hasPhoto ? styles.photoUploadBoxAttached : null,
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                <Box style={styles.photoUploadIconBox}>
+                  {hasPhoto ? (
+                    <IconCheck color={colors.success.text} size={24} strokeWidth={2.5} />
+                  ) : (
+                    <IconCamera color={customerPalette.textSlateDark} size={24} strokeWidth={2} />
+                  )}
+                </Box>
+                <Text style={styles.photoUploadText}>
+                  {hasPhoto
+                    ? 'Đã đính kèm ảnh minh chứng (Bấm để đổi ảnh)'
+                    : 'Tải lên hình ảnh kiện hàng bị sự cố'}
+                </Text>
+                <Text style={styles.photoUploadSub}>Hỗ trợ JPEG, PNG tối đa 10 MB</Text>
+              </Pressable>
+            </Card>
 
             {/* ── Detail Description Note ──────────────────────── */}
             <FormField

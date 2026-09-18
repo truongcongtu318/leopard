@@ -11,12 +11,16 @@ import type { UpdateBankAccountDto } from './dto/update-bank-account.dto.js';
 import type { UpdateAvailabilityDto } from './dto/update-availability.dto.js';
 import type { UpdateDriverLocationDto } from './dto/update-driver-location.dto.js';
 
+import { PaymentProvider } from '../payments/payment.provider.js';
+import type { TopupWalletDto } from './dto/topup-wallet.dto.js';
+
 @Injectable()
 export class DriversService {
   constructor(
     private readonly driversRepository: DriversRepository,
     private readonly ordersRepository: OrdersRepository,
     private readonly withdrawalsRepository: WithdrawalsRepository,
+    private readonly paymentProvider: PaymentProvider,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -197,6 +201,32 @@ export class DriversService {
     return {
       order: order ? mapOrderResponse(order) : null,
       availability: profile?.availability ?? 'OFFLINE',
+    };
+  }
+
+  async createTopup(actor: AuthenticatedActor, dto: TopupWalletDto) {
+    const idempotencyKey = dto.clientRequestId ?? `topup-${actor.userId}-${Date.now()}`;
+    const qr = await this.paymentProvider.createQr({
+      amountVnd: dto.amountVnd,
+      orderId: actor.userId,
+      idempotencyKey,
+    });
+
+    const deposit = await this.withdrawalsRepository.createDeposit({
+      driverId: actor.userId,
+      amountVnd: dto.amountVnd,
+      payosOrderCode: qr.payosOrderCode ?? BigInt(Date.now()),
+      qrPayload: qr.qrPayload,
+      clientRequestId: dto.clientRequestId,
+    });
+
+    return {
+      depositId: deposit.id,
+      amountVnd: deposit.amountVnd,
+      qrPayload: qr.qrPayload,
+      provider: qr.provider,
+      providerReference: qr.providerReference,
+      expiresAt: qr.expiresAt,
     };
   }
 }

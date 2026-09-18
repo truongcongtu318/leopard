@@ -10,6 +10,7 @@ export function DriverWalletRuntime() {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
+  const [isSubmittingTopup, setIsSubmittingTopup] = useState(false);
 
   const summaryQuery = useQuery({
     queryKey: ['driver', 'wallet', 'summary'],
@@ -21,6 +22,22 @@ export function DriverWalletRuntime() {
   });
 
   const rows = historyQuery.data?.items ?? [];
+
+  async function handleTopup(amountVnd: number) {
+    setIsSubmittingTopup(true);
+    try {
+      const res = await adapter.topupWallet({ amountVnd });
+      return res;
+    } catch (error) {
+      Alert.alert(
+        'Lỗi nạp tiền',
+        error instanceof Error ? error.message : 'Không thể tạo mã nạp tiền. Vui lòng thử lại.',
+      );
+      return null;
+    } finally {
+      setIsSubmittingTopup(false);
+    }
+  }
 
   async function handleRequestWithdrawal(input: Parameters<typeof adapter.requestWithdrawal>[0]) {
     setIsSubmitting(true);
@@ -63,6 +80,8 @@ export function DriverWalletRuntime() {
           deliveredOrderCount: 0,
         }
       }
+      onTopupWallet={handleTopup}
+      isSubmittingTopup={isSubmittingTopup}
       withdrawalError={withdrawalError}
     />
   );

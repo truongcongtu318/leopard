@@ -15,10 +15,16 @@ import {
 import { z } from 'zod';
 
 import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
   IconCamera,
   IconCheck,
   IconClose,
   IconTag,
+  VStack,
   colors,
   control,
   customerPalette,
@@ -300,13 +306,13 @@ export function BookingDetailsModal({
           </View>
 
           {/* Header */}
-          <View style={styles.headerRow}>
-            <View style={styles.headerTextGroup}>
+          <HStack style={styles.headerRow}>
+            <VStack style={styles.headerTextGroup}>
               <Text style={styles.sheetTitle}>Chi tiết chuyến hàng</Text>
               <Text numberOfLines={1} style={styles.sheetSubtitle}>
                 {subtitle}
               </Text>
-            </View>
+            </VStack>
             <Pressable
               accessibilityLabel="Đóng modal chi tiết"
               hitSlop={spacing.xs}
@@ -315,29 +321,29 @@ export function BookingDetailsModal({
             >
               <IconClose color={customerPalette.textSubtle} size={16} />
             </Pressable>
-          </View>
+          </HStack>
 
           {/* Route Info Badge */}
           {pickupAddress || dropoffAddress ? (
-            <View style={styles.routeBadge} testID="modal-route-badge">
-              <View style={styles.routeBadgeDotOrigin} />
+            <Card style={styles.routeBadge} testID="modal-route-badge">
+              <Box style={styles.routeBadgeDotOrigin} />
               <Text numberOfLines={1} style={styles.routeBadgeText}>
                 {pickupAddress || 'Điểm lấy hàng'}
               </Text>
               {stopCount > 0 ? (
-                <View style={styles.routeBadgeStopCountPill} testID="modal-stop-count-pill">
-                  <Text style={styles.routeBadgeStopCountText}>
+                <Badge action="info" size="sm" style={styles.routeBadgeStopCountPill} testID="modal-stop-count-pill">
+                  <Badge.Text style={styles.routeBadgeStopCountText}>
                     {`+${stopCount} điểm dừng`}
-                  </Text>
-                </View>
+                  </Badge.Text>
+                </Badge>
               ) : (
                 <Text style={styles.routeBadgeArrow}>➔</Text>
               )}
-              <View style={styles.routeBadgeDotDest} />
+              <Box style={styles.routeBadgeDotDest} />
               <Text numberOfLines={1} style={styles.routeBadgeText}>
                 {dropoffAddress || 'Điểm giao hàng'}
               </Text>
-            </View>
+            </Card>
           ) : null}
 
           {/* Scrollable Form Content */}
@@ -348,9 +354,9 @@ export function BookingDetailsModal({
             style={styles.scrollArea}
           >
             {/* 1. Người nhận hàng */}
-            <View style={styles.section}>
+            <VStack style={styles.section}>
               <Text style={styles.sectionTitle}>Người nhận hàng</Text>
-              <View style={styles.inputStack}>
+              <VStack style={styles.inputStack}>
                 <TextInput
                   accessibilityLabel="Tên người nhận hàng"
                   onChangeText={setReceiverName}
@@ -368,13 +374,13 @@ export function BookingDetailsModal({
                   style={styles.textInput}
                   value={receiverPhone}
                 />
-              </View>
-            </View>
+              </VStack>
+            </VStack>
 
             {/* 2. Hàng hóa */}
-            <View style={styles.section}>
+            <VStack style={styles.section}>
               <Text style={styles.sectionTitle}>Hàng hóa</Text>
-              <View style={styles.chipsRow}>
+              <HStack style={styles.chipsRow}>
                 {CARGO_CATEGORIES.map((cat) => {
                   const isSelected = cargoCategory === cat;
                   return (
@@ -402,7 +408,7 @@ export function BookingDetailsModal({
                     </Pressable>
                   );
                 })}
-              </View>
+              </HStack>
               <TextInput
                 accessibilityLabel="Ghi chú cho tài xế"
                 onChangeText={setCargoNote}
@@ -411,16 +417,16 @@ export function BookingDetailsModal({
                 style={[styles.textInput, styles.noteInput]}
                 value={cargoNote}
               />
-            </View>
+            </VStack>
 
             {/* 3. Ảnh chụp hàng hóa (Bắt buộc) */}
-            <View style={styles.section}>
-              <View style={styles.sectionTitleRow}>
+            <VStack style={styles.section}>
+              <HStack style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>Ảnh chụp hàng hóa</Text>
-                <View style={styles.badgeRequired}>
-                  <Text style={styles.badgeRequiredText}>Bắt buộc</Text>
-                </View>
-              </View>
+                <Badge action="warning" size="sm" style={styles.badgeRequired}>
+                  <Badge.Text style={styles.badgeRequiredText}>Bắt buộc</Badge.Text>
+                </Badge>
+              </HStack>
               {cargoImageUri ? (
                 <View style={styles.imagePreviewRow}>
                   <Image
@@ -485,31 +491,31 @@ export function BookingDetailsModal({
               {cargoImageError ? (
                 <Text style={styles.errorFeedbackText}>{cargoImageError}</Text>
               ) : null}
-            </View>
+            </VStack>
 
             {/* 4. Voucher Cheetah Golden Amber (#F59E0B) */}
-            <View style={styles.section}>
-              <View style={styles.voucherSectionHeader}>
-                <View style={styles.voucherTitleRow}>
+            <VStack style={styles.section}>
+              <HStack style={styles.voucherSectionHeader}>
+                <HStack style={styles.voucherTitleRow}>
                   <IconTag color={customerPalette.accent} size={16} />
                   <Text style={styles.sectionTitle}>Mã khuyến mãi / Voucher</Text>
-                </View>
-                <View style={styles.voucherTagAmber}>
-                  <Text style={styles.voucherTagAmberText}>Cheetah voucher</Text>
-                </View>
-              </View>
+                </HStack>
+                <Badge action="warning" size="sm" style={styles.voucherTagAmber}>
+                  <Badge.Text style={styles.voucherTagAmberText}>Cheetah voucher</Badge.Text>
+                </Badge>
+              </HStack>
 
               {appliedVoucher ? (
-                <View style={styles.appliedVoucherCard} testID="applied-voucher-card">
-                  <View style={styles.appliedVoucherLeft}>
-                    <View style={styles.appliedVoucherDot} />
-                    <View>
+                <Card style={styles.appliedVoucherCard} testID="applied-voucher-card">
+                  <HStack style={styles.appliedVoucherLeft}>
+                    <Box style={styles.appliedVoucherDot} />
+                    <VStack>
                       <Text style={styles.appliedVoucherCode}>{appliedVoucher.code}</Text>
                       <Text style={styles.appliedVoucherDesc}>
                         Đã giảm {formatVnd(appliedVoucher.discount)} vào cước chuyến
                       </Text>
-                    </View>
-                  </View>
+                    </VStack>
+                  </HStack>
                   <Pressable
                     accessibilityLabel="Bỏ áp dụng voucher"
                     accessibilityRole="button"
@@ -520,10 +526,10 @@ export function BookingDetailsModal({
                   >
                     <IconClose color={customerPalette.accent} size={14} />
                   </Pressable>
-                </View>
+                </Card>
               ) : (
-                <View style={styles.voucherInputContainer}>
-                  <View style={styles.voucherInputRow}>
+                <VStack style={styles.voucherInputContainer}>
+                  <HStack style={styles.voucherInputRow}>
                     <TextInput
                       accessibilityLabel="Nhập mã khuyến mãi"
                       autoCapitalize="characters"
@@ -548,10 +554,10 @@ export function BookingDetailsModal({
                     >
                       <Text style={styles.applyVoucherBtnText}>Áp dụng</Text>
                     </Pressable>
-                  </View>
+                  </HStack>
 
                   {/* Preset Quick Chips */}
-                  <View style={styles.quickVoucherRow}>
+                  <HStack style={styles.quickVoucherRow}>
                     {PRESET_VOUCHERS.map((v) => (
                       <Pressable
                         accessibilityLabel={`Chọn voucher ${v.code}`}
@@ -568,18 +574,18 @@ export function BookingDetailsModal({
                         </Text>
                       </Pressable>
                     ))}
-                  </View>
+                  </HStack>
                   {voucherError ? (
                     <Text style={styles.voucherErrorText}>{voucherError}</Text>
                   ) : null}
-                </View>
+                </VStack>
               )}
-            </View>
+            </VStack>
 
             {/* 5. Dịch vụ cộng thêm */}
-            <View style={styles.section}>
+            <VStack style={styles.section}>
               <Text style={styles.sectionTitle}>Dịch vụ cộng thêm</Text>
-              <View style={styles.toggleStack}>
+              <VStack space="xs" style={styles.toggleStack}>
                 {/* Bốc xếp */}
                 <Pressable
                   accessibilityLabel="Tài xế hỗ trợ bốc xếp 2 đầu"
@@ -594,7 +600,7 @@ export function BookingDetailsModal({
                     hasLoadingSupport ? styles.toggleRowActive : null,
                   ]}
                 >
-                  <View
+                  <Box
                     style={[
                       styles.checkbox,
                       hasLoadingSupport ? styles.checkboxActive : null,
@@ -603,10 +609,10 @@ export function BookingDetailsModal({
                     {hasLoadingSupport ? (
                       <IconCheck color={customerPalette.surfaceWhite} size={14} strokeWidth={2.5} />
                     ) : null}
-                  </View>
-                  <View style={styles.toggleLabelCol}>
+                  </Box>
+                  <VStack style={styles.toggleLabelCol}>
                     <Text style={styles.toggleTitle}>Tài xế hỗ trợ bốc xếp 2 đầu</Text>
-                  </View>
+                  </VStack>
                   <Text style={styles.toggleFee}>+{formatVnd(unitLoadingFee)}</Text>
                 </Pressable>
 
@@ -624,7 +630,7 @@ export function BookingDetailsModal({
                     hasVatInvoice ? styles.toggleRowActive : null,
                   ]}
                 >
-                  <View
+                  <Box
                     style={[
                       styles.checkbox,
                       hasVatInvoice ? styles.checkboxActive : null,
@@ -633,19 +639,19 @@ export function BookingDetailsModal({
                     {hasVatInvoice ? (
                       <IconCheck color={customerPalette.surfaceWhite} size={14} strokeWidth={2.5} />
                     ) : null}
-                  </View>
-                  <View style={styles.toggleLabelCol}>
+                  </Box>
+                  <VStack style={styles.toggleLabelCol}>
                     <Text style={styles.toggleTitle}>Xuất hóa đơn VAT điện tử (8%)</Text>
-                  </View>
+                  </VStack>
                   <Text style={styles.toggleFee}>+{formatVnd(vatAmount)}</Text>
                 </Pressable>
-              </View>
-            </View>
+              </VStack>
+            </VStack>
 
             {/* 6. Hình thức thanh toán */}
-            <View style={styles.section}>
+            <VStack style={styles.section}>
               <Text style={styles.sectionTitle}>Hình thức thanh toán</Text>
-              <View style={styles.radioStack}>
+              <VStack space="xs" style={styles.radioStack}>
                 {/* VietQR */}
                 <Pressable
                   accessibilityLabel="Chuyển khoản VietQR payOS"
@@ -660,20 +666,20 @@ export function BookingDetailsModal({
                     paymentMethod === 'VIETQR' ? styles.radioRowActive : null,
                   ]}
                 >
-                  <View
+                  <Box
                     style={[
                       styles.radioCircle,
                       paymentMethod === 'VIETQR' ? styles.radioCircleActive : null,
                     ]}
                   >
                     {paymentMethod === 'VIETQR' ? (
-                      <View style={styles.radioDot} />
+                      <Box style={styles.radioDot} />
                     ) : null}
-                  </View>
-                  <View style={styles.radioTextCol}>
+                  </Box>
+                  <VStack style={styles.radioTextCol}>
                     <Text style={styles.radioTitle}>Chuyển khoản VietQR payOS</Text>
                     <Text style={styles.radioSubtitle}>Ký quỹ Escrow bảo vệ an toàn</Text>
-                  </View>
+                  </VStack>
                 </Pressable>
 
                 {/* Tiền mặt */}
@@ -690,27 +696,27 @@ export function BookingDetailsModal({
                     paymentMethod === 'CASH' ? styles.radioRowActive : null,
                   ]}
                 >
-                  <View
+                  <Box
                     style={[
                       styles.radioCircle,
                       paymentMethod === 'CASH' ? styles.radioCircleActive : null,
                     ]}
                   >
                     {paymentMethod === 'CASH' ? (
-                      <View style={styles.radioDot} />
+                      <Box style={styles.radioDot} />
                     ) : null}
-                  </View>
-                  <View style={styles.radioTextCol}>
+                  </Box>
+                  <VStack style={styles.radioTextCol}>
                     <Text style={styles.radioTitle}>Tiền mặt khi nhận hàng</Text>
                     <Text style={styles.radioSubtitle}>Người gửi hoặc người nhận thanh toán</Text>
-                  </View>
+                  </VStack>
                 </Pressable>
-              </View>
-            </View>
+              </VStack>
+            </VStack>
           </ScrollView>
 
           {/* Footer Primary CTA: Midnight Navy (#0B2545) */}
-          <View style={styles.footer}>
+          <Box style={styles.footer}>
             <Pressable
               accessibilityLabel={`XÁC NHẬN GỌI XE · ${formatVnd(totalFare)}`}
               accessibilityRole="button"
@@ -725,7 +731,7 @@ export function BookingDetailsModal({
                 XÁC NHẬN GỌI XE · {formatVnd(totalFare)} ➔
               </Text>
             </Pressable>
-          </View>
+          </Box>
         </Animated.View>
       </View>
     </Modal>

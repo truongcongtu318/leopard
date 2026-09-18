@@ -11,6 +11,37 @@ jest.mock('expo-location', () => ({
     .mockResolvedValue({ status: 'denied' }),
 }));
 
+// Suggestions come only from the real VietMap autocomplete API.
+jest.mock('./services/vietmap-search', () => ({
+  ...(jest.requireActual('./services/vietmap-search') as Record<string, unknown>),
+  searchVietmapWithCoords: jest.fn(async (query: string) => {
+    const q = query.toLowerCase();
+    if (q.includes('cát lái') || q.includes('cat lai')) {
+      return [
+        {
+          id: 'vm-cat-lai',
+          title: 'Cảng Cát Lái',
+          subtitle: 'Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
+          address: 'Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
+          coords: { lat: 10.764, lng: 106.79 },
+        },
+      ];
+    }
+    if (q.includes('cộng hòa') || q.includes('cong hoa')) {
+      return [
+        {
+          id: 'vm-cong-hoa',
+          title: 'Đường Cộng Hòa',
+          subtitle: 'Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
+          address: 'Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
+          coords: { lat: 10.7955, lng: 106.6512 },
+        },
+      ];
+    }
+    return [];
+  }),
+}));
+
 import { addressStore } from '../customer/addresses/address-store';
 import { getTimeOfDayGreeting, HomeDashboardScreen } from './HomeDashboardScreen';
 
@@ -94,7 +125,7 @@ describe('HomeDashboardScreen', () => {
 
     // Fleet vehicle card jumps into order creation
     await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Tải 1.25T/));
-    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK', 'TRUCK_125T');
 
     // Active shipment sits below booking: status + route + ETA, opens on press
     expect(screen.getAllByText('Đang vận chuyển')[0]).toBeTruthy();
@@ -106,7 +137,7 @@ describe('HomeDashboardScreen', () => {
 
     // Quick book by Ba Gác jumps into the create flow
     await fireEvent.press(screen.getByLabelText(/Chọn xe Xe Ba Gác/));
-    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('3_WHEEL_BIKE');
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('3_WHEEL_BIKE', 'BIKE_3W');
 
     // Wallet utility strip removed from home dashboard
     expect(screen.queryByText('Ví VietQR')).toBeNull();
@@ -220,6 +251,7 @@ describe('HomeDashboardScreen', () => {
       'KCN Sóng Thần, Bình Dương',
       undefined,
       undefined,
+      'TRUCK_125T',
     );
 
     await screen.unmount();
@@ -247,14 +279,14 @@ describe('HomeDashboardScreen', () => {
       <HomeDashboardScreen onSelectVehicleAndBook={onSelectVehicleAndBook} defaultDropoffLocation="KCN Tân Tạo" />,
     );
 
-    for (const [name, category] of [
-      ['Van 500kg', 'LIGHT_TRUCK'],
-      ['Xe Tải 1.25T', 'LIGHT_TRUCK'],
-      ['Xe Tải 2.5T', 'HEAVY_TRUCK'],
-      ['Xe Ba Gác', '3_WHEEL_BIKE'],
+    for (const [name, category, fleetId] of [
+      ['Van 500kg', 'LIGHT_TRUCK', 'VAN_500KG'],
+      ['Xe Tải 1.25T', 'LIGHT_TRUCK', 'TRUCK_125T'],
+      ['Xe Tải 2.5T', 'HEAVY_TRUCK', 'TRUCK_25T'],
+      ['Xe Ba Gác', '3_WHEEL_BIKE', 'BIKE_3W'],
     ] as const) {
       await fireEvent.press(screen.getByLabelText(new RegExp(`Chọn xe ${name}`)));
-      expect(onSelectVehicleAndBook).toHaveBeenLastCalledWith(category);
+      expect(onSelectVehicleAndBook).toHaveBeenLastCalledWith(category, fleetId);
     }
     expect(onSelectVehicleAndBook).toHaveBeenCalledTimes(4);
 
@@ -346,7 +378,7 @@ describe('HomeDashboardScreen', () => {
 
     // Type query
     await fireEvent.changeText(screen.getByTestId('cr-pickup-input'), 'Cát Lái');
-    expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
+    expect(await screen.findByText('Cảng Cát Lái')).toBeTruthy();
 
     // Tap a suggestion
     await fireEvent.press(screen.getByLabelText('Chọn gợi ý Cảng Cát Lái'));
@@ -367,8 +399,8 @@ describe('HomeDashboardScreen', () => {
     await fireEvent(dropoffInput, 'focus');
     await fireEvent.changeText(dropoffInput, 'Cát Lái');
 
-    // Suggestions filter in real-time
-    expect(screen.getByText('Cảng Cát Lái')).toBeTruthy();
+    // Suggestions arrive from the real autocomplete lookup.
+    expect(await screen.findByText('Cảng Cát Lái')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Chọn gợi ý Cảng Cát Lái'));
 
     // Destination is updated
@@ -383,7 +415,7 @@ describe('HomeDashboardScreen', () => {
     await fireEvent(dropoffInput, 'focus');
     await fireEvent.changeText(dropoffInput, 'cong hoa');
 
-    expect(screen.getByText('Đường Cộng Hòa')).toBeTruthy();
+    expect(await screen.findByText('Đường Cộng Hòa')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Chọn gợi ý Đường Cộng Hòa'));
 
     expect(screen.getByDisplayValue('Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh')).toBeTruthy();
@@ -425,6 +457,7 @@ describe('HomeDashboardScreen', () => {
       'KCN Amata, Đồng Nai',
       undefined,
       undefined,
+      'TRUCK_125T',
     );
 
     await screen.unmount();
@@ -452,7 +485,7 @@ describe('HomeDashboardScreen', () => {
 
     // Tap CTA
     await fireEvent.press(screen.getByText(/XÁC NHẬN GỌI XE/));
-    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK');
+    expect(onSelectVehicleAndBook).toHaveBeenCalledWith('LIGHT_TRUCK', 'TRUCK_125T');
 
     await screen.unmount();
   });

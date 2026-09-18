@@ -2,6 +2,8 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Box,
+  HStack,
   colors,
   driverPrimitives,
   IconHome,
@@ -97,8 +99,8 @@ export function DriverBottomNavigation({
   };
 
   return (
-    <View style={styles.dockWrapper} testID="driver-bottom-navigation">
-      <View style={styles.dockContainer}>
+    <Box style={styles.dockWrapper} testID="driver-bottom-navigation">
+      <HStack style={styles.dockContainer}>
         {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.key;
           return (
@@ -114,9 +116,9 @@ export function DriverBottomNavigation({
                 pressed ? styles.pressed : null,
               ]}
             >
-              <View style={[styles.iconWrap, isActive ? styles.iconWrapActive : null]}>
+              <Box style={[styles.iconWrap, isActive ? styles.iconWrapActive : null]}>
                 {item.icon(isActive)}
-              </View>
+              </Box>
               <Text
                 numberOfLines={1}
                 style={[styles.navLabel, isActive ? styles.navLabelActive : null]}
@@ -126,8 +128,8 @@ export function DriverBottomNavigation({
             </Pressable>
           );
         })}
-      </View>
-    </View>
+      </HStack>
+    </Box>
   );
 }
 

@@ -8,21 +8,41 @@ import type { CustomerOrderDetailDataView, CustomerTrackingView, LatLng } from '
 import { createCustomerTrackingSocket } from '../customer/orders/tracking-socket';
 import { RealtimeTrackingScreen, type TrackingPoint, type TripBookingDetails } from './RealtimeTrackingScreen';
 
-const ACTIVE_TRACKING_STATUSES = ['ACCEPTED', 'PICKING_UP', 'PICKED_UP', 'IN_TRANSIT'] as const;
+const ACTIVE_TRACKING_STATUSES = [
+  'ACCEPTED',
+  'PICKING_UP',
+  'PICKED_UP',
+  'IN_TRANSIT',
+  'RETURNING',
+] as const;
 
 export type CustomerTrackingRuntimeProps = Readonly<{
   initialOrderId?: string;
 }>;
 
 function isTerminalStatus(status: string): boolean {
-  return status === 'DELIVERED' || status === 'CANCELLED';
+  return (
+    status === 'DELIVERED' ||
+    status === 'CANCELLED' ||
+    status === 'RETURNED' ||
+    status === 'INCIDENT_CANCELLED'
+  );
 }
 
+/**
+ * Mirrors the driver's own mission steps so the customer's tracking header
+ * flips the instant the cockpit reports a new stage.
+ */
 function mapStatusToTripStatus(status: string): TripBookingDetails['status'] {
   switch (status) {
+    case 'ACCEPTED':
+      return 'ACCEPTED';
     case 'PICKING_UP':
-      return 'LOADING';
+      return 'PICKING_UP';
+    case 'RETURNING':
+      return 'RETURNING';
     case 'DELIVERED':
+    case 'RETURNED':
       return 'DELIVERED';
     default:
       return 'IN_TRANSIT';
@@ -31,6 +51,17 @@ function mapStatusToTripStatus(status: string): TripBookingDetails['status'] {
 
 function getDriverLabel(tracking: CustomerTrackingView): string {
   return 'driverLabel' in tracking ? tracking.driverLabel : 'Tài xế';
+}
+
+/** Newest driver coordinate carried by a tracking view, when there is one. */
+function resolveTrackingCoords(
+  tracking: CustomerTrackingView,
+): { lat: number; lng: number } | null {
+  if ('coords' in tracking && tracking.coords) return tracking.coords;
+  if ('point' in tracking && tracking.point) {
+    return { lat: tracking.point.latitude, lng: tracking.point.longitude };
+  }
+  return null;
 }
 
 function haversineKm(a: LatLng, b: LatLng): number {
@@ -98,6 +129,12 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
         if (!active) return;
         if (detail.kind === 'content') {
           setOrder(detail.order);
+          // The REST payload already carries the newest point; paint it before
+          // the socket replays anything so the map is never blank on open.
+          const coords = resolveTrackingCoords(detail.order.tracking);
+          if (coords) {
+            setTruckPoint((current) => current ?? { ...coords, timestamp: new Date().toISOString() });
+          }
         } else {
           setLoadError(true);
         }
@@ -112,12 +149,13 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
   }, [orderId, port]);
 
   const status = order?.status ?? null;
+  // Connecting/disconnecting on every driver step would drop the pin mid-trip,
+  // so the effect keys off these two booleans rather than the status string.
+  const hasStatus = status !== null;
+  const isTerminal = status !== null && isTerminalStatus(status);
 
   useEffect(() => {
-    if (!orderId || !status || isTerminalStatus(status)) return undefined;
-
-    socketManager.joinOrder(orderId);
-    void socketManager.connect();
+    if (!orderId || !hasStatus || isTerminal) return undefined;
 
     const unsubscribe = socketManager.subscribe({
       onPointUpdated: (update) => {
@@ -136,11 +174,14 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
       },
     });
 
+    socketManager.joinOrder(orderId);
+    void socketManager.connect();
+
     return () => {
       unsubscribe();
       socketManager.leaveOrder(orderId);
     };
-  }, [socketManager, orderId, status, port]);
+  }, [socketManager, orderId, hasStatus, isTerminal, port]);
 
   useEffect(() => {
     return () => socketManager.destroy();
@@ -234,6 +275,7 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
         status: mapStatusToTripStatus(order.status),
         hasDeliveryProof: order.media.kind === 'available',
         isSimulated,
+        routeCoords: order.route.routeCoords,
       }}
       truckLocation={truckPoint ?? undefined}
     />

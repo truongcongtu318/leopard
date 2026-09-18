@@ -2,6 +2,8 @@ import React, { memo, useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import {
+  Box,
+  VStack,
   colors,
   iconSize,
   IconShieldAlert,
@@ -71,14 +73,14 @@ export function DriverOrderBoardScreen({
         showsVerticalScrollIndicator={false}
       >
         {view.kind === 'loading' ? (
-          <View style={styles.sectionGap}>
+          <VStack space="sm" style={styles.sectionGap}>
             <SkeletonCard />
             <SkeletonCard />
-          </View>
+          </VStack>
         ) : null}
 
         {view.kind === 'permission-denied' || view.kind === 'error' ? (
-          <View style={styles.boundaryBox}>
+          <Box style={styles.boundaryBox}>
             <ScreenState
               actionLabel={view.kind === 'error' ? 'Thử tải lại danh sách' : undefined}
               icon={<IconShieldAlert color={colors.danger.text} size={iconSize.lg} />}
@@ -87,7 +89,7 @@ export function DriverOrderBoardScreen({
               state={view.kind}
               title={view.title}
             />
-          </View>
+          </Box>
         ) : null}
 
         {isContent ? (
@@ -98,7 +100,7 @@ export function DriverOrderBoardScreen({
             />
 
             {filteredOrders.length > 0 ? (
-              <View style={styles.ordersFeed}>
+              <VStack space="sm" style={styles.ordersFeed}>
                 {filteredOrders.map((item) => (
                   <DriverNearbyOrderCard
                     item={item}
@@ -107,7 +109,7 @@ export function DriverOrderBoardScreen({
                     onOpenOrder={onOpenOrder}
                   />
                 ))}
-              </View>
+              </VStack>
             ) : (
               <DriverEmptyBoard
                 isOnline={

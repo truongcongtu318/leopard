@@ -6,11 +6,13 @@ export interface AssertOrderTransitionInput {
   to: OrderStatus;
   actorRole: Role;
   hasDeliveryProof: boolean;
+  /** Pickup evidence; required before the cargo can leave the pickup point. */
+  hasPickupProof?: boolean;
   cancelReason?: string;
 }
 
 export function assertOrderTransition(input: AssertOrderTransitionInput): void {
-  const { from, to, actorRole, hasDeliveryProof, cancelReason } = input;
+  const { from, to, actorRole, hasDeliveryProof, hasPickupProof = true, cancelReason } = input;
 
   if (
     from === OrderStatus.DELIVERED ||
@@ -82,6 +84,14 @@ export function assertOrderTransition(input: AssertOrderTransitionInput): void {
       return;
     }
     if (from === OrderStatus.PICKING_UP && to === OrderStatus.IN_TRANSIT) {
+      if (!hasPickupProof) {
+        throw new DomainError(
+          'PICKUP_PROOF_REQUIRED',
+          409,
+          'Cần phải có ảnh xác nhận đã lấy hàng trước khi bắt đầu giao hàng.',
+          { from, to },
+        );
+      }
       return;
     }
     if (from === OrderStatus.IN_TRANSIT && to === OrderStatus.RETURNING) {

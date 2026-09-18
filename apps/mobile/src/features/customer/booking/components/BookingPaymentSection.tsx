@@ -7,6 +7,7 @@ import {
   IconQrPayment,
   colors,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   radius,
   spacing,
@@ -23,6 +24,11 @@ export function BookingPaymentSection({
   selectedMethod,
   onSelectMethod,
 }: BookingPaymentSectionProps) {
+  const handleSelect = (method: PaymentMethod) => {
+    haptic.selection();
+    onSelectMethod(method);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionHeader}>Phương thức thanh toán</Text>
@@ -30,16 +36,21 @@ export function BookingPaymentSection({
       <View style={styles.insetGroupedCard}>
         {/* VietQR */}
         <Pressable
+          accessibilityLabel={`Phương thức VietQR, Quét mã qua mọi ứng dụng ngân hàng, Khuyên dùng${selectedMethod === 'VIETQR' ? ', đã chọn' : ''}`}
           accessibilityRole="button"
           accessibilityState={{ selected: selectedMethod === 'VIETQR' }}
-          onPress={() => onSelectMethod('VIETQR')}
+          onPress={() => handleSelect('VIETQR')}
           style={({ pressed }) => [
             styles.methodRow,
             selectedMethod === 'VIETQR' && styles.methodRowSelected,
             pressed && styles.rowPressed,
           ]}
         >
-          <View style={styles.iconCircle}>
+          <View
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no"
+            style={styles.iconCircle}
+          >
             <IconQrPayment color={customerPalette.primary} size={20} />
           </View>
           <View style={styles.methodInfo}>
@@ -51,7 +62,11 @@ export function BookingPaymentSection({
             </View>
             <Text style={styles.methodDesc}>Quét mã qua mọi ứng dụng ngân hàng</Text>
           </View>
-          <View style={styles.checkmarkSlot}>
+          <View
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no"
+            style={styles.checkmarkSlot}
+          >
             {selectedMethod === 'VIETQR' && (
               <View style={styles.checkmarkCircle}>
                 <IconCheck color="#FFFFFF" size={12} />
@@ -64,23 +79,32 @@ export function BookingPaymentSection({
 
         {/* Tiền mặt */}
         <Pressable
+          accessibilityLabel={`Phương thức Tiền mặt, Thanh toán trực tiếp cho tài xế${selectedMethod === 'CASH' ? ', đã chọn' : ''}`}
           accessibilityRole="button"
           accessibilityState={{ selected: selectedMethod === 'CASH' }}
-          onPress={() => onSelectMethod('CASH')}
+          onPress={() => handleSelect('CASH')}
           style={({ pressed }) => [
             styles.methodRow,
             selectedMethod === 'CASH' && styles.methodRowSelected,
             pressed && styles.rowPressed,
           ]}
         >
-          <View style={styles.iconCircle}>
+          <View
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no"
+            style={styles.iconCircle}
+          >
             <IconPaymentConvenient color="#64748B" size={20} />
           </View>
           <View style={styles.methodInfo}>
             <Text style={styles.methodName}>Tiền mặt</Text>
             <Text style={styles.methodDesc}>Thanh toán trực tiếp cho tài xế</Text>
           </View>
-          <View style={styles.checkmarkSlot}>
+          <View
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no"
+            style={styles.checkmarkSlot}
+          >
             {selectedMethod === 'CASH' && (
               <View style={styles.checkmarkCircle}>
                 <IconCheck color="#FFFFFF" size={12} />
@@ -109,6 +133,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     ...iosContinuousCurve,
@@ -124,7 +150,8 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.primaryBg,
   },
   rowPressed: {
-    opacity: 0.75,
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
   iconCircle: {
     width: 40,
@@ -154,6 +181,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.hairline,
     borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
   },
   recommendedBadgeText: {
     ...typeScale.caption2,
@@ -181,7 +209,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: colors.neutral.border,
     marginLeft: 68,
   },
 });

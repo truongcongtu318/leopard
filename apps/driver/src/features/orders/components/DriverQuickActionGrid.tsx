@@ -2,6 +2,9 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Box,
+  Card,
+  HStack,
   driverPrimitives,
   iconSize,
   IconLocationPin,
@@ -104,23 +107,25 @@ export function DriverQuickActionGrid({
   ];
 
   return (
-    <View style={styles.grid} testID="driver-quick-action-grid">
-      {actions.map((action) => (
-        <Pressable
-          accessibilityLabel={action.accessibilityLabel}
-          accessibilityRole="button"
-          key={action.key}
-          onPress={action.onPress}
-          style={({ pressed }) => [styles.item, pressed ? styles.pressed : null]}
-          testID={action.testID}
-        >
-          <View style={styles.circle}>{action.icon}</View>
-          <Text numberOfLines={1} style={styles.label}>
-            {action.label}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
+    <Card style={styles.grid} testID="driver-quick-action-grid">
+      <HStack style={styles.innerRow}>
+        {actions.map((action) => (
+          <Pressable
+            accessibilityLabel={action.accessibilityLabel}
+            accessibilityRole="button"
+            key={action.key}
+            onPress={action.onPress}
+            style={({ pressed }) => [styles.item, pressed ? styles.pressed : null]}
+            testID={action.testID}
+          >
+            <Box style={styles.circle}>{action.icon}</Box>
+            <Text numberOfLines={1} style={styles.label}>
+              {action.label}
+            </Text>
+          </Pressable>
+        ))}
+      </HStack>
+    </Card>
   );
 }
 
@@ -131,8 +136,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.md,
@@ -141,6 +144,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
+  },
+  innerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   item: {
     alignItems: 'center',

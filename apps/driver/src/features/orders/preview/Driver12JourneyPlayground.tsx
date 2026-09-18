@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import {
-  RealInteractiveMap,
+  LeopardMapView,
   driverHapticMatrix,
   iosContinuousCurve,
   radius,
@@ -16,9 +16,8 @@ import {
 } from '@leopard/mobile-core';
 import { IncomingDispatchModal } from '../IncomingDispatchModal';
 import { DriverNavigationSheet } from '../components/detail/DriverNavigationSheet';
-import { PickupVerificationView } from '../components/detail/PickupVerificationView';
+import { ProofCaptureSheet } from '../components/detail/ProofCaptureSheet';
 import { MultiStopProgressHeader } from '../components/detail/MultiStopProgressHeader';
-import { DeliveryVerificationView } from '../components/detail/DeliveryVerificationView';
 import { TripCompletedSummaryView } from '../components/detail/TripCompletedSummaryView';
 
 export type JourneyStateId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
@@ -105,7 +104,7 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
         return (
           <View style={styles.screenWrapper} testID="playground-state-4">
             <View style={styles.mapArea}>
-              <RealInteractiveMap
+              <LeopardMapView
                 destination={{ label: SAMPLE_OFFER.dropoffAddress }}
                 height="100%"
                 mode="route"
@@ -133,7 +132,7 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
         return (
           <View style={styles.screenWrapper} testID="playground-state-5">
             <View style={styles.mapArea}>
-              <RealInteractiveMap
+              <LeopardMapView
                 destination={{ label: SAMPLE_OFFER.dropoffAddress }}
                 height="100%"
                 mode="route"
@@ -160,13 +159,14 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
       case 6:
         return (
           <View style={styles.screenWrapper} testID="playground-state-6">
-            <PickupVerificationView
-              initialPackageCount={24}
-              onCapturePhoto={() => {}}
-              onConfirmPickup={() => handleSelectState(7)}
-              orderCode="#LP-8921"
-              photos={['file://simulated-cargo.jpg']}
-              senderPhotoReferenceUrl="https://placehold.co/120x120.png"
+            <ProofCaptureSheet
+              capturedAt={new Date(2026, 7, 15, 14, 30, 15)}
+              onCancel={() => {}}
+              onConfirm={() => handleSelectState(7)}
+              onRetake={() => {}}
+              photoUri="https://placehold.co/600x400.png"
+              title="Ảnh kiểm hàng tại điểm lấy"
+              watermarkCoords="21.02800° N, 105.83450° E"
             />
           </View>
         );
@@ -176,7 +176,7 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
           <View style={styles.screenWrapper} testID="playground-state-7">
             <MultiStopProgressHeader stops={SAMPLE_STOPS} />
             <View style={styles.mapArea}>
-              <RealInteractiveMap
+              <LeopardMapView
                 destination={{ label: '58 Trần Duy Hưng, Cầu Giấy' }}
                 height="100%"
                 mode="route"
@@ -203,14 +203,14 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
       case 8:
         return (
           <View style={styles.screenWrapper} testID="playground-state-8">
-            <DeliveryVerificationView
-              expectedAmount={520000}
-              onCapturePhoto={() => {}}
-              onCompleteDelivery={() => handleSelectState(10)}
-              onSwitchToFailure={() => handleSelectState(9)}
-              orderCode="#LP-8921"
-              photos={['file://simulated-delivered.jpg']}
-              type="COD"
+            <ProofCaptureSheet
+              capturedAt={new Date(2026, 7, 15, 15, 2, 40)}
+              onCancel={() => {}}
+              onConfirm={() => handleSelectState(10)}
+              onRetake={() => {}}
+              photoUri="https://placehold.co/600x400.png"
+              title="Ảnh xác nhận đã giao hàng"
+              watermarkCoords="21.03310° N, 105.84120° E"
             />
           </View>
         );
@@ -218,13 +218,15 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
       case 9:
         return (
           <View style={styles.screenWrapper} testID="playground-state-9">
-            <DeliveryVerificationView
-              onCapturePhoto={() => {}}
-              onCompleteDelivery={() => {}}
-              onReportFailure={() => handleSelectState(10)}
-              orderCode="#LP-8921"
-              photos={['file://simulated-closed-store.jpg']}
-              type="FAILURE"
+            <ProofCaptureSheet
+              capturedAt={new Date(2026, 7, 15, 15, 10, 5)}
+              isUploading
+              onCancel={() => {}}
+              onConfirm={() => {}}
+              onRetake={() => {}}
+              photoUri="https://placehold.co/600x400.png"
+              title="Ảnh bằng chứng không giao được"
+              watermarkCoords="21.03310° N, 105.84120° E"
             />
           </View>
         );
@@ -264,7 +266,7 @@ export const Driver12JourneyPlayground = memo(function Driver12JourneyPlayground
             testID="playground-dark-surface"
           >
             <View style={styles.mapArea}>
-              <RealInteractiveMap
+              <LeopardMapView
                 destination={{ label: SAMPLE_OFFER.dropoffAddress }}
                 height="100%"
                 mode="route"

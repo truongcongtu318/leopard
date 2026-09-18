@@ -16,14 +16,17 @@ describe('Booking Modular Components', () => {
     );
 
     expect(screen.getByText('Xe Tải 1.25 Tấn')).toBeTruthy();
-    expect(screen.getByText('200.000 đ')).toBeTruthy();
+    // Without a real routed distance there is no fare to show. Previously this
+    // fell back to the 200.000 base fare, quoting a price for an unmeasured trip.
+    expect(screen.queryByText('200.000 đ')).toBeNull();
+    expect(screen.getAllByText('Đang tính…').length).toBeGreaterThan(0);
     expect(screen.queryByRole('radio')).toBeNull();
 
     fireEvent.press(screen.getByText('Xe Tải 2.5 Tấn'));
     expect(onSelect).toHaveBeenCalledWith('TRUCK_25T');
   });
 
-  it('BookingRouteSection renders pickup with Kho tag, dropoff, and handles stops', async () => {
+  it('BookingRouteSection renders pickup, dropoff, and handles stops', async () => {
     const onAddStop = jest.fn();
     const screen = await render(
       <BookingRouteSection
@@ -41,7 +44,8 @@ describe('Booking Modular Components', () => {
     expect(screen.getByText('120 Song Hành')).toBeTruthy();
     expect(screen.getByText('Công trình Jamona City')).toBeTruthy();
     expect(screen.getByText('Đào Trí')).toBeTruthy();
-    expect(screen.getByText('Kho')).toBeTruthy();
+    // No fabricated "Kho" tag: the pickup is not necessarily a warehouse.
+    expect(screen.queryByText('Kho')).toBeNull();
     expect(screen.getByText(/Khoảng 12,5 km · dự kiến 35 phút/i)).toBeTruthy();
 
     fireEvent.press(screen.getByText('Thêm điểm dừng'));
@@ -126,7 +130,7 @@ describe('Booking Modular Components', () => {
     expect(screen.getByText('Chi tiết cước vận chuyển')).toBeTruthy();
     expect(screen.getByText('378.000 đ')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('ĐÃ HIỂU'));
+    fireEvent.press(screen.getByText('Đã hiểu'));
     expect(onClose).toHaveBeenCalled();
   });
 });

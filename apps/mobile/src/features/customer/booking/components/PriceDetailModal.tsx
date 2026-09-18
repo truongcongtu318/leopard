@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   customerPalette,
+  haptic,
   iosContinuousCurve,
   radius,
   spacing,
@@ -15,7 +16,8 @@ export interface PriceDetailModalProps {
   visible: boolean;
   onClose: () => void;
   breakdown: BookingPricingBreakdown;
-  distanceKm: number;
+  /** Real routed distance; undefined until the estimate resolves. */
+  distanceKm?: number;
 }
 
 export function PriceDetailModal({
@@ -26,32 +28,55 @@ export function PriceDetailModal({
 }: PriceDetailModalProps) {
   const insets = useSafeInsets();
 
+  const handleClose = () => {
+    haptic.light();
+    onClose();
+  };
+
   return (
     <Modal
+      accessibilityViewIsModal={true}
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       transparent
       visible={visible}
     >
       <View style={styles.modalOverlay}>
-        <Pressable onPress={onClose} style={styles.backdrop} />
+        <Pressable
+          accessibilityLabel="Đóng modal"
+          accessibilityRole="button"
+          onPress={handleClose}
+          style={styles.backdrop}
+        />
 
         <View
           style={[
             styles.sheetContainer,
-            { paddingBottom: Math.max(insets.bottom, 24) },
+            { paddingBottom: Math.max(insets.bottom, spacing.lg) },
           ]}
         >
           {/* iOS Grabber */}
-          <View style={styles.grabber} />
+          <View
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no"
+            style={styles.grabber}
+          />
 
           {/* Header */}
           <View style={styles.sheetHeader}>
             <View>
-              <Text style={styles.sheetTitle}>Chi tiết cước vận chuyển</Text>
+              <Text accessibilityRole="header" style={styles.sheetTitle}>
+                Chi tiết cước vận chuyển
+              </Text>
               <Text style={styles.sheetSubtitle}>Bóc tách minh bạch chi phí đơn hàng</Text>
             </View>
-            <Pressable hitSlop={12} onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              accessibilityLabel="Đóng chi tiết cước"
+              accessibilityRole="button"
+              hitSlop={12}
+              onPress={handleClose}
+              style={styles.closeBtn}
+            >
               <Text style={styles.closeText}>Đóng</Text>
             </Pressable>
           </View>
@@ -64,7 +89,7 @@ export function PriceDetailModal({
                 <Text style={styles.itemLabel}>1. Cước xuất xe cơ sở</Text>
                 <Text style={styles.itemHint}>{breakdown.vehicleName} · Đã gồm định mức khởi điểm</Text>
               </View>
-              <Text style={styles.itemValue}>
+              <Text selectable style={styles.itemValue}>
                 {breakdown.baseFare.toLocaleString('vi-VN')} đ
               </Text>
             </View>
@@ -73,13 +98,16 @@ export function PriceDetailModal({
             <View style={styles.itemRow}>
               <View style={styles.labelCol}>
                 <Text style={styles.itemLabel}>
-                  2. Cước cự ly ({distanceKm.toFixed(1).replace('.', ',')} km)
+                  2. Cước cự ly
+                  {typeof distanceKm === 'number' && distanceKm > 0
+                    ? ` (${distanceKm.toFixed(1).replace('.', ',')} km)`
+                    : ''}
                 </Text>
                 <Text style={styles.itemHint}>
                   Tính theo quãng đường thực tế
                 </Text>
               </View>
-              <Text style={styles.itemValue}>
+              <Text selectable style={styles.itemValue}>
                 {breakdown.distanceFare.toLocaleString('vi-VN')} đ
               </Text>
             </View>
@@ -91,7 +119,7 @@ export function PriceDetailModal({
                   <Text style={styles.itemLabel}>3. Phụ phí điểm dừng dỡ hàng</Text>
                   <Text style={styles.itemHint}>Phụ phí bến bãi &amp; dừng xe trả hàng</Text>
                 </View>
-                <Text style={styles.itemValuePlus}>
+                <Text selectable style={styles.itemValuePlus}>
                   +{breakdown.stopFare.toLocaleString('vi-VN')} đ
                 </Text>
               </View>
@@ -104,7 +132,7 @@ export function PriceDetailModal({
                   <Text style={styles.itemLabel}>4. Tài xế hỗ trợ bốc xếp</Text>
                   <Text style={styles.itemHint}>Dịch vụ bốc dỡ hàng theo yêu cầu</Text>
                 </View>
-                <Text style={styles.itemValuePlus}>
+                <Text selectable style={styles.itemValuePlus}>
                   +{breakdown.loadingFee.toLocaleString('vi-VN')} đ
                 </Text>
               </View>
@@ -115,7 +143,7 @@ export function PriceDetailModal({
             {/* Tạm tính trước thuế */}
             <View style={styles.itemRowSubtotal}>
               <Text style={styles.subtotalLabel}>Tạm tính cước vận chuyển &amp; dịch vụ</Text>
-              <Text style={styles.subtotalValue}>
+              <Text selectable style={styles.subtotalValue}>
                 {breakdown.subtotal.toLocaleString('vi-VN')} đ
               </Text>
             </View>
@@ -127,7 +155,7 @@ export function PriceDetailModal({
                   <Text style={styles.itemLabel}>5. Thuế GTGT / VAT (8%)</Text>
                   <Text style={styles.itemHint}>Xuất hóa đơn điện tử hợp lệ</Text>
                 </View>
-                <Text style={styles.itemValuePlus}>
+                <Text selectable style={styles.itemValuePlus}>
                   +{breakdown.vatFee.toLocaleString('vi-VN')} đ
                 </Text>
               </View>
@@ -138,12 +166,12 @@ export function PriceDetailModal({
             {/* Tổng cộng */}
             <View style={styles.totalRow}>
               <View>
-                <Text style={styles.totalLabel}>TỔNG CỘNG</Text>
+                <Text style={styles.totalLabel}>Tổng cộng</Text>
                 <Text style={styles.noteText}>
                   Đã gồm nhiên liệu, phí cầu đường &amp; thuế (nếu có)
                 </Text>
               </View>
-              <Text style={styles.totalValue}>
+              <Text selectable style={styles.totalValue}>
                 {breakdown.totalFare.toLocaleString('vi-VN')} đ
               </Text>
             </View>
@@ -151,11 +179,12 @@ export function PriceDetailModal({
 
           {/* Nút Đã hiểu */}
           <Pressable
+            accessibilityLabel="Đã hiểu chi tiết cước vận chuyển"
             accessibilityRole="button"
-            onPress={onClose}
+            onPress={handleClose}
             style={({ pressed }) => [styles.confirmBtn, pressed && styles.confirmBtnPressed]}
           >
-            <Text style={styles.confirmBtnText}>ĐÃ HIỂU</Text>
+            <Text style={styles.confirmBtnText}>Đã hiểu</Text>
           </Pressable>
         </View>
       </View>
@@ -174,10 +203,10 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    borderTopLeftRadius: radius.modal,
+    borderTopRightRadius: radius.modal,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
     maxHeight: '75%',
     boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.16)',
     ...iosContinuousCurve,
@@ -185,78 +214,70 @@ const styles = StyleSheet.create({
   grabber: {
     width: 36,
     height: 5,
-    borderRadius: 2.5,
+    borderRadius: radius.pill,
     backgroundColor: '#D1D1D6',
     alignSelf: 'center',
-    marginVertical: 8,
+    marginVertical: spacing.xs,
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: spacing.xs,
     borderBottomWidth: 0.5,
     borderBottomColor: '#E5E5EA',
   },
   sheetTitle: {
     ...typeScale.title3,
-    fontSize: 18,
     fontWeight: '700',
-    color: '#000000',
-    letterSpacing: -0.3,
+    color: customerPalette.textSlateDark,
   },
   sheetSubtitle: {
     ...typeScale.caption1,
-    fontSize: 12,
-    color: '#8E8E93',
-    marginTop: 2,
+    color: customerPalette.textSubtle,
+    marginTop: spacing.hairline,
   },
   closeBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.xs,
   },
   closeText: {
     ...typeScale.body,
-    fontSize: 16,
     fontWeight: '600',
     color: customerPalette.primary,
   },
   itemList: {
-    paddingVertical: 12,
-    gap: 8,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingVertical: 4,
+    paddingVertical: spacing.xxs,
   },
   labelCol: {
     flex: 1,
-    paddingRight: 12,
+    paddingRight: spacing.sm,
   },
   itemLabel: {
     ...typeScale.subheadline,
-    fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: customerPalette.textSlateDark,
   },
   itemHint: {
     ...typeScale.caption2,
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 1,
+    color: customerPalette.textMutedSlate,
+    marginTop: spacing.hairline,
   },
   itemValue: {
     ...typeScale.subheadline,
-    fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
   },
   itemValuePlus: {
     ...typeScale.subheadline,
-    fontSize: 14,
     fontWeight: '600',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
@@ -265,66 +286,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingVertical: spacing.xs,
+    backgroundColor: customerPalette.canvas,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
   },
   subtotalLabel: {
     ...typeScale.footnote,
-    fontSize: 13,
     fontWeight: '600',
-    color: '#475569',
+    color: customerPalette.textMutedSlate,
   },
   subtotalValue: {
     ...typeScale.subheadline,
-    fontSize: 14,
     fontWeight: '700',
-    color: '#000000',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
   },
   separator: {
     height: 0.5,
     backgroundColor: '#E5E5EA',
-    marginVertical: 4,
+    marginVertical: spacing.xxs,
   },
   separatorBold: {
     height: 1,
     backgroundColor: '#CBD5E1',
-    marginVertical: 6,
+    marginVertical: spacing.xs,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: spacing.xs,
   },
   totalLabel: {
     ...typeScale.headline,
-    fontSize: 16,
     fontWeight: '700',
-    color: '#000000',
+    color: customerPalette.textSlateDark,
   },
   totalValue: {
     ...typeScale.title2,
-    fontSize: 22,
     fontWeight: '700',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
   noteText: {
     ...typeScale.footnote,
-    fontSize: 11,
-    color: '#8E8E93',
-    marginTop: 2,
+    color: customerPalette.textSubtle,
+    marginTop: spacing.hairline,
   },
   confirmBtn: {
     height: 50,
     backgroundColor: customerPalette.primary,
-    borderRadius: 14,
+    borderRadius: radius.card,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: spacing.sm,
     boxShadow: '0 2px 8px rgba(11, 37, 69, 0.25)',
     ...iosContinuousCurve,
   },
@@ -334,7 +351,6 @@ const styles = StyleSheet.create({
   },
   confirmBtnText: {
     ...typeScale.callout,
-    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     letterSpacing: 0.5,

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import {
+  VStack,
   colors,
   driverPrimitives,
   haptic,
@@ -61,7 +62,7 @@ export const DriverMapControlStack = memo(function DriverMapControlStack({
 
   // ponytail: Vector buttons sized 46x46pt satisfy Apple HIG minimum touch target without extra padding container.
   return (
-    <View style={styles.stack} testID="driver-map-control-stack">
+    <VStack space="xs" style={styles.stack} testID="driver-map-control-stack">
       <Pressable
         accessibilityLabel={
           isLocating ? 'Đang xác định vị trí của bạn' : 'Về vị trí hiện tại của tôi'
@@ -99,7 +100,7 @@ export const DriverMapControlStack = memo(function DriverMapControlStack({
       >
         <IconSettings color={colors.neutral.text} size={iconSize.md} />
       </Pressable>
-    </View>
+    </VStack>
   );
 });
 

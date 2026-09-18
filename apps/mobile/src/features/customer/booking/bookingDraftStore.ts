@@ -43,8 +43,7 @@ export const bookingDraftStore = {
       currentDraft.cargoImages.length > 0 ||
       currentDraft.hasLoadingSupport ||
       currentDraft.hasVatInvoice ||
-      currentDraft.stops.length > 0 ||
-      currentDraft.vehicleId !== 'TRUCK_125T'
+      currentDraft.stops.length > 0
     );
   },
   subscribe: (listener: () => void) => {

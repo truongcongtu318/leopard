@@ -2,9 +2,14 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  Card,
+  HStack,
   IconRoute,
   IconSpeedTruck,
   StatusBadge,
+  VStack,
   colors,
   iosContinuousCurve,
   leopardPalette,
@@ -71,7 +76,7 @@ export function DriverNearbyOrderCard({
     : loadingDesc;
 
   return (
-    <View style={styles.cardContainer}>
+    <Card style={styles.cardContainer}>
       <Pressable
         accessibilityLabel={`Xem chi tiết đơn ${item.reference}, ${item.publicRouteLabel}`}
         accessibilityRole="button"
@@ -79,44 +84,44 @@ export function DriverNearbyOrderCard({
         style={({ pressed }) => [styles.cardPressable, pressed ? styles.pressed : null]}
       >
         {/* Row 1: Vehicle Badge + Proximity | Price */}
-        <View style={styles.topRow}>
-          <View style={styles.tagGroup}>
-            <View style={styles.vehicleBadge}>
+        <HStack style={styles.topRow}>
+          <HStack style={styles.tagGroup}>
+            <Badge action="muted" style={styles.vehicleBadge}>
               <IconSpeedTruck color={leopardPalette.primary} size={12} />
-              <Text style={styles.vehicleTagText}>{item.vehicleLabel}</Text>
-            </View>
+              <Badge.Text style={styles.vehicleTagText}>{item.vehicleLabel}</Badge.Text>
+            </Badge>
             <Text style={styles.proximityText}>
               {item.pickupDistanceLabel ?? 'Đang cập nhật'}
             </Text>
-          </View>
-          <View style={styles.priceWrap}>
+          </HStack>
+          <Box style={styles.priceWrap}>
             <Text style={styles.priceAmount}>{item.priceLabel ?? 'Đang cập nhật'}</Text>
-          </View>
-        </View>
+          </Box>
+        </HStack>
 
         {/* Row 2: Route Spine (Compact 2-line vertical spine) */}
-        <View style={styles.routeRow}>
-          <View style={styles.spineCol}>
-            <View style={styles.dotPickup} />
-            <View style={styles.spineLine} />
-            <View style={styles.dotDropoff} />
-          </View>
-          <View style={styles.addressCol}>
+        <HStack style={styles.routeRow}>
+          <VStack style={styles.spineCol}>
+            <Box style={styles.dotPickup} />
+            <Box style={styles.spineLine} />
+            <Box style={styles.dotDropoff} />
+          </VStack>
+          <VStack style={styles.addressCol}>
             <Text numberOfLines={1} style={styles.addressText}>
               {pickupLabel}
             </Text>
             <Text numberOfLines={1} style={styles.addressText}>
               {dropoffLabel}
             </Text>
-          </View>
-          <View style={styles.distanceBadge}>
+          </VStack>
+          <HStack style={styles.distanceBadge}>
             <IconRoute color={colors.neutral.subtleText} size={11} />
             <Text style={styles.distanceText}>{distanceEtaText}</Text>
-          </View>
-        </View>
+          </HStack>
+        </HStack>
 
         {/* Row 3: Cargo & Reference snippet */}
-        <View style={styles.metaRow}>
+        <HStack style={styles.metaRow}>
           <Text numberOfLines={1} style={styles.cargoNameText} testID="nearby-order-cargo-name">
             {cargoName}
           </Text>
@@ -132,11 +137,11 @@ export function DriverNearbyOrderCard({
           ) : null}
           <Text style={styles.refDot}>·</Text>
           <Text style={styles.refText}>{item.reference}</Text>
-        </View>
+        </HStack>
       </Pressable>
 
       {/* Row 4: Compact Grab-style Action Buttons */}
-      <View style={styles.actionBar}>
+      <HStack style={styles.actionBar}>
         <Pressable
           accessibilityLabel="Bỏ qua đơn này"
           accessibilityRole="button"
@@ -154,8 +159,8 @@ export function DriverNearbyOrderCard({
         >
           <Text style={styles.acceptText}>Nhận đơn</Text>
         </Pressable>
-      </View>
-    </View>
+      </HStack>
+    </Card>
   );
 }
 

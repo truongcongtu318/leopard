@@ -29,7 +29,13 @@ describe('PaymentWebhookService', () => {
       findByPayosOrderCode: jest.fn(),
       updateStatus: jest.fn(),
     };
-    prisma = { $transaction: jest.fn((cb) => cb(prisma)) };
+    prisma = {
+      $transaction: jest.fn((cb) => cb(prisma)),
+      driverDeposit: {
+        findUnique: jest.fn().mockReturnValue(null),
+        update: jest.fn(),
+      },
+    };
     auditService = { append: jest.fn() };
     service = new PaymentWebhookService(payOsProvider, repo, prisma, auditService);
   });

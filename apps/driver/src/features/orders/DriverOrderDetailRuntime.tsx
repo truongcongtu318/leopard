@@ -8,7 +8,11 @@ import { createSocketFactory } from '@leopard/mobile-core';
 import { pickDeviceImage, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { DriverIncidentModal, type DriverIncidentSubmitPayload } from './DriverIncidentModal';
 import { createDriverHttpAdapter, createDriverProofAdapter } from './adapter';
-import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';
+import {
+  DriverOrderDetailScreen,
+  type DriverProofFileInput,
+  type DriverProofUploadResult,
+} from './DriverOrderDetailScreen';
 import type { DriverDetailView, DriverTrackingView } from './model';
 import { createDriverTrackingSender, isTrackingEligibleStatus } from './tracking-sender';
 import { useRouteEtaChannel } from './useRouteEtaChannel';
@@ -27,10 +31,10 @@ const DRIVER_TERMINAL_STATUSES = new Set(['DELIVERED', 'RETURNED']);
 
 export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimeProps) {
   const port = useMemo(() => createDriverHttpAdapter(), []);
-  const proofPort = useMemo(
-    () => createDriverProofAdapter(undefined, { filePicker: pickDeviceImage }),
-    [],
-  );
+  // The screen captures the photo itself and hands the resulting file to the
+  // upload, so the adapter must never open a picker of its own: doing so made
+  // the driver choose a second, different image after already taking one.
+  const proofPort = useMemo(() => createDriverProofAdapter(undefined, {}), []);
   const sender = useMemo(
     () => createDriverTrackingSender({ socketFactory: createSocketFactory }),
     [],
@@ -318,11 +322,37 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
     }
   }
 
-  async function handleSelectProof() {
-    const file = await proofPort.selectProof();
-    if (!file) return;
-    const commandId = `cmd-select-proof-${orderId}`;
-    const proof = await proofPort.uploadProof(commandId);
+  async function handleSelectProof(file: DriverProofFileInput): Promise<DriverProofUploadResult> {
+    // Which evidence is being uploaded decides both the endpoint and the leg
+    // that opens next. Sending a pickup photo to the delivery endpoint would be
+    // rejected by the API, and advancing to DELIVERED from PICKING_UP is not a
+    // legal transition — so the two legs must never share one hardcoded path.
+    const currentView = queryClient.getQueryData<typeof query.data>(queryKey);
+    const isPickupLeg =
+      currentView?.kind === 'content' &&
+      currentView.accessScope === 'ASSIGNED_FULL' &&
+      currentView.order.status === 'PICKING_UP';
+
+    const commandId = isPickupLeg
+      ? `cmd-select-pickup-proof-${orderId}`
+      : `cmd-select-proof-${orderId}`;
+
+    const proof = await proofPort.uploadProof(commandId, file);
+
+    // Only a proof the server actually accepted may release the lifecycle
+    // transition; an upload-retry proof means the evidence did not land.
+    const ok = proof.kind === 'persisted' || proof.kind === 'uploading';
+
+    if (!ok) {
+      // Keep the current task untouched so the driver can retry the upload
+      // rather than being pushed into a transition the server will refuse.
+      return { ok: false, nextCommandId: null };
+    }
+
+    const nextCommandId = isPickupLeg
+      ? `cmd-transit-${orderId}`
+      : `cmd-deliver-${orderId}`;
+
     queryClient.setQueryData(queryKey, (current: typeof query.data) => {
       if (!current || current.kind !== 'content') return current;
       return {
@@ -331,14 +361,18 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
         primaryTask: {
           kind: 'advance-lifecycle',
           command: {
-            id: `cmd-deliver-${orderId}`,
-            label: 'Xác nhận hoàn tất giao hàng',
-            targetStatus: 'DELIVERED',
+            id: nextCommandId,
+            label: isPickupLeg
+              ? 'Đã lấy hàng — bắt đầu giao'
+              : 'Xác nhận hoàn tất giao hàng',
+            targetStatus: isPickupLeg ? 'IN_TRANSIT' : 'DELIVERED',
             pendingLabel: 'Đang ghi nhận...',
           },
         },
       };
     });
+
+    return { ok, nextCommandId };
   }
 
   async function handleReportIncident(payload: DriverIncidentSubmitPayload) {
@@ -401,7 +435,7 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
           void sender.retryConnection(orderId);
         }}
         onRetryProof={(commandId) => void handleExecuteTask(commandId)}
-        onSelectProof={() => void handleSelectProof()}
+        onSelectProof={(file) => handleSelectProof(file)}
         view={view}
       />
       <DriverIncidentModal

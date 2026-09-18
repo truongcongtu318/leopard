@@ -1,7 +1,16 @@
 import React from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, IconAlertTriangle, IconShieldAlert } from '@leopard/mobile-core';
+import {
+  Alert,
+  Box,
+  HStack,
+  IconAlertTriangle,
+  IconShieldAlert,
+  colors,
+  radius,
+  spacing,
+} from '@leopard/mobile-core';
 import type { IdlePingHealth } from '../idle-location-ping';
 
 export type DriverSystemBannerProps = Readonly<{
@@ -29,7 +38,7 @@ export function DriverSystemBanner({
   }
 
   return (
-    <View style={styles.bannerContainer}>
+    <Box style={styles.bannerContainer}>
       {/* Radar health warning */}
       {isRadarUnhealthy ? (
         <Pressable
@@ -58,24 +67,28 @@ export function DriverSystemBanner({
           style={styles.radarWarningBanner}
           testID="radar-health-warning"
         >
-          <IconShieldAlert color={colors.danger.text} size={16} />
-          <Text style={styles.radarWarningText}>
-            {idlePingHealth === 'permission-denied'
-              ? 'Chưa cấp quyền vị trí — bạn đang ẩn khỏi radar. Chạm để mở cài đặt.'
-              : 'Tín hiệu vị trí gián đoạn — bạn có thể đang ẩn khỏi radar điều phối.'}
-          </Text>
+          <HStack style={{ alignItems: 'center', gap: spacing.xs, flex: 1 }}>
+            <IconShieldAlert color={colors.danger.text} size={16} />
+            <Text style={styles.radarWarningText}>
+              {idlePingHealth === 'permission-denied'
+                ? 'Chưa cấp quyền vị trí — bạn đang ẩn khỏi radar. Chạm để mở cài đặt.'
+                : 'Tín hiệu vị trí gián đoạn — bạn có thể đang ẩn khỏi radar điều phối.'}
+            </Text>
+          </HStack>
         </Pressable>
       ) : null}
 
       {/* Network / refetch error banner */}
       {networkError ? (
-        <View accessibilityRole="alert" style={styles.networkErrorBanner}>
-          <View style={styles.networkErrorLeft}>
-            <IconAlertTriangle color="#D97706" size={16} />
-            <Text style={styles.networkErrorText}>
+        <Alert action="warning" accessibilityRole="alert" style={styles.networkErrorBanner}>
+          <HStack style={styles.networkErrorLeft}>
+            <Alert.Icon>
+              <IconAlertTriangle color="#D97706" size={16} />
+            </Alert.Icon>
+            <Alert.Text style={styles.networkErrorText}>
               Mất kết nối — dữ liệu có thể chưa được cập nhật
-            </Text>
-          </View>
+            </Alert.Text>
+          </HStack>
           {onRetry ? (
             <Pressable
               accessibilityLabel="Thử lại kết nối"
@@ -87,9 +100,9 @@ export function DriverSystemBanner({
               <Text style={styles.retryBtnText}>Thử lại</Text>
             </Pressable>
           ) : null}
-        </View>
+        </Alert>
       ) : null}
-    </View>
+    </Box>
   );
 }
 

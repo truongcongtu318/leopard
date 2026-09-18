@@ -6,6 +6,7 @@ import {
   IconCamera,
   IconCheck,
   IconTxPayment,
+  colors,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -14,11 +15,10 @@ import {
 } from '@leopard/mobile-core';
 import type { DriverAssignedDetailView } from '../../model';
 import { formatVndPrice } from '../../adapter';
-import { getDriverCurrentLocation } from '../../driver-current-location';
+import { useLiveTruckLocation } from '../../use-live-truck-location';
 import { postMapMessageToFrames } from '@leopard/mobile-core';
 import { MissionMapCanvas } from './MissionMapCanvas';
 import { VerticalRouteStepper } from './VerticalRouteStepper';
-import { EpodPanel } from './EpodPanel';
 import { CompletionSummaryCard } from './CompletionSummaryCard';
 import { DriverMissionBackButton } from './DriverMissionBackButton';
 import { DriverMissionActionBar } from './DriverMissionActionBar';
@@ -29,7 +29,6 @@ export type AssignedDetailViewProps = Readonly<{
   taskButtonComponent?: React.ReactNode;
   onBack?: () => void;
   onExecuteTask?: (commandId: string) => void;
-  onSelectProof?: () => void;
   onOpenPickupProof?: () => void;
   onOpenDeliveryProof?: () => void;
   onRetryProof?: (commandId: string) => void;
@@ -49,7 +48,6 @@ export function AssignedDetailView({
   taskButtonComponent,
   onBack,
   onExecuteTask,
-  onSelectProof,
   onOpenPickupProof,
   onOpenDeliveryProof,
   onRetryProof,
@@ -60,8 +58,6 @@ export function AssignedDetailView({
   onRecordStopProgress,
   inFlightStopCommand,
 }: AssignedDetailViewProps) {
-  const [preloadingPhotoCaptured, setPreloadingPhotoCaptured] = useState(false);
-  const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
   const [isMapOffCenter, setIsMapOffCenter] = useState(false);
   const [navMode, setNavMode] = useState<'overview' | 'turn-by-turn'>('overview');
 
@@ -69,29 +65,27 @@ export function AssignedDetailView({
   const isReturning = view.order.status === 'RETURNING';
   const isTerminal = view.order.status === 'DELIVERED' || view.order.status === 'RETURNED';
 
-  React.useEffect(() => {
-    let isMounted = true;
-    void getDriverCurrentLocation().then((loc) => {
-      if (isMounted && loc.kind === 'ready') {
-        setDriverLocation(loc.coords);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Live GPS feed. The marker is only drawn when a real fix exists — a missing
+  // fix must never be replaced by an invented coordinate, or the map would show
+  // the truck somewhere it has never been.
+  const { coords: truckLocation, heading: truckHeading } = useLiveTruckLocation(!isTerminal);
 
-  const effectiveTruckLocation = React.useMemo(() => {
-    if (driverLocation && driverLocation.lat > 20 && driverLocation.lat < 22) {
-      return driverLocation;
-    }
-    // Default near Hanoi origin for driver Tran Minh Quan
-    return { lat: 21.0280, lng: 105.8345 };
-  }, [driverLocation]);
+  // The map frame builds its truck marker from the initial HTML, so a moving
+  // vehicle only follows if each new fix is pushed into the frame. Without this
+  // the marker stayed frozen at the position captured when the map mounted.
+  React.useEffect(() => {
+    if (!truckLocation || isTerminal) return;
+    postMapMessageToFrames({
+      type: 'LEOPARD_UPDATE_TRUCK_LOCATION',
+      lat: truckLocation.lat,
+      lng: truckLocation.lng,
+      eta: view.order.route.distanceLabel ?? '',
+    });
+  }, [isTerminal, truckLocation, view.order.route.distanceLabel]);
 
   const handleRecenterDriverLocation = () => {
     setIsMapOffCenter(false);
-    postMapMessageToFrames({ type: 'LEOPARD_MAP_SET_VIEW_MODE', mode: 'driving' });
+    postMapMessageToFrames({ type: 'LEOPARD_MAP_RECENTER' });
   };
 
   const handleToggleNavigationMode = () => {
@@ -103,46 +97,47 @@ export function AssignedDetailView({
     });
   };
 
-  const activeNavigationTarget = React.useMemo(() => {
-    if (isReturning || isPickupLeg) {
-      return view.order.route.origin;
-    }
-    return view.order.route.destination;
-  }, [isReturning, isPickupLeg, view.order.route.origin, view.order.route.destination]);
-
-  const mapOrigin = React.useMemo(() => {
-    // Luôn ưu tiên vị trí xe hợp lệ trong khu vực của chuyến đi
-    if (effectiveTruckLocation) {
-      return { label: 'Vị trí của bạn', coords: effectiveTruckLocation };
-    }
+  /** Pickup point (A) — the fixed first stop of the order, never the vehicle. */
+  const pickupPoint = React.useMemo(() => {
+    const { origin } = view.order.route;
     return {
-      label: view.order.route.origin.label,
+      // The action bar's external-navigation handoff reads flat lat/lng while
+      // the map canvas reads `coords`, so both must stay populated.
+      id: origin.id,
+      label: origin.label,
+      lat: origin.lat,
+      lng: origin.lng,
       coords:
-        view.order.route.origin.lat != null && view.order.route.origin.lng != null
-          ? { lat: view.order.route.origin.lat, lng: view.order.route.origin.lng }
+        origin.lat != null && origin.lng != null
+          ? { lat: origin.lat, lng: origin.lng }
           : undefined,
     };
-  }, [effectiveTruckLocation, view.order.route.origin]);
+  }, [view.order.route.origin]);
 
-  const mapDestination = React.useMemo(() => {
-    // Trong giai đoạn đi lấy hàng (ACCEPTED, PICKING_UP), đích đến của bản đồ là ĐIỂM LẤY HÀNG
-    if (isPickupLeg) {
-      return {
-        label: view.order.route.origin.label,
-        coords:
-          view.order.route.origin.lat != null && view.order.route.origin.lng != null
-            ? { lat: view.order.route.origin.lat, lng: view.order.route.origin.lng }
-            : undefined,
-      };
-    }
+  /** Delivery point (B) — the fixed final stop of the order. */
+  const deliveryPoint = React.useMemo(() => {
+    const { destination } = view.order.route;
     return {
-      label: view.order.route.destination.label,
+      id: destination.id,
+      label: destination.label,
+      lat: destination.lat,
+      lng: destination.lng,
       coords:
-        view.order.route.destination.lat != null && view.order.route.destination.lng != null
-          ? { lat: view.order.route.destination.lat, lng: view.order.route.destination.lng }
+        destination.lat != null && destination.lng != null
+          ? { lat: destination.lat, lng: destination.lng }
           : undefined,
     };
-  }, [isPickupLeg, view.order.route.origin, view.order.route.destination]);
+  }, [view.order.route.destination]);
+
+  // Both endpoints stay on the map for the whole trip, so the driver always
+  // sees where the cargo is coming from and where it is going.
+  const mapOrigin = pickupPoint;
+  const mapDestination = deliveryPoint;
+
+  const activeNavigationTarget = React.useMemo(
+    () => (isReturning || isPickupLeg ? pickupPoint : deliveryPoint),
+    [deliveryPoint, isPickupLeg, isReturning, pickupPoint],
+  );
 
   const isMissionActive =
     !isTerminal &&
@@ -153,6 +148,8 @@ export function AssignedDetailView({
     view.order.isCashConfirmed || view.order.paymentStatus === 'PAID_MANUAL',
   );
 
+  // ── Arrival geofence: switch from the driving cockpit to the on-site form
+  // automatically once the truck reaches the active stop. ──
   const legTitle = isTerminal
     ? 'HOÀN TẤT'
     : view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP'
@@ -166,6 +163,8 @@ export function AssignedDetailView({
   return (
     <View style={styles.root} testID="assigned-detail-view">
       <MissionMapCanvas
+        cargoSummary={view.order.cargoSummary}
+        cargoWeightKg={view.order.cargoWeightKg}
         destination={mapDestination}
         destinationLabel={mapDestination.label}
         distanceLabel={view.order.route.distanceLabel}
@@ -176,6 +175,7 @@ export function AssignedDetailView({
             : undefined
         }
         fillContainer
+        navMode={navMode}
         navigationTarget={activeNavigationTarget}
         origin={mapOrigin}
         originLabel={mapOrigin.label}
@@ -183,7 +183,8 @@ export function AssignedDetailView({
         routeSegments={view.order.route.routeSegments}
         stops={isPickupLeg ? [] : view.order.route.stops}
         tracking={view.tracking}
-        truckLocation={effectiveTruckLocation}
+        truckHeading={truckHeading}
+        truckLocation={truckLocation ?? undefined}
         vehicleType={view.order.vehicleType}
       />
 
@@ -281,92 +282,10 @@ export function AssignedDetailView({
                 stops={view.order.route.stops}
               />
             </>
-          ) : (
-            /* Active Target Destination Card (Clean Apple HIG - Glanceable while driving) */
-            <View style={styles.activeLegGlanceCard} testID="active-leg-glance-card">
-              <View style={styles.activeLegBadgeRow}>
-                <View style={styles.activeLegPill}>
-                  <Text style={styles.activeLegPillText}>
-                    {isPickupLeg ? 'ĐIỂM LẤY HÀNG (A)' : 'ĐIỂM GIAO HÀNG (B)'}
-                  </Text>
-                </View>
-                {view.order.route.distanceLabel ? (
-                  <Text style={styles.activeLegDistanceText}>
-                    {view.order.route.distanceLabel}
-                  </Text>
-                ) : null}
-              </View>
-
-              <Text numberOfLines={2} style={styles.activeLegAddressText}>
-                {isPickupLeg
-                  ? view.order.route.origin.label
-                  : view.order.route.destination.label}
-              </Text>
-
-              {/* Stage 2 (PICKING_UP): Tích hợp gọn gàng kiểm hàng ngay trong thẻ điểm đến, KHÔNG tạo card riêng che map */}
-              {view.order.status === 'PICKING_UP' ? (
-                <View style={styles.inlineCargoChecklist} testID="cargo-specs-checklist">
-                  <View style={styles.inlineCargoInfoRow}>
-                    <View style={styles.inlineCargoSummaryCol}>
-                      <Text numberOfLines={1} style={styles.inlineCargoText}>
-                        {view.order.cargoSummary || 'Hàng hóa tiêu chuẩn'}
-                      </Text>
-                      {view.order.cargoWeightKg ? (
-                        <Text style={styles.inlineCargoWeightText}>{view.order.cargoWeightKg} kg</Text>
-                      ) : null}
-                    </View>
-                    <View style={styles.inlineCargoFeeCol}>
-                      <Text style={styles.inlineCargoFeeLabel}>Phí bốc xếp:</Text>
-                      <Text style={styles.inlineCargoBold}> Miễn phí tiêu chuẩn</Text>
-                    </View>
-                  </View>
-
-                  <Pressable
-                    accessibilityHint="Chụp ảnh hàng hóa trước khi bốc lên xe để làm bằng chứng tránh khiếu nại"
-                    accessibilityLabel="Chụp ảnh hàng trước khi bốc"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setPreloadingPhotoCaptured(true);
-                      if (onOpenPickupProof) {
-                        onOpenPickupProof();
-                      } else if (onSelectProof) {
-                        onSelectProof();
-                      }
-                    }}
-                    style={({ pressed }) => [
-                      styles.inlineCaptureBtn,
-                      preloadingPhotoCaptured ? styles.inlineCaptureBtnDone : null,
-                      pressed ? styles.btnPressed : null,
-                    ]}
-                    testID="btn-preloading-cargo-photo"
-                  >
-                    {preloadingPhotoCaptured ? (
-                      <View style={styles.inlineCaptureInnerRow}>
-                        <IconCheck color="#15803D" size={16} strokeWidth={2.5} />
-                        <Text style={styles.inlineCaptureDoneText}>
-                          Đã chụp ảnh kiểm hàng (tránh khiếu nại)
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={styles.inlineCaptureInnerRow}>
-                        <IconCamera color="#0B2545" size={16} />
-                        <Text style={styles.inlineCapturePromptText}>
-                          + Chụp ảnh kiểm hàng tại điểm lấy
-                        </Text>
-                      </View>
-                    )}
-                  </Pressable>
-                </View>
-              ) : view.order.cargoSummary ? (
-                <View style={styles.activeLegCargoRow}>
-                  <Text numberOfLines={1} style={styles.activeLegCargoText}>
-                    📦 {view.order.cargoSummary}
-                    {view.order.cargoWeightKg ? ` (${view.order.cargoWeightKg} kg)` : ''}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          )}
+          ) : null}
+          {/* The active-leg card (address, cargo, loading fee) is gone: the
+              address already lives on the map HUD and cargo moved to the map
+              header, so the sheet no longer repeats it. */}
 
           {/* Thu tiền mặt (Cash on Delivery) khi đơn thanh toán CASH chuẩn Apple HIG */}
           {isCashOrder && (view.order.status === 'IN_TRANSIT' || isTerminal) && (
@@ -425,40 +344,7 @@ export function AssignedDetailView({
             </View>
           )}
 
-          {view.order.status === 'DELIVERED' && (
-            <EpodPanel
-              isCashConfirmed={isCashConfirmed}
-              onExecuteTask={onExecuteTask}
-              onRetryProof={onRetryProof}
-              onSelectProof={onSelectProof}
-              orderId={view.order.id}
-              paymentMethod={view.order.paymentMethod}
-              paymentStatus={view.order.paymentStatus}
-              priceLabel={view.order.priceLabel || (view.order.priceVnd ? formatVndPrice(view.order.priceVnd) : undefined)}
-              proof={view.proof}
-              status={view.order.status}
-            />
-          )}
-
-          {view.order.status === 'IN_TRANSIT' && (
-            <View style={styles.srOnly}>
-              <EpodPanel
-                isCashConfirmed={isCashConfirmed}
-                onExecuteTask={onExecuteTask}
-                onRetryProof={onRetryProof}
-                onSelectProof={onSelectProof}
-                orderId={view.order.id}
-                paymentMethod={view.order.paymentMethod}
-                paymentStatus={view.order.paymentStatus}
-                priceLabel={view.order.priceLabel || (view.order.priceVnd ? formatVndPrice(view.order.priceVnd) : undefined)}
-                proof={view.proof}
-                status={view.order.status}
-              />
-            </View>
-          )}
-
-          {view.tracking.kind === 'permission-denied' ? (
-            <View style={styles.permissionAlertBox}>
+          {view.tracking.kind === 'permission-denied' ? (            <View style={styles.permissionAlertBox}>
               <Text accessibilityRole="alert" style={styles.permissionAlertTitle}>Quyền vị trí bị từ chối</Text>
               <Text style={styles.permissionAlertMessage}>
                 Ứng dụng cần quyền vị trí để tiếp tục cập nhật lộ trình di chuyển của xe.
@@ -559,130 +445,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xs,
     paddingBottom: spacing.xs,
-  },
-  activeLegGlanceCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    padding: spacing.md,
-    ...iosContinuousCurve,
-    shadowColor: '#0B2545',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
-    gap: 4,
-  },
-  activeLegBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
-  activeLegPill: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-  },
-  activeLegPillText: {
-    color: '#D97706',
-    ...typeScale.caption2,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  activeLegDistanceText: {
-    color: leopardPalette.primary,
-    ...typeScale.footnote,
-    fontWeight: '700',
-  },
-  activeLegAddressText: {
-    color: '#0F172A',
-    ...typeScale.headline,
-    fontWeight: '700',
-  },
-  activeLegCargoRow: {
-    marginTop: 2,
-  },
-  activeLegCargoText: {
-    color: '#64748B',
-    ...typeScale.footnote,
-  },
-  inlineCargoChecklist: {
-    marginTop: spacing.xs,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    gap: 6,
-  },
-  inlineCargoInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  inlineCargoSummaryCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-  },
-  inlineCargoText: {
-    ...typeScale.footnote,
-    color: '#0F172A',
-    fontWeight: '600',
-  },
-  inlineCargoWeightText: {
-    ...typeScale.footnote,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  inlineCargoFeeCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  inlineCargoFeeLabel: {
-    ...typeScale.caption1,
-    color: '#64748B',
-  },
-  inlineCargoBold: {
-    fontWeight: '700',
-    color: '#0B2545',
-  },
-  inlineCaptureBtn: {
-    height: 38,
-    borderRadius: radius.control,
-    backgroundColor: '#FFFBEB',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-    ...iosContinuousCurve,
-  },
-  inlineCaptureBtnDone: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderStyle: 'solid',
-  },
-  inlineCaptureInnerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  inlineCapturePromptText: {
-    ...typeScale.footnote,
-    color: '#0B2545',
-    fontWeight: '600',
-  },
-  inlineCaptureDoneText: {
-    ...typeScale.footnote,
-    color: '#15803D',
-    fontWeight: '600',
   },
   notice: {
     backgroundColor: '#FEF3C7',

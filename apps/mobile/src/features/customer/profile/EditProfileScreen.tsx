@@ -14,13 +14,20 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 
 import {
+  Alert as LeopardAlert,
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
+  HStack,
   IconCamera,
   IconIdCard,
   IconMessage,
   IconSecurityShield,
   IconUser,
   ScreenScaffold,
+  VStack,
   colors,
   customerPalette,
   haptic,
@@ -145,16 +152,16 @@ export function EditProfileScreen({
           style={styles.scrollWrap}
         >
           {/* Avatar Hero Section (Apple Profile Style) */}
-          <View style={styles.avatarSection}>
-            <View style={styles.avatarWrapper}>
+          <VStack style={styles.avatarSection}>
+            <Box style={styles.avatarWrapper}>
               {avatarUrl ? (
                 <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
               ) : (
-                <View style={styles.avatarPlaceholder}>
+                <Box style={styles.avatarPlaceholder}>
                   <Text style={styles.avatarInitial}>
                     {(name || 'K').charAt(0).toUpperCase()}
                   </Text>
-                </View>
+                </Box>
               )}
               <Pressable
                 accessibilityLabel="Đổi ảnh đại diện"
@@ -167,10 +174,10 @@ export function EditProfileScreen({
               >
                 <IconCamera color={customerPalette.surfaceWhite} size={15} />
               </Pressable>
-            </View>
+            </Box>
 
             {/* Quick Action Pill Buttons */}
-            <View style={styles.avatarActionRow}>
+            <HStack style={styles.avatarActionRow}>
               <Pressable
                 accessibilityLabel="Chụp ảnh đại diện"
                 accessibilityRole="button"
@@ -196,20 +203,20 @@ export function EditProfileScreen({
                 <IconIdCard color={customerPalette.primary} size={14} />
                 <Text style={styles.actionPillText}>Đổi ảnh đại diện</Text>
               </Pressable>
-            </View>
-          </View>
+            </HStack>
+          </VStack>
 
           {/* Personal Information Group (Apple Inset Grouped Table View) */}
-          <View style={styles.sectionGroup}>
+          <VStack style={styles.sectionGroup}>
             <Text style={styles.sectionHeaderTitle}>Thông tin cá nhân</Text>
 
-            <View style={styles.insetCard}>
+            <Card style={styles.insetCard}>
               {/* Name Field */}
-              <View style={styles.fieldRow}>
-                <View style={styles.fieldIconBox}>
+              <HStack style={styles.fieldRow}>
+                <Box style={styles.fieldIconBox}>
                   <IconUser color={customerPalette.primary} size={18} />
-                </View>
-                <View style={styles.fieldInputCol}>
+                </Box>
+                <VStack style={styles.fieldInputCol}>
                   <Text style={styles.fieldLabel}>Họ và tên</Text>
                   <TextInput
                     accessibilityLabel="Họ và tên"
@@ -224,23 +231,23 @@ export function EditProfileScreen({
                     style={styles.textInput}
                     value={name}
                   />
-                </View>
-              </View>
+                </VStack>
+              </HStack>
 
               {nameError ? (
-                <View style={styles.errorTextRow}>
+                <Box style={styles.errorTextRow}>
                   <Text style={styles.errorText}>{nameError}</Text>
-                </View>
+                </Box>
               ) : null}
 
-              <View style={styles.rowDivider} />
+              <Divider style={styles.rowDivider} />
 
               {/* Email Field */}
-              <View style={styles.fieldRow}>
-                <View style={styles.fieldIconBox}>
+              <HStack style={styles.fieldRow}>
+                <Box style={styles.fieldIconBox}>
                   <IconMessage color={customerPalette.primary} size={18} />
-                </View>
-                <View style={styles.fieldInputCol}>
+                </Box>
+                <VStack style={styles.fieldInputCol}>
                   <Text style={styles.fieldLabel}>Địa chỉ Email</Text>
                   <TextInput
                     accessibilityLabel="Email"
@@ -253,24 +260,24 @@ export function EditProfileScreen({
                     style={styles.textInput}
                     value={email}
                   />
-                </View>
-              </View>
-            </View>
+                </VStack>
+              </HStack>
+            </Card>
 
             {errorMessage ? (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorBannerText}>{errorMessage}</Text>
-              </View>
+              <LeopardAlert action="error" style={styles.errorBanner}>
+                <LeopardAlert.Text style={styles.errorBannerText}>{errorMessage}</LeopardAlert.Text>
+              </LeopardAlert>
             ) : null}
-          </View>
+          </VStack>
 
           {/* Security & Privacy Trust Footnote (Apple Style) */}
-          <View style={styles.trustFootnote}>
+          <HStack style={styles.trustFootnote}>
             <IconSecurityShield color={colors.success.text} size={15} />
             <Text style={styles.trustFootnoteText}>
               Thông tin của bạn được bảo mật an toàn theo tiêu chuẩn bảo mật dữ liệu khách hàng LEOPARD.
             </Text>
-          </View>
+          </HStack>
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenScaffold>

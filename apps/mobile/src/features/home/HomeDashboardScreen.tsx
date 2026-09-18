@@ -34,7 +34,7 @@ import {
   IconTruck,
   IconVan,
   IconWarehouse,
-  RealInteractiveMap,
+  LeopardMapView,
   RouteSpine,
   StatusBadge,
   colors,
@@ -80,6 +80,8 @@ export type ActiveShipment = Readonly<{
   driverName?: string;
   plate?: string;
   etaMinutes?: number;
+  routeCoords?: readonly { lat: number; lng: number }[];
+  truckLocation?: { lat: number; lng: number };
 }>;
 
 export type RecentOrder = Readonly<{
@@ -228,73 +230,15 @@ export function stripVietnameseAccents(str: string): string {
     .toLowerCase();
 }
 
-export function searchPlacesDirect(query: string): readonly LocationSuggestionItem[] {
-  const trimmed = query.trim();
-  if (!trimmed || trimmed.length < 2) {
-    return [];
-  }
-  const cleanQ = stripVietnameseAccents(trimmed);
-  const REAL_VIETNAM_PLACES: readonly LocationSuggestionItem[] = [
-    {
-      id: 'pl-1',
-      title: '120 Trường Chinh',
-      subtitle: 'Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
-      address: '120 Trường Chinh, Phường 12, Quận Tân Bình, TP. Hồ Chí Minh',
-    },
-    {
-      id: 'pl-2',
-      title: 'Đường Cộng Hòa',
-      subtitle: 'Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
-      address: 'Đường Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh',
-    },
-    {
-      id: 'pl-3',
-      title: 'Cảng Cát Lái',
-      subtitle: 'Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
-      address: 'Cảng Cát Lái, Đường Nguyễn Thị Định, TP. Thủ Đức, TP. Hồ Chí Minh',
-    },
-    {
-      id: 'pl-4',
-      title: 'Sân bay Tân Sơn Nhất',
-      subtitle: 'Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
-      address: 'Sân bay Tân Sơn Nhất, Đường Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
-    },
-    {
-      id: 'pl-5',
-      title: 'Chợ Bến Thành',
-      subtitle: 'Đường Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-      address: 'Chợ Bến Thành, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-    },
-  ];
-
-  const matched = REAL_VIETNAM_PLACES.filter(
-    (p) =>
-      stripVietnameseAccents(p.title).includes(cleanQ) ||
-      stripVietnameseAccents(p.subtitle).includes(cleanQ) ||
-      stripVietnameseAccents(p.address).includes(cleanQ),
-  );
-
-  return matched.length > 0
-    ? matched
-    : [
-        {
-          id: `typed-${cleanQ}`,
-          title: trimmed,
-          subtitle: 'Địa chỉ tìm kiếm theo từ khóa',
-          address: trimmed,
-        },
-      ];
-}
-
 export async function searchPlacesLive(
   query: string,
   apiKey?: string,
 ): Promise<readonly LocationSuggestionItem[]> {
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
-  const liveResults = await searchVietmapWithCoords(trimmed, apiKey);
-  if (liveResults.length > 0) return liveResults;
-  return searchPlacesDirect(trimmed);
+  // Real results only. A hardcoded place list used to be returned whenever the
+  // API found nothing, presenting invented addresses as search results.
+  return searchVietmapWithCoords(trimmed, apiKey);
 }
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';
@@ -334,7 +278,13 @@ export type HomeDashboardScreenProps = Readonly<{
   onOpenProfile?: () => void;
   onSwitchRole?: (role: 'CUSTOMER' | 'DRIVER') => void;
   onRegisterDriver?: () => void;
-  onQuickBook?: (origin?: string, destination?: string, dropoffCoords?: { lat: number; lng: number }, pickupCoords?: { lat: number; lng: number }) => void;
+  onQuickBook?: (
+    origin?: string,
+    destination?: string,
+    dropoffCoords?: { lat: number; lng: number },
+    pickupCoords?: { lat: number; lng: number },
+    fleetVehicleId?: FleetVehicleCategory,
+  ) => void;
   onConfirmBooking?: (details: BookingDetails & {
     pickup: string;
     dropoff: string;
@@ -345,10 +295,14 @@ export type HomeDashboardScreenProps = Readonly<{
     vehicleName: string;
     fleetVehicleId?: FleetVehicleCategory;
   }) => void;
-  onPressSearchAddress?: () => void;
+  onPressSearchAddress?: (
+    fleetVehicleId?: FleetVehicleCategory,
+    pickup?: string,
+    pickupCoords?: { lat: number; lng: number } | null,
+  ) => void;
   onOpenSavedAddresses?: () => void;
   onNavigateTab?: (tab: TabKey) => void;
-  onSelectVehicleAndBook?: (vehicleId: VehicleCategory) => void;
+  onSelectVehicleAndBook?: (vehicleId: VehicleCategory, fleetVehicleId?: FleetVehicleCategory) => void;
   onTopUpWallet?: () => void;
   onOpenQrScan?: () => void;
   hasFloatingNavBar?: boolean;
@@ -515,6 +469,7 @@ export function HomeDashboardScreen({
             dropoff,
             dropoffCoords || undefined,
             pickupCoords || undefined,
+            selectedFleetId,
           );
         } else {
           onCreateOrder?.();
@@ -522,7 +477,7 @@ export function HomeDashboardScreen({
         setTimeout(() => { setIsAutoNavigating(false); hasNavigatedRef.current = false; }, 1500);
       }, 400);
     },
-    [onQuickBook, onCreateOrder, pickupCoords],
+    [onQuickBook, onCreateOrder, pickupCoords, selectedFleetId],
   );
 
   useEffect(() => {
@@ -558,9 +513,12 @@ export function HomeDashboardScreen({
           setLocationNotice('Chưa cấp quyền vị trí — vui lòng nhập điểm lấy hàng thủ công.');
           return;
         }
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        } as any);
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
+        setPickupCoords({ lat, lng });
         const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
         if (resolved && resolved.trim().length > 0) {
           setPickupText(resolved);
@@ -714,7 +672,9 @@ export function HomeDashboardScreen({
     }
 
     setIsSearchingLocation(true);
-    setLiveSuggestions(searchPlacesDirect(q));
+    // Clear stale rows instead of showing hardcoded places while the real
+    // autocomplete request is in flight.
+    setLiveSuggestions([]);
     if (searchDebounceTimerRef.current) {
       clearTimeout(searchDebounceTimerRef.current);
     }
@@ -746,12 +706,12 @@ export function HomeDashboardScreen({
   const handleFleetSelectAndBook = (vehicle: FleetVehicleItem) => {
     haptic.selection();
     setSelectedFleetId(vehicle.id);
-    onSelectVehicleAndBook?.(vehicle.vehicleCategory);
+    onSelectVehicleAndBook?.(vehicle.vehicleCategory, vehicle.id);
   };
 
   const handleMainCtaBook = () => {
     haptic.selection();
-    onSelectVehicleAndBook?.(currentFleetVehicle.vehicleCategory);
+    onSelectVehicleAndBook?.(currentFleetVehicle.vehicleCategory, currentFleetVehicle.id);
 
     const details: BookingDetails = {
       receiverName: receiverName.trim() || loggedInCustomer?.name || userName || 'Người nhận',
@@ -785,6 +745,7 @@ export function HomeDashboardScreen({
         dropoffText,
         dropoffCoords || undefined,
         pickupCoords || undefined,
+        currentFleetVehicle.id,
       );
     } else {
       onCreateOrder?.();
@@ -795,7 +756,7 @@ export function HomeDashboardScreen({
     <View style={styles.root}>
       {/* ================= LAYER 0 (z-index 0): 100% FULL-BLEED MAP ================= */}
       <View pointerEvents="box-none" style={styles.layer0Map} testID="home-map-layer">
-        <RealInteractiveMap
+        <LeopardMapView
           destination={
             activeShipment
               ? {
@@ -806,7 +767,8 @@ export function HomeDashboardScreen({
                 ? { label: dropoffText, coords: dropoffCoords || undefined }
                 : undefined
           }
-          height="100%" interactive
+          height="100%"
+          interactive
           mode={activeShipment ? 'tracking' : hasSelectedDropoff ? 'route' : 'preview'}
           nearbyDrivers={effectiveNearbyDrivers}
           origin={
@@ -819,9 +781,11 @@ export function HomeDashboardScreen({
                 ? { label: pickupText, coords: pickupCoords || undefined }
                 : undefined
           }
+          routeCoords={activeShipment?.routeCoords}
           stops={activeShipment ? [] : mapStops}
-          truckEtaMinutes={activeShipment?.etaMinutes}
           testID="home-interactive-map"
+          truckEtaMinutes={activeShipment?.etaMinutes}
+          truckLocation={activeShipment?.truckLocation || activeShipment?.originCoords}
         />
       </View>
 
@@ -907,7 +871,7 @@ export function HomeDashboardScreen({
                   onPress={() => {
                     haptic.light();
                     if (onPressSearchAddress) {
-                      onPressSearchAddress();
+                      onPressSearchAddress(selectedFleetId, pickupText, pickupCoords);
                     } else {
                       setIsBookingSheetOpen(true);
                       setFocusedField('dropoff');
@@ -927,7 +891,7 @@ export function HomeDashboardScreen({
                       onChangeText={handleDropoffChangeText}
                       onFocus={() => {
                         if (onPressSearchAddress) {
-                          onPressSearchAddress();
+                          onPressSearchAddress(selectedFleetId, pickupText, pickupCoords);
                         } else {
                           setFocusedField('dropoff');
                         }
@@ -1014,11 +978,11 @@ export function HomeDashboardScreen({
 
                 {/* Accessible hidden controls when in compact mode so tests can interact with pickup */}
                 <View style={styles.accessibleHiddenForm}>
-                  {pickupLabel || pickupText ? (
+                  {pickupLabel ? (
                     <View style={styles.pickupLabelBadge} testID="pickup-label-badge">
                       <IconWarehouse color={colors.success.text} size={12} />
                       <Text style={styles.pickupLabelBadgeText} testID="pickup-label-badge-text">
-                        {pickupLabel || 'Kho'}
+                        {pickupLabel}
                       </Text>
                     </View>
                   ) : null}

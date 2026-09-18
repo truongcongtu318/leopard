@@ -10,7 +10,24 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import { typeScale, colors, customerPalette, radius, spacing, typography, Button, IconCopy, IconQrPayment, IconSecurityShield } from '@leopard/mobile-core';
+import {
+  Badge,
+  Box,
+  Button,
+  Card,
+  Divider,
+  HStack,
+  IconCopy,
+  IconQrPayment,
+  IconSecurityShield,
+  VStack,
+  colors,
+  customerPalette,
+  radius,
+  spacing,
+  typeScale,
+  typography,
+} from '@leopard/mobile-core';
 
 export type VietQRPaymentModalProps = Readonly<{
   visible: boolean;
@@ -111,15 +128,15 @@ export function VietQRPaymentModal({
 
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+      <Box style={styles.modalOverlay}>
+        <Card style={styles.modalCard}>
           {/* Header */}
-          <View style={styles.modalHeader}>
-            <View style={styles.modalTitleRow}>
-              <View style={styles.headerIconBox}>
+          <HStack style={styles.modalHeader}>
+            <HStack style={styles.modalTitleRow}>
+              <Box style={styles.headerIconBox}>
                 <IconQrPayment color={customerPalette.primary} size={20} />
-              </View>
-              <View>
+              </Box>
+              <VStack>
                 <Text style={styles.modalTitle}>
                   {isSuccess ? 'Thanh toán thành công' : 'Thanh toán VietQR'}
                 </Text>
@@ -128,8 +145,8 @@ export function VietQRPaymentModal({
                     ? 'Đang chuẩn bị điều phối tài xế...'
                     : 'Quét mã qua app ngân hàng hoặc ví điện tử'}
                 </Text>
-              </View>
-            </View>
+              </VStack>
+            </HStack>
             {!isSuccess ? (
               <Pressable
                 accessibilityLabel="Đóng modal thanh toán"
@@ -141,7 +158,7 @@ export function VietQRPaymentModal({
                 <Text style={styles.closeBtnText}>✕</Text>
               </Pressable>
             ) : null}
-          </View>
+          </HStack>
 
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -151,31 +168,31 @@ export function VietQRPaymentModal({
               /* ========================================================= */
               /* 🎉 TRẠNG THÁI CHÚC MỪNG THANH TOÁN THÀNH CÔNG */
               /* ========================================================= */
-              <View style={styles.successWrapper}>
-                <View style={styles.successCircleOuter}>
-                  <View style={styles.successCircleInner}>
+              <VStack style={styles.successWrapper}>
+                <Box style={styles.successCircleOuter}>
+                  <Box style={styles.successCircleInner}>
                     <Text style={styles.successCheckIcon}>✓</Text>
-                  </View>
-                </View>
+                  </Box>
+                </Box>
 
                 <Text style={styles.successHeading}>Thanh toán thành công!</Text>
                 <Text style={styles.successAmount}>{finalAmountLabel}</Text>
 
-                <View style={styles.successDetailBox}>
+                <VStack style={styles.successDetailBox}>
                   <Text style={styles.successDetailRow}>
                     Mã đơn hàng: <Text style={styles.boldText}>{orderReference}</Text>
                   </Text>
                   <Text style={styles.successDetailRow}>
                     Phương thức: <Text style={styles.boldText}>VietQR (Napas 24/7)</Text>
                   </Text>
-                </View>
+                </VStack>
 
-                <View style={styles.autoAdvanceRow}>
-                  <View style={styles.pulseIndicator} />
+                <HStack style={styles.autoAdvanceRow}>
+                  <Box style={styles.pulseIndicator} />
                   <Text style={styles.autoAdvanceText}>
                     Đang chuyển sang màn hình tìm tài xế...
                   </Text>
-                </View>
+                </HStack>
 
                 <Button
                   label="Tiếp tục ngay ➔"
@@ -183,20 +200,20 @@ export function VietQRPaymentModal({
                   size="driver-primary"
                   variant="primary"
                 />
-              </View>
+              </VStack>
             ) : (
               /* ========================================================= */
               /* 💳 TRẠNG THÁI QUÉT MÃ QR & THÔNG TIN CHUYỂN KHOẢN */
               /* ========================================================= */
-              <View style={styles.qrFlowWrapper}>
+              <VStack style={styles.qrFlowWrapper}>
                 {/* QR Code Container */}
-                <View style={styles.qrCodeCard}>
-                  <View style={styles.qrBankRow}>
+                <Card style={styles.qrCodeCard}>
+                  <HStack style={styles.qrBankRow}>
                     <Text style={styles.qrBankName}>{bankName}</Text>
-                    <View style={styles.napasBadge}>
-                      <Text style={styles.napasBadgeText}>NAPAS 24/7</Text>
-                    </View>
-                  </View>
+                    <Badge action="info" size="sm" style={styles.napasBadge}>
+                      <Badge.Text style={styles.napasBadgeText}>NAPAS 24/7</Badge.Text>
+                    </Badge>
+                  </HStack>
 
                   <View accessibilityLabel="Mã QR thanh toán VietQR" style={styles.qrCodeBox}>
                     <QRCode size={180} value={effectivePayload} />
@@ -205,24 +222,24 @@ export function VietQRPaymentModal({
                   <Text style={styles.qrHint}>
                     Mở app ngân hàng bất kỳ để quét mã tự động điền số tiền và nội dung
                   </Text>
-                </View>
+                </Card>
 
                 {/* Countdown & Status */}
-                <View style={styles.timerRow}>
+                <HStack style={styles.timerRow}>
                   <Text style={styles.timerLabel}>Giữ mã thanh toán:</Text>
                   <Text style={styles.timerClock}>{timeFormatted}</Text>
-                </View>
+                </HStack>
 
                 {/* Transfer Information Table */}
-                <View style={styles.infoTableCard}>
+                <Card style={styles.infoTableCard}>
                   <Text style={styles.infoTableTitle}>HOẶC CHUYỂN KHOẢN THỦ CÔNG</Text>
 
                   {/* STK */}
-                  <View style={styles.infoRow}>
-                    <View style={styles.infoCol}>
+                  <HStack style={styles.infoRow}>
+                    <VStack style={styles.infoCol}>
                       <Text style={styles.infoLabel}>Số tài khoản</Text>
                       <Text style={styles.infoValHighlight}>{accountNumber}</Text>
-                    </View>
+                    </VStack>
                     <Pressable
                       accessibilityLabel="Sao chép số tài khoản"
                       accessibilityRole="button"
@@ -246,24 +263,24 @@ export function VietQRPaymentModal({
                         {copiedField === 'accountNumber' ? 'Đã chép' : 'Sao chép'}
                       </Text>
                     </Pressable>
-                  </View>
+                  </HStack>
 
                   {/* Chủ TK */}
-                  <View style={styles.infoRowDivider} />
-                  <View style={styles.infoRow}>
-                    <View style={styles.infoCol}>
+                  <Divider style={styles.infoRowDivider} />
+                  <HStack style={styles.infoRow}>
+                    <VStack style={styles.infoCol}>
                       <Text style={styles.infoLabel}>Chủ tài khoản</Text>
                       <Text style={styles.infoVal}>{accountName}</Text>
-                    </View>
-                  </View>
+                    </VStack>
+                  </HStack>
 
                   {/* Số tiền */}
-                  <View style={styles.infoRowDivider} />
-                  <View style={styles.infoRow}>
-                    <View style={styles.infoCol}>
+                  <Divider style={styles.infoRowDivider} />
+                  <HStack style={styles.infoRow}>
+                    <VStack style={styles.infoCol}>
                       <Text style={styles.infoLabel}>Số tiền chính xác</Text>
                       <Text style={styles.infoValPrice}>{finalAmountLabel}</Text>
-                    </View>
+                    </VStack>
                     <Pressable
                       accessibilityLabel="Sao chép số tiền"
                       accessibilityRole="button"
@@ -287,15 +304,15 @@ export function VietQRPaymentModal({
                         {copiedField === 'amount' ? 'Đã chép' : 'Sao chép'}
                       </Text>
                     </Pressable>
-                  </View>
+                  </HStack>
 
                   {/* Nội dung */}
-                  <View style={styles.infoRowDivider} />
-                  <View style={styles.infoRow}>
-                    <View style={styles.infoCol}>
+                  <Divider style={styles.infoRowDivider} />
+                  <HStack style={styles.infoRow}>
+                    <VStack style={styles.infoCol}>
                       <Text style={styles.infoLabel}>Nội dung chuyển khoản</Text>
                       <Text style={styles.infoValHighlight}>{cleanRef}</Text>
-                    </View>
+                    </VStack>
                     <Pressable
                       accessibilityLabel="Sao chép nội dung chuyển khoản"
                       accessibilityRole="button"
@@ -319,19 +336,19 @@ export function VietQRPaymentModal({
                         {copiedField === 'reference' ? 'Đã chép' : 'Sao chép'}
                       </Text>
                     </Pressable>
-                  </View>
-                </View>
+                  </HStack>
+                </Card>
 
                 {/* Safety notice */}
-                <View style={styles.trustBanner}>
+                <HStack style={styles.trustBanner}>
                   <IconSecurityShield color={colors.success.text} size={16} />
                   <Text style={styles.trustBannerText}>
                     Hệ thống tự động xác nhận trong vòng 5–15 giây sau khi ngân hàng xử lý thành công.
                   </Text>
-                </View>
+                </HStack>
 
                 {/* Action Buttons */}
-                <View style={styles.btnStack}>
+                <VStack space="xs" style={styles.btnStack}>
                   <Button
                     label="Tôi đã chuyển khoản ➔"
                     onPress={handleConfirmPaid}
@@ -346,12 +363,12 @@ export function VietQRPaymentModal({
                   >
                     <Text style={styles.btnLaterText}>Để sau / Đóng</Text>
                   </Pressable>
-                </View>
-              </View>
+                </VStack>
+              </VStack>
             )}
           </ScrollView>
-        </View>
-      </View>
+        </Card>
+      </Box>
     </Modal>
   );
 }

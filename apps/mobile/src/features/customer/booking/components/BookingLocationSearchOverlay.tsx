@@ -17,15 +17,18 @@ import {
   IconClose,
   IconLocationPin,
   IconSearch,
+  colors,
   customerPalette,
+  haptic,
   iosContinuousCurve,
   radius,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
+import * as Location from 'expo-location';
 import { addressStore, type SavedAddress } from '../../addresses/address-store';
-import { searchPlacesDirect } from '../../../home/HomeDashboardScreen';
 import { searchVietmapWithCoords, type GeocodedSuggestion } from '../../../home/services/vietmap-search';
+import { reverseGeocodeCoords } from '../../../home/components/MapAddressPickerModal';
 
 export interface LocationSearchResult {
   id: string;
@@ -36,8 +39,8 @@ export interface LocationSearchResult {
 
 export interface BookingLocationSearchOverlayProps {
   visible: boolean;
-  target: 'pickup' | 'dropoff';
-  currentValue: string;
+  target: string;
+  currentValue?: string;
   onClose: () => void;
   onSelectLocation: (address: string, coords?: { lat: number; lng: number }) => void;
   onPickOnMap?: () => void;
@@ -53,6 +56,7 @@ export function BookingLocationSearchOverlay({
 }: BookingLocationSearchOverlayProps) {
   const [query, setQuery] = useState('');
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
+  const [isLocatingCurrentPosition, setIsLocatingCurrentPosition] = useState(false);
   const [searchResults, setSearchResults] = useState<LocationSearchResult[]>([]);
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -95,18 +99,13 @@ export function BookingLocationSearchOverlay({
       return;
     }
 
-    // 1. Instant real places match
-    const directMatches = searchPlacesDirect(trimmed)
-      .filter((p) => !p.id.startsWith('typed-'))
-      .map((p) => ({
-        id: p.id,
-        name: p.title,
-        address: p.address || p.subtitle,
-        coords: p.coords,
-      }));
-    setSearchResults(directMatches);
+    // Only the real VietMap Autocomplete API feeds this list. A hardcoded
+    // "places" list used to be shown here instantly, so the picker displayed
+    // addresses that were never real search results.
+    setSearchResults([]);
+    setIsSearchingOnline(true);
 
-    // 2. Debounced VietMap Autocomplete API
+    // Debounced VietMap Autocomplete API
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
     }
@@ -125,7 +124,7 @@ export function BookingLocationSearchOverlay({
 
           const seen = new Set<string>();
           const deduped: LocationSearchResult[] = [];
-          for (const item of [...directMatches, ...mapped]) {
+          for (const item of mapped) {
             const key = item.name.toLowerCase().trim();
             if (!seen.has(key)) {
               seen.add(key);
@@ -148,10 +147,45 @@ export function BookingLocationSearchOverlay({
     };
   }, [query]);
 
+  const handleUseCurrentLocation = async () => {
+    haptic.light();
+    setIsLocatingCurrentPosition(true);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') {
+        setIsLocatingCurrentPosition(false);
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      } as any);
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+      const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
+      const chosenAddress =
+        resolved && resolved.trim().length > 0
+          ? resolved.trim()
+          : `Vị trí hiện tại (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+      handleSelect({
+        id: 'current-gps',
+        name: 'Vị trí hiện tại',
+        address: chosenAddress,
+        coords: { lat, lng },
+      });
+    } catch (err) {
+      console.warn('[BookingLocationSearchOverlay] Location error:', err);
+    } finally {
+      setIsLocatingCurrentPosition(false);
+    }
+  };
+
   const isSearching = query.trim().length >= 2;
   const hasNoResults = isSearching && !isSearchingOnline && searchResults.length === 0;
 
   const handleSelect = (item: LocationSearchResult) => {
+    haptic.selection();
     Keyboard.dismiss();
     const fullAddress = item.address.includes(item.name)
       ? item.address
@@ -160,10 +194,15 @@ export function BookingLocationSearchOverlay({
     onClose();
   };
 
+  const handleClose = () => {
+    haptic.light();
+    onClose();
+  };
+
   return (
     <Modal
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       transparent={true}
       visible={visible}
     >
@@ -171,7 +210,7 @@ export function BookingLocationSearchOverlay({
         {/* Semi-transparent backdrop - Tapping here dismisses overlay */}
         <Pressable
           accessibilityLabel="Đóng overlay"
-          onPress={onClose}
+          onPress={handleClose}
           style={styles.upperBackdrop}
         />
 
@@ -198,7 +237,7 @@ export function BookingLocationSearchOverlay({
               accessibilityLabel="Đóng tìm kiếm"
               accessibilityRole="button"
               hitSlop={12}
-              onPress={onClose}
+              onPress={handleClose}
               style={styles.closeBtn}
             >
               <Text style={styles.closeBtnText}>Đóng</Text>
@@ -207,7 +246,12 @@ export function BookingLocationSearchOverlay({
 
           {/* Search Input Box */}
           <View style={styles.inputWrapper}>
-            <IconSearch color="#8E8E93" size={17} />
+            <View
+              accessibilityElementsHidden={true}
+              importantForAccessibility="no"
+            >
+              <IconSearch color={customerPalette.offlineGray} size={17} />
+            </View>
             <TextInput
               accessibilityLabel={
                 target === 'pickup' ? 'Nhập địa chỉ lấy hàng' : 'Nhập địa chỉ giao hàng'
@@ -220,17 +264,17 @@ export function BookingLocationSearchOverlay({
               placeholder={
                 target === 'pickup' ? 'Nhập địa chỉ lấy hàng...' : 'Nhập địa chỉ giao hàng...'
               }
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={customerPalette.offlineGray}
               returnKeyType="search"
               style={styles.searchInput}
               value={query}
             />
             {isSearchingOnline && (
-              <ActivityIndicator color={customerPalette.primary} size="small" style={{ marginRight: 4 }} />
+              <ActivityIndicator color={customerPalette.primary} size="small" style={{ marginRight: spacing.xxs }} />
             )}
             {query.length > 0 && (
               <Pressable
-                accessibilityLabel="Xóa chữ"
+                accessibilityLabel="Xóa nội dung tìm kiếm"
                 accessibilityRole="button"
                 hitSlop={10}
                 onPress={() => setQuery('')}
@@ -243,40 +287,66 @@ export function BookingLocationSearchOverlay({
             )}
           </View>
 
-          {/* Action "Chọn trên bản đồ" */}
+          {/* Action "Chọn vị trí hiện tại" */}
           <Pressable
-            accessibilityLabel="Chọn trên bản đồ"
+            accessibilityLabel="Chọn vị trí hiện tại theo GPS thiết bị"
             accessibilityRole="button"
-            onPress={() => {
-              onClose();
-              if (onPickOnMap) onPickOnMap();
-            }}
+            disabled={isLocatingCurrentPosition}
+            onPress={handleUseCurrentLocation}
             style={({ pressed }) => [styles.pickOnMapCard, pressed && styles.rowPressed]}
           >
-            <View style={styles.mapPinCircle}>
-              <IconLocationPin color={customerPalette.primary} size={18} />
+            <View
+              accessibilityElementsHidden={true}
+              importantForAccessibility="no"
+              style={styles.mapPinCircle}
+            >
+              {isLocatingCurrentPosition ? (
+                <ActivityIndicator color={customerPalette.primary} size="small" />
+              ) : (
+                <IconLocationPin color={customerPalette.primary} size={18} />
+              )}
             </View>
-            <Text style={styles.pickOnMapText}>Chọn vị trí chính xác trên bản đồ</Text>
-            <IconChevronRight color="#C7C7CC" size={15} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pickOnMapText}>
+                {isLocatingCurrentPosition ? 'Đang định vị GPS…' : 'Chọn vị trí hiện tại'}
+              </Text>
+              <Text style={styles.pickOnMapSub}>
+                Lấy tọa độ GPS thiết bị làm điểm {target === 'pickup' ? 'lấy hàng' : 'giao hàng'}
+              </Text>
+            </View>
+            <IconChevronRight color={customerPalette.offlineGray} size={15} />
           </Pressable>
 
           {/* Real Search Results */}
           {isSearching && searchResults.length > 0 && (
             <View style={styles.resultsWrap}>
-              <Text style={styles.sectionHeader}>Kết quả tìm kiếm</Text>
+              <Text accessibilityRole="header" style={styles.sectionHeader}>
+                Kết quả tìm kiếm
+              </Text>
               <FlatList
                 data={searchResults}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ItemSeparatorComponent={() => (
+                  <View
+                    accessibilityElementsHidden={true}
+                    importantForAccessibility="no"
+                    style={styles.separator}
+                  />
+                )}
                 keyboardShouldPersistTaps="handled"
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <Pressable
+                    accessibilityLabel={`${item.name}, ${item.address}`}
                     accessibilityRole="button"
                     onPress={() => handleSelect(item)}
                     style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
                   >
-                    <View style={styles.pinCircle}>
-                      <IconLocationPin color="#64748B" size={16} />
+                    <View
+                      accessibilityElementsHidden={true}
+                      importantForAccessibility="no"
+                      style={styles.pinCircle}
+                    >
+                      <IconLocationPin color={colors.neutral.mutedText} size={16} />
                     </View>
                     <View style={styles.resultTextWrap}>
                       <Text numberOfLines={1} style={styles.resultTitle}>
@@ -286,7 +356,7 @@ export function BookingLocationSearchOverlay({
                         {item.address}
                       </Text>
                     </View>
-                    <IconChevronRight color="#C7C7CC" size={14} />
+                    <IconChevronRight color={customerPalette.offlineGray} size={14} />
                   </Pressable>
                 )}
                 style={styles.listStyle}
@@ -297,19 +367,32 @@ export function BookingLocationSearchOverlay({
           {/* Real Saved Addresses (If any) */}
           {!isSearching && realSavedAddresses.length > 0 && (
             <View style={styles.resultsWrap}>
-              <Text style={styles.sectionHeader}>Sổ địa chỉ đã lưu</Text>
+              <Text accessibilityRole="header" style={styles.sectionHeader}>
+                Sổ địa chỉ đã lưu
+              </Text>
               <FlatList
                 data={realSavedAddresses}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ItemSeparatorComponent={() => (
+                  <View
+                    accessibilityElementsHidden={true}
+                    importantForAccessibility="no"
+                    style={styles.separator}
+                  />
+                )}
                 keyboardShouldPersistTaps="handled"
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <Pressable
+                    accessibilityLabel={`${item.name}, ${item.address}`}
                     accessibilityRole="button"
                     onPress={() => handleSelect(item)}
                     style={({ pressed }) => [styles.resultRow, pressed && styles.rowPressed]}
                   >
-                    <View style={[styles.pinCircle, styles.savedPinCircle]}>
+                    <View
+                      accessibilityElementsHidden={true}
+                      importantForAccessibility="no"
+                      style={[styles.pinCircle, styles.savedPinCircle]}
+                    >
                       <IconLocationPin color={customerPalette.primary} size={16} />
                     </View>
                     <View style={styles.resultTextWrap}>
@@ -320,7 +403,7 @@ export function BookingLocationSearchOverlay({
                         {item.address}
                       </Text>
                     </View>
-                    <IconChevronRight color="#C7C7CC" size={14} />
+                    <IconChevronRight color={customerPalette.offlineGray} size={14} />
                   </Pressable>
                 )}
                 style={styles.listStyle}
@@ -332,7 +415,7 @@ export function BookingLocationSearchOverlay({
           {hasNoResults && (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconCircle}>
-                <IconSearch color="#8E8E93" size={28} />
+                <IconSearch color={customerPalette.offlineGray} size={28} />
               </View>
               <Text style={styles.emptyTitle}>Không tìm thấy địa chỉ</Text>
               <Text style={styles.emptySubtitle}>
@@ -359,58 +442,55 @@ const styles = StyleSheet.create({
   sheetCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
+    borderTopLeftRadius: radius.modal,
+    borderTopRightRadius: radius.modal,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.lg,
     boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.16)',
     ...iosContinuousCurve,
   },
   grabber: {
     width: 36,
     height: 5,
-    borderRadius: 2.5,
+    borderRadius: radius.pill,
     backgroundColor: '#D1D1D6',
     alignSelf: 'center',
-    marginVertical: 8,
+    marginVertical: spacing.xs,
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   targetBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   targetDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: radius.pill,
   },
   pickupDot: {
-    backgroundColor: '#34C759',
+    backgroundColor: colors.success.text,
   },
   dropoffDot: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: colors.danger.text,
   },
   targetTitle: {
     ...typeScale.title3,
-    fontSize: 18,
     fontWeight: '700',
-    color: '#000000',
-    letterSpacing: -0.3,
+    color: customerPalette.textSlateDark,
   },
   closeBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.xs,
   },
   closeBtnText: {
     ...typeScale.body,
-    fontSize: 16,
     fontWeight: '600',
     color: customerPalette.primary,
   },
@@ -418,20 +498,20 @@ const styles = StyleSheet.create({
     height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(118, 118, 128, 0.12)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    gap: 8,
-    marginBottom: 12,
+    backgroundColor: colors.neutral.surfaceMuted,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
     ...iosContinuousCurve,
   },
   searchInput: {
     flex: 1,
     height: '100%',
     ...typeScale.body,
-    fontSize: 16,
-    color: '#000000',
+    color: customerPalette.textSlateDark,
     padding: 0,
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
   },
   clearBtn: {
     width: 28,
@@ -442,36 +522,39 @@ const styles = StyleSheet.create({
   clearCircle: {
     width: 18,
     height: 18,
-    borderRadius: 9,
-    backgroundColor: '#8E8E93',
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.textSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   pickOnMapCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    backgroundColor: customerPalette.canvas,
+    borderRadius: radius.card,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
     ...iosContinuousCurve,
+  },
+  pickOnMapSub: {
+    ...typeScale.caption2,
+    color: customerPalette.textSubtle,
+    marginTop: spacing.hairline,
   },
   mapPinCircle: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#EBF2FA',
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.primaryBg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: spacing.xs,
   },
   pickOnMapText: {
-    flex: 1,
-    ...typeScale.body,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '600',
     color: customerPalette.primary,
   },
@@ -483,12 +566,9 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     ...typeScale.footnote,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6E6E73',
-    textTransform: 'uppercase',
-    letterSpacing: 0.2,
-    marginBottom: 8,
+    fontWeight: '600',
+    color: customerPalette.textSubtle,
+    marginBottom: spacing.xs,
   },
   listStyle: {
     flex: 1,
@@ -496,69 +576,65 @@ const styles = StyleSheet.create({
   resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.sm,
   },
   pinCircle: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    borderRadius: radius.pill,
+    backgroundColor: colors.neutral.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   savedPinCircle: {
-    backgroundColor: '#EBF2FA',
+    backgroundColor: customerPalette.primaryBg,
   },
   resultTextWrap: {
     flex: 1,
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: spacing.xs,
   },
   resultTitle: {
-    ...typeScale.body,
-    fontSize: 15,
+    ...typeScale.subheadline,
     fontWeight: '600',
-    color: '#000000',
-    marginBottom: 2,
+    color: customerPalette.textSlateDark,
+    marginBottom: spacing.hairline,
   },
   resultSubtitle: {
-    ...typeScale.subheadline,
-    fontSize: 13,
-    color: '#8E8E93',
+    ...typeScale.footnote,
+    color: customerPalette.textSubtle,
     lineHeight: 17,
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: colors.neutral.border,
     marginLeft: 44,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.lg,
   },
   emptyIconCircle: {
     width: 52,
     height: 52,
-    borderRadius: 26,
-    backgroundColor: '#F1F5F9',
+    borderRadius: radius.pill,
+    backgroundColor: colors.neutral.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.xs,
   },
   emptyTitle: {
     ...typeScale.headline,
-    fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
-    marginBottom: 4,
+    color: customerPalette.textSlateDark,
+    marginBottom: spacing.xxs,
   },
   emptySubtitle: {
     ...typeScale.subheadline,
-    fontSize: 13,
-    color: '#8E8E93',
+    color: customerPalette.textSubtle,
     textAlign: 'center',
     lineHeight: 18,
   },

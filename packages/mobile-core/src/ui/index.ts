@@ -28,3 +28,4 @@ export * from './TruckLoader';
 export * from './VehicleSelectCard';
 export * from './icons/CoreIcons';
 export * from '../icons/svg-icons';
+export * from './gluestack';

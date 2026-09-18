@@ -136,7 +136,7 @@ describe('AdminDriverReviewService', () => {
 
     expect(tx.user.update).toHaveBeenCalledWith({
       where: { id: 'u-1' },
-      data: { status: 'ACTIVE' },
+      data: { status: 'ACTIVE', onboardedAt: expect.any(Date) },
     });
     expect(tx.driverProfile.update).toHaveBeenCalledWith({
       where: { userId: 'u-1' },

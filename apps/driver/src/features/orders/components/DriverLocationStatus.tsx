@@ -2,6 +2,9 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
+  Badge,
+  Box,
+  HStack,
   iosContinuousCurve,
   leopardPalette,
 } from '@leopard/mobile-core';
@@ -26,14 +29,14 @@ export function DriverLocationStatus({ location, onRetry }: DriverLocationStatus
 
   if (location.kind === 'loading') {
     return (
-      <View
+      <HStack
         accessibilityLabel="Đang xác định vị trí GPS hiện tại"
         style={styles.pill}
         testID="driver-current-location-status"
       >
-        <View style={[styles.dot, styles.dotLoading]} />
+        <Box style={[styles.dot, styles.dotLoading]} />
         <Text style={styles.text}>Đang xác định vị trí...</Text>
-      </View>
+      </HStack>
     );
   }
 
@@ -50,7 +53,7 @@ export function DriverLocationStatus({ location, onRetry }: DriverLocationStatus
       style={({ pressed }) => [styles.pill, styles.pillWarning, pressed ? styles.pressed : null]}
       testID="driver-current-location-status"
     >
-      <View style={[styles.dot, styles.dotWarning]} />
+      <Box style={[styles.dot, styles.dotWarning]} />
       <Text style={[styles.text, styles.textWarning]}>{label}</Text>
     </Pressable>
   );

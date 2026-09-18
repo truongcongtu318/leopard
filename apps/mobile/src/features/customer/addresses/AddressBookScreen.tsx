@@ -11,8 +11,13 @@ import {
 
 import { addressStore } from './address-store';
 import {
+  Badge,
+  Box,
   Button,
+  Card,
+  Divider,
   FormField,
+  HStack,
   IconCheck,
   IconClose,
   IconHome,
@@ -26,8 +31,12 @@ import {
   IconTrash,
   IconUser,
   IconWarehouse,
-  RealInteractiveMap,
+  Input,
+  InputField,
+  InputSlot,
+  LeopardMapView,
   ScreenScaffold,
+  VStack,
   colors,
   customerPalette,
   haptic,
@@ -428,13 +437,15 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
       onBack={handleBack}
       title={isAdding ? 'Thêm địa chỉ mới' : 'Sổ địa chỉ'}
     >
-      <View style={styles.container}>
+      <Box style={styles.container}>
         {/* 1. Thanh Tìm Kiếm Nhanh (Realtime Search Bar) */}
         {!isAdding ? (
-          <View style={styles.searchWrap}>
-            <View style={styles.searchBar}>
-              <IconSearch color={customerPalette.textSubtle} size={18} />
-              <TextInput
+          <Box style={styles.searchWrap}>
+            <Input size="md" style={styles.searchBar}>
+              <InputSlot>
+                <IconSearch color={customerPalette.textSubtle} size={18} />
+              </InputSlot>
+              <InputField
                 accessibilityLabel="Tìm kiếm địa chỉ"
                 onChangeText={setSearchQuery}
                 placeholder="Tìm theo tên kho, địa chỉ, người nhận..."
@@ -443,23 +454,25 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                 value={searchQuery}
               />
               {searchQuery ? (
-                <Pressable
-                  accessibilityLabel="Xóa tìm kiếm"
-                  accessibilityRole="button"
-                  hitSlop={14}
-                  onPress={() => setSearchQuery('')}
-                  style={styles.clearSearchBtn}
-                >
-                  <IconClose color={leopardPalette.inputPlaceholder} size="sm" />
-                </Pressable>
+                <InputSlot>
+                  <Pressable
+                    accessibilityLabel="Xóa tìm kiếm"
+                    accessibilityRole="button"
+                    hitSlop={14}
+                    onPress={() => setSearchQuery('')}
+                    style={styles.clearSearchBtn}
+                  >
+                    <IconClose color={leopardPalette.inputPlaceholder} size="sm" />
+                  </Pressable>
+                </InputSlot>
               ) : null}
-            </View>
-          </View>
+            </Input>
+          </Box>
         ) : null}
 
         {/* 2. Phân Loại Địa Chỉ (3 chip cố định, không scroll) */}
         {!isAdding ? (
-          <View
+          <HStack
             accessibilityLabel="Thanh lọc phân loại địa chỉ"
             style={styles.filterRow}
           >
@@ -506,21 +519,25 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                     {chip.label}
                   </Text>
                   {chip.count > 0 ? (
-                    <View style={[styles.filterBadge, active && styles.filterBadgeActive]}>
-                      <Text
+                    <Badge
+                      action={active ? 'info' : 'muted'}
+                      size="sm"
+                      style={[styles.filterBadge, active && styles.filterBadgeActive]}
+                    >
+                      <Badge.Text
                         style={[
                           styles.filterBadgeText,
                           active && styles.filterBadgeTextActive,
                         ]}
                       >
                         {chip.count}
-                      </Text>
-                    </View>
+                      </Badge.Text>
+                    </Badge>
                   ) : null}
                 </Pressable>
               );
             })}
-          </View>
+          </HStack>
         ) : null}
 
         {/* 3. Form Tạo Địa Chỉ Mới (Apple HIG Inset Grouped) */}
@@ -673,7 +690,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   <Text style={styles.mapPinHint}>Chạm hoặc kéo ghim để chỉnh</Text>
                 </View>
                 <View style={styles.mapPinBox}>
-                  <RealInteractiveMap
+                  <LeopardMapView
                     height={165}
                     initialPinCoords={newPinCoords || resolveLocationCoords(newAddress)}
                     interactive={true}
@@ -808,33 +825,33 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
               const meta = getCategoryMeta(item.category);
 
               return (
-                <View
+                <Card
                   style={[
                     styles.addressCard,
                     item.isDefault ? styles.addressCardDefault : null,
                   ]}
                 >
                   {/* Top Header: Category Icon + Title + Default Badge + Delete */}
-                  <View style={styles.cardHeaderRow}>
-                    <View style={styles.cardTitleGroup}>
-                      <View style={styles.inlineCategoryIcon}>{meta.icon}</View>
+                  <HStack style={styles.cardHeaderRow}>
+                    <HStack style={styles.cardTitleGroup}>
+                      <Box style={styles.inlineCategoryIcon}>{meta.icon}</Box>
                       <Text numberOfLines={1} style={styles.addressLabel}>
                         {item.label}
                       </Text>
                       {item.isDefault ? (
-                        <View style={styles.defaultBadge}>
+                        <Badge action="warning" size="sm" style={styles.defaultBadge}>
                           <IconStar
                             color={customerPalette.accent}
                             fill={customerPalette.accent}
                             size={10}
                             strokeWidth={2}
                           />
-                          <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                        </View>
+                          <Badge.Text style={styles.defaultBadgeText}>Mặc định</Badge.Text>
+                        </Badge>
                       ) : null}
-                    </View>
+                    </HStack>
 
-                    <View style={styles.headerActionGroup}>
+                    <HStack style={styles.headerActionGroup}>
                       <Pressable
                         accessibilityLabel={`Xem bản đồ ${item.label}`}
                         accessibilityRole="button"
@@ -866,8 +883,8 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         <IconTrash color={colors.danger.text} size={13} />
                         <Text style={styles.deleteText}>Xóa</Text>
                       </Pressable>
-                    </View>
-                  </View>
+                    </HStack>
+                  </HStack>
 
                   {/* Address Line: Clean text without redundant outer icons */}
                   <Text numberOfLines={2} style={styles.addressText}>
@@ -875,7 +892,7 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                   </Text>
 
                   {/* Contact Line + Set Default Action: Inline, clean and compact */}
-                  <View style={styles.cardFooterRow}>
+                  <HStack style={styles.cardFooterRow}>
                     <Text numberOfLines={1} style={styles.contactInlineText}>
                       <Text style={styles.contactName}>{item.contactName}</Text>
                       <Text style={styles.contactDot}> · </Text>
@@ -896,12 +913,12 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         <Text style={styles.setDefaultText}>Đặt làm mặc định</Text>
                       </Pressable>
                     ) : null}
-                  </View>
+                  </HStack>
 
                   {/* Bản đồ xem nhanh khi mở rộng */}
                   {expandedMapId === item.id ? (
-                    <View style={styles.cardMapPreviewWrap}>
-                      <RealInteractiveMap
+                    <Box style={styles.cardMapPreviewWrap}>
+                      <LeopardMapView
                         height={130}
                         mode="preview"
                         origin={{
@@ -913,14 +930,14 @@ export function AddressBookScreen({ onBack, onOpenAddAddress }: AddressBookScree
                         }}
                         title={`Bản đồ ${item.label}`}
                       />
-                    </View>
+                    </Box>
                   ) : null}
-                </View>
+                </Card>
               );
             }}
           />
         ) : null}
-      </View>
+      </Box>
     </ScreenScaffold>
   );
 }

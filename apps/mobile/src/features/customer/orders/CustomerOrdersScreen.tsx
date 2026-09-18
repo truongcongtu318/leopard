@@ -13,13 +13,22 @@ import {
 
 import type { OrderStatus } from '@leopard/shared';
 import {
+  Badge,
+  Box,
   Button,
+  Card,
   colors,
   customerPalette,
+  Divider,
+  haptic,
+  HStack,
   IconClock,
   IconRoute,
   IconSearch,
   IconSpeedTruck,
+  Input,
+  InputField,
+  InputSlot,
   iosContinuousCurve,
   layout,
   leopardPalette,
@@ -29,10 +38,10 @@ import {
   SkeletonCard,
   SkeletonBar,
   StatusBadge,
-  haptic,
   spacing,
   typography,
   typeScale,
+  VStack,
 } from '@leopard/mobile-core';
 import type {
   CustomerListContentView,
@@ -139,7 +148,7 @@ function AppleSegmentedControl({
   onSegmentChange: (segment: OrdersSegment) => void;
 }>) {
   return (
-    <View accessibilityRole="tablist" style={s.segmentedBar}>
+    <HStack accessibilityRole="tablist" style={s.segmentedBar}>
       <Pressable
         accessibilityLabel={`Đang giao${activeCount > 0 ? ` (${activeCount})` : ''}`}
         accessibilityRole="tab"
@@ -157,11 +166,15 @@ function AppleSegmentedControl({
           Đang giao
         </Text>
         {activeCount > 0 ? (
-          <View style={[s.segmentBadge, activeSegment === 'active' && s.segmentBadgeActive]}>
-            <Text style={[s.segmentBadgeText, activeSegment === 'active' && s.segmentBadgeTextActive]}>
+          <Badge
+            action={activeSegment === 'active' ? 'success' : 'muted'}
+            size="sm"
+            style={[s.segmentBadge, activeSegment === 'active' && s.segmentBadgeActive]}
+          >
+            <Badge.Text style={activeSegment === 'active' ? s.segmentBadgeTextActive : s.segmentBadgeText}>
               {activeCount}
-            </Text>
-          </View>
+            </Badge.Text>
+          </Badge>
         ) : null}
       </Pressable>
 
@@ -176,7 +189,7 @@ function AppleSegmentedControl({
           Lịch sử
         </Text>
       </Pressable>
-    </View>
+    </HStack>
   );
 }
 
@@ -198,15 +211,18 @@ function OrdersSearchBar({
   onBlur: () => void;
 }>) {
   return (
-    <View
+    <Input
+      size="md"
       style={[s.searchBar, isFocused && s.searchBarFocused]}
       testID="customer-orders-search-bar"
     >
-      <IconSearch
-        color={isFocused ? customerPalette.primary : leopardPalette.textMutedSlate}
-        size={17}
-      />
-      <TextInput
+      <InputSlot style={s.searchIconSlot}>
+        <IconSearch
+          color={isFocused ? customerPalette.primary : leopardPalette.textMutedSlate}
+          size={17}
+        />
+      </InputSlot>
+      <InputField
         accessibilityLabel="Tìm kiếm đơn hàng"
         autoCapitalize="none"
         autoCorrect={false}
@@ -220,17 +236,19 @@ function OrdersSearchBar({
         value={value}
       />
       {value ? (
-        <Pressable
-          accessibilityLabel="Xóa tìm kiếm"
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={onClear}
-          style={s.clearSearchBtn}
-        >
-          <Text style={s.clearSearchIcon}>✕</Text>
-        </Pressable>
+        <InputSlot style={s.clearBtnSlot}>
+          <Pressable
+            accessibilityLabel="Xóa tìm kiếm"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={onClear}
+            style={s.clearSearchBtn}
+          >
+            <Text style={s.clearSearchIcon}>✕</Text>
+          </Pressable>
+        </InputSlot>
       ) : null}
-    </View>
+    </Input>
   );
 }
 
@@ -255,70 +273,70 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
       style={({ pressed }) => [s.heroCard, pressed && s.heroCardPressed]}
     >
       {/* Dark gradient map strip */}
-      <View style={s.heroMapStrip}>
-        <View style={s.heroMapGradient} />
+      <Box style={s.heroMapStrip}>
+        <Box style={s.heroMapGradient} />
         {/* Route line overlay */}
-        <View style={s.heroRouteLine}>
-          <View style={[s.heroRouteEndpoint, { backgroundColor: colors.success.text }]} />
-          <View style={s.heroRouteDash} />
-          <View style={s.heroRouteDash} />
-          <View style={s.heroRouteDash} />
-          <View style={[s.heroRouteEndpoint, { backgroundColor: colors.danger.text }]} />
-        </View>
+        <HStack style={s.heroRouteLine}>
+          <Box style={[s.heroRouteEndpoint, { backgroundColor: colors.success.text }]} />
+          <Box style={s.heroRouteDash} />
+          <Box style={s.heroRouteDash} />
+          <Box style={s.heroRouteDash} />
+          <Box style={[s.heroRouteEndpoint, { backgroundColor: colors.danger.text }]} />
+        </HStack>
         {/* Status overlay pill */}
-        <View style={[s.heroStatusPill, { backgroundColor: accentColor }]}>
+        <HStack style={[s.heroStatusPill, { backgroundColor: accentColor }]}>
           <PulseDot color={colors.neutral.surface} size={4} />
           <Text style={s.heroStatusText}>{statusLabel}</Text>
-        </View>
-      </View>
+        </HStack>
+      </Box>
 
       {/* Content */}
-      <View style={s.heroContent}>
+      <VStack style={s.heroContent}>
         {/* Route info */}
-        <View style={s.heroRouteInfo}>
-          <View style={s.heroRoutePoint}>
-            <View style={s.heroOriginDot} />
-            <View style={s.heroRouteTextWrap}>
+        <VStack style={s.heroRouteInfo}>
+          <HStack style={s.heroRoutePoint}>
+            <Box style={s.heroOriginDot} />
+            <VStack style={s.heroRouteTextWrap}>
               <Text style={s.heroRouteLabel}>Lấy hàng</Text>
               <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.origin.label}</Text>
-            </View>
-          </View>
-          <View style={s.heroRouteSeparator} />
-          <View style={s.heroRoutePoint}>
-            <View style={s.heroDestDot} />
-            <View style={s.heroRouteTextWrap}>
+            </VStack>
+          </HStack>
+          <Box style={s.heroRouteSeparator} />
+          <HStack style={s.heroRoutePoint}>
+            <Box style={s.heroDestDot} />
+            <VStack style={s.heroRouteTextWrap}>
               <Text style={s.heroRouteLabel}>Giao hàng</Text>
               <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.destination.label}</Text>
-            </View>
-          </View>
-        </View>
+            </VStack>
+          </HStack>
+        </VStack>
 
         {/* Footer: Reference + ETA + Price */}
-        <View style={s.heroFooter}>
-          <View style={s.heroRefWrap}>
+        <HStack style={s.heroFooter}>
+          <HStack style={s.heroRefWrap}>
             <IconSpeedTruck color={colors.neutral.subtleText} size={14} />
             <Text style={s.heroRef}>{order.reference}</Text>
-          </View>
-          <View style={s.heroMetaRight}>
+          </HStack>
+          <HStack style={s.heroMetaRight}>
             {order.etaLabel ? (
-              <View style={s.heroEtaPill}>
+              <HStack style={s.heroEtaPill}>
                 <IconClock color={colors.neutral.subtleText} size={12} />
                 <Text style={s.heroEtaText}>{order.etaLabel}</Text>
-              </View>
+              </HStack>
             ) : null}
             {order.priceLabel ? (
               <Text style={s.heroPrice}>{order.priceLabel}</Text>
             ) : null}
-          </View>
-        </View>
-      </View>
+          </HStack>
+        </HStack>
+      </VStack>
 
       {/* Track CTA strip */}
-      <View style={s.heroTrackStrip}>
+      <HStack style={s.heroTrackStrip}>
         <IconRoute color={colors.neutral.surface} size={14} />
         <Text style={s.heroTrackText}>Theo dõi chuyến hàng</Text>
         <Text style={s.heroTrackArrow}>→</Text>
-      </View>
+      </HStack>
     </Pressable>
   );
 });
@@ -341,35 +359,35 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
       style={({ pressed }) => [s.completedCard, pressed && s.completedCardPressed]}
     >
       {/* Header: icon + reference + status */}
-      <View style={s.completedHeader}>
-        <View style={s.completedIconBox}>
+      <HStack style={s.completedHeader}>
+        <Box style={s.completedIconBox}>
           <IconSpeedTruck color={customerPalette.primary} size={18} />
-        </View>
-        <View style={s.completedTitleWrap}>
+        </Box>
+        <VStack style={s.completedTitleWrap}>
           <Text numberOfLines={1} style={s.completedRef}>Đơn {order.reference}</Text>
           <Text numberOfLines={1} style={s.completedUpdated}>{order.updatedAtLabel}</Text>
-        </View>
+        </VStack>
         <StatusBadge domain="order" status={order.status} />
-      </View>
+      </HStack>
 
       {/* Route: horizontal compact */}
-      <View style={s.completedRoute}>
-        <View style={s.completedRouteFlow}>
-          <View style={[s.completedDot, { backgroundColor: colors.success.text }]} />
+      <HStack style={s.completedRoute}>
+        <HStack style={s.completedRouteFlow}>
+          <Box style={[s.completedDot, { backgroundColor: colors.success.text }]} />
           <Text numberOfLines={1} style={s.completedRouteText}>{order.route.origin.label}</Text>
-        </View>
-        <View style={s.completedArrow}>
-          <View style={s.completedArrowLine} />
+        </HStack>
+        <HStack style={s.completedArrow}>
+          <Box style={s.completedArrowLine} />
           <Text style={s.completedArrowHead}>›</Text>
-        </View>
-        <View style={s.completedRouteFlow}>
-          <View style={[s.completedDot, { backgroundColor: colors.danger.text }]} />
+        </HStack>
+        <HStack style={s.completedRouteFlow}>
+          <Box style={[s.completedDot, { backgroundColor: colors.danger.text }]} />
           <Text numberOfLines={1} style={s.completedRouteText}>{order.route.destination.label}</Text>
-        </View>
-      </View>
+        </HStack>
+      </HStack>
 
       {/* Footer: price + distance */}
-      <View style={s.completedFooter}>
+      <HStack style={s.completedFooter}>
         <Text style={s.completedPrice}>{order.priceLabel || '—'}</Text>
         {order.route.distanceLabel ? (
           <Text style={s.completedDistance}>{order.route.distanceLabel}</Text>
@@ -377,7 +395,7 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
         {order.etaLabel ? (
           <Text style={s.completedEta}>ETA dự kiến: {order.etaLabel}</Text>
         ) : null}
-      </View>
+      </HStack>
     </Pressable>
   );
 });
@@ -386,17 +404,17 @@ const CompletedOrderCard = React.memo(function CompletedOrderCard({
 
 function EmptyActiveState() {
   return (
-    <View style={s.emptyActive}>
-      <View style={s.emptyIconOuter}>
-        <View style={s.emptyIconInner}>
+    <VStack style={s.emptyActive}>
+      <Box style={s.emptyIconOuter}>
+        <Box style={s.emptyIconInner}>
           <IconSpeedTruck color={leopardPalette.offlineGray} size={32} />
-        </View>
-      </View>
+        </Box>
+      </Box>
       <Text style={s.emptyTitle}>Không có chuyến đang giao</Text>
       <Text style={s.emptyBody}>
         Khi bạn đặt chuyến mới, đơn hàng đang vận chuyển sẽ hiện tại đây.
       </Text>
-    </View>
+    </VStack>
   );
 }
 
@@ -406,14 +424,14 @@ function Notice({ view }: Readonly<{ view: CustomerListContentView }>) {
   if (!view.notice) return null;
   const isError = view.contentState === 'page-error';
   return (
-    <View
+    <Box
       accessibilityLiveRegion="polite"
       style={[s.notice, isError ? s.noticeError : s.noticeWarning]}
     >
       <Text accessibilityRole={isError ? 'alert' : undefined} style={s.noticeText}>
         {view.notice}
       </Text>
-    </View>
+    </Box>
   );
 }
 
@@ -708,6 +726,13 @@ const s = StyleSheet.create({
   },
   searchBarFocused: {
     borderColor: customerPalette.primary,
+  },
+  searchIconSlot: {
+    paddingLeft: spacing.xxs,
+    paddingRight: spacing.xxs,
+  },
+  clearBtnSlot: {
+    paddingRight: spacing.xxs,
   },
   searchInput: {
     color: colors.neutral.text,

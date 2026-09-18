@@ -9,7 +9,34 @@ import {
   View,
 } from 'react-native';
 
-import { typeScale, colors, customerPalette, haptic, iosContinuousCurve, layout, leopardElevation, leopardPalette, leopardRadius, spacing, typography, IconOrders, IconSearch, IconSpeedTruck, IconTag, IconVehicle3Wheel, IconVehicleHeavyTruck } from '@leopard/mobile-core';
+import {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  HStack,
+  IconOrders,
+  IconSearch,
+  IconSpeedTruck,
+  IconTag,
+  IconVehicle3Wheel,
+  IconVehicleHeavyTruck,
+  Input,
+  InputField,
+  InputSlot,
+  VStack,
+  colors,
+  customerPalette,
+  haptic,
+  iosContinuousCurve,
+  layout,
+  leopardElevation,
+  leopardPalette,
+  leopardRadius,
+  spacing,
+  typeScale,
+  typography,
+} from '@leopard/mobile-core';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -171,105 +198,107 @@ function OrderCardComponent({ index, onPress, order }: OrderCardProps) {
         },
       ]}
     >
-      <Pressable
-        accessibilityLabel={`Đơn ${order.bookingCode}, ${order.cargoLabel}, ${pres.label}`}
-        accessibilityRole="button"
-        onPress={() => onPress?.(order.id)}
-        style={({ pressed }) => [styles.card, pressed ? styles.cardPressed : null]}
-      >
-        {/* Main row: cargo info + status badge */}
-        <View style={styles.mainRow}>
-          <View style={styles.leftCol}>
-            <View style={styles.cargoIconRow}>
-              <View style={styles.cargoIconBox}>
-                <CargoIcon type={order.cargoType} />
-              </View>
-              <View style={styles.cargoMeta}>
-                <Text numberOfLines={1} style={styles.cargoLabel}>
-                  {order.cargoLabel}
+      <Card style={styles.card}>
+        <Pressable
+          accessibilityLabel={`Đơn ${order.bookingCode}, ${order.cargoLabel}, ${pres.label}`}
+          accessibilityRole="button"
+          onPress={() => onPress?.(order.id)}
+          style={({ pressed }) => (pressed ? styles.cardPressed : null)}
+        >
+          {/* Main row: cargo info + status badge */}
+          <HStack style={styles.mainRow}>
+            <VStack style={styles.leftCol}>
+              <HStack style={styles.cargoIconRow}>
+                <Box style={styles.cargoIconBox}>
+                  <CargoIcon type={order.cargoType} />
+                </Box>
+                <VStack style={styles.cargoMeta}>
+                  <Text numberOfLines={1} style={styles.cargoLabel}>
+                    {order.cargoLabel}
+                  </Text>
+                  <Text style={styles.bookingCode}>{order.bookingCode}</Text>
+                </VStack>
+              </HStack>
+
+              <HStack style={styles.routeRow}>
+                <Box style={styles.routeDot} />
+                <Text numberOfLines={1} style={styles.routeOriginText}>
+                  {order.origin}
                 </Text>
-                <Text style={styles.bookingCode}>{order.bookingCode}</Text>
-              </View>
-            </View>
+              </HStack>
+              <Box style={styles.routeConnectorLine} />
+              <HStack style={styles.routeRow}>
+                <Box style={[styles.routeDot, styles.routeDotDestination]} />
+                <Text numberOfLines={1} style={styles.routeDestText}>
+                  {order.destination}
+                </Text>
+              </HStack>
 
-            <View style={styles.routeRow}>
-              <View style={styles.routeDot} />
-              <Text numberOfLines={1} style={styles.routeOriginText}>
-                {order.origin}
-              </Text>
-            </View>
-            <View style={styles.routeConnectorLine} />
-            <View style={styles.routeRow}>
-              <View style={[styles.routeDot, styles.routeDotDestination]} />
-              <Text numberOfLines={1} style={styles.routeDestText}>
-                {order.destination}
-              </Text>
-            </View>
+              <HStack style={styles.metaRow}>
+                <Text style={styles.metaText}>{order.scheduledDate}</Text>
+                <Text style={styles.metaDot}>•</Text>
+                <Text style={styles.metaText}>{order.weightKg} kg</Text>
+              </HStack>
+            </VStack>
 
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{order.scheduledDate}</Text>
-              <Text style={styles.metaDot}>•</Text>
-              <Text style={styles.metaText}>{order.weightKg} kg</Text>
-            </View>
-          </View>
+            <VStack style={styles.rightCol}>
+              <Badge action="muted" size="sm" style={[styles.statusBadge, { backgroundColor: pres.bg }]}>
+                <Box style={[styles.statusDot, { backgroundColor: pres.dot }]} />
+                <Badge.Text style={[styles.statusText, { color: pres.text }]}>{pres.label}</Badge.Text>
+              </Badge>
+              <Text style={styles.priceText}>{order.priceVnd}</Text>
+              <Text style={styles.vehicleText}>{order.vehicleName}</Text>
+            </VStack>
+          </HStack>
 
-          <View style={styles.rightCol}>
-            <View style={[styles.statusBadge, { backgroundColor: pres.bg }]}>
-              <View style={[styles.statusDot, { backgroundColor: pres.dot }]} />
-              <Text style={[styles.statusText, { color: pres.text }]}>{pres.label}</Text>
-            </View>
-            <Text style={styles.priceText}>{order.priceVnd}</Text>
-            <Text style={styles.vehicleText}>{order.vehicleName}</Text>
-          </View>
-        </View>
-
-        {/* 3-step dotted progress stepper */}
-        {stepperProgress >= 0 ? (
-          <View style={styles.stepperContainer}>
-            {STEPPER_LABELS.map((label, i) => {
-              const isCompleted = i <= stepperProgress;
-              const isActive = i === stepperProgress;
-              return (
-                <React.Fragment key={label}>
-                  <View style={styles.stepItem}>
-                    <View
-                      style={[
-                        styles.stepDot,
-                        isCompleted ? styles.stepDotCompleted : null,
-                        isActive ? styles.stepDotActive : null,
-                      ]}
-                    >
-                      {isCompleted ? (
-                        <Text style={styles.stepCheck}>✓</Text>
-                      ) : (
-                        <Text style={styles.stepNumber}>{i + 1}</Text>
-                      )}
-                    </View>
-                    <Text
-                      style={[
-                        styles.stepLabel,
-                        isCompleted ? styles.stepLabelCompleted : null,
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </View>
-                  {i < STEPPER_LABELS.length - 1 ? (
-                    <View
-                      style={[
-                        styles.stepConnector,
-                        isCompleted && i < stepperProgress
-                          ? styles.stepConnectorCompleted
-                          : null,
-                      ]}
-                    />
-                  ) : null}
-                </React.Fragment>
-              );
-            })}
-          </View>
-        ) : null}
-      </Pressable>
+          {/* 3-step dotted progress stepper */}
+          {stepperProgress >= 0 ? (
+            <HStack style={styles.stepperContainer}>
+              {STEPPER_LABELS.map((label, i) => {
+                const isCompleted = i <= stepperProgress;
+                const isActive = i === stepperProgress;
+                return (
+                  <React.Fragment key={label}>
+                    <VStack style={styles.stepItem}>
+                      <Box
+                        style={[
+                          styles.stepDot,
+                          isCompleted ? styles.stepDotCompleted : null,
+                          isActive ? styles.stepDotActive : null,
+                        ]}
+                      >
+                        {isCompleted ? (
+                          <Text style={styles.stepCheck}>✓</Text>
+                        ) : (
+                          <Text style={styles.stepNumber}>{i + 1}</Text>
+                        )}
+                      </Box>
+                      <Text
+                        style={[
+                          styles.stepLabel,
+                          isCompleted ? styles.stepLabelCompleted : null,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </VStack>
+                    {i < STEPPER_LABELS.length - 1 ? (
+                      <Box
+                        style={[
+                          styles.stepConnector,
+                          isCompleted && i < stepperProgress
+                            ? styles.stepConnectorCompleted
+                            : null,
+                        ]}
+                      />
+                    ) : null}
+                  </React.Fragment>
+                );
+              })}
+            </HStack>
+          ) : null}
+        </Pressable>
+      </Card>
     </Animated.View>
   );
 }
@@ -321,10 +350,10 @@ export function MyDeliveriesScreen({
   const keyExtractor = useCallback((item: DeliveryOrder) => item.id, []);
 
   return (
-    <View style={styles.screen}>
+    <Box style={styles.screen}>
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerTitleRow}>
+      <VStack style={styles.header}>
+        <HStack style={styles.headerTitleRow}>
           <Text accessibilityRole="header" style={styles.pageTitle}>
             Đang giao
           </Text>
@@ -338,15 +367,18 @@ export function MyDeliveriesScreen({
               <Text style={styles.newOrderBtnText}>+ Tạo đơn</Text>
             </Pressable>
           ) : null}
-        </View>
+        </HStack>
 
         {/* Search bar */}
-        <View
+        <Input
+          size="md"
           style={[styles.searchBar, isSearchFocused ? styles.searchBarFocused : null]}
           testID="search-bar"
         >
-          <IconSearch color={isSearchFocused ? customerPalette.primary : leopardPalette.textMutedSlate} size={18} />
-          <TextInput
+          <InputSlot>
+            <IconSearch color={isSearchFocused ? customerPalette.primary : leopardPalette.textMutedSlate} size={18} />
+          </InputSlot>
+          <InputField
             accessibilityLabel="Tìm kiếm đơn hàng"
             onBlur={() => setIsSearchFocused(false)}
             onFocus={() => setIsSearchFocused(true)}
@@ -357,14 +389,16 @@ export function MyDeliveriesScreen({
             value={searchQuery}
           />
           {searchQuery ? (
-            <Pressable onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
-              <Text style={styles.clearSearchIcon}>✕</Text>
-            </Pressable>
+            <InputSlot>
+              <Pressable onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
+                <Text style={styles.clearSearchIcon}>✕</Text>
+              </Pressable>
+            </InputSlot>
           ) : null}
-        </View>
+        </Input>
 
         {/* Filter Chips */}
-        <View style={styles.chipRow}>
+        <HStack style={styles.chipRow}>
           {FILTER_CHIPS.map((chip) => {
             const isActive = activeFilter === chip.key;
             return (
@@ -383,22 +417,26 @@ export function MyDeliveriesScreen({
                   {chip.label}
                 </Text>
                 {chipCounts[chip.key] > 0 ? (
-                  <View style={[styles.filterBadge, isActive && styles.filterBadgeActive]}>
-                    <Text
+                  <Badge
+                    action={isActive ? 'info' : 'muted'}
+                    size="sm"
+                    style={[styles.filterBadge, isActive && styles.filterBadgeActive]}
+                  >
+                    <Badge.Text
                       style={[
                         styles.filterBadgeText,
                         isActive ? styles.filterBadgeTextActive : null,
                       ]}
                     >
                       {chipCounts[chip.key]}
-                    </Text>
-                  </View>
+                    </Badge.Text>
+                  </Badge>
                 ) : null}
               </Pressable>
             );
           })}
-        </View>
-      </View>
+        </HStack>
+      </VStack>
 
       {/* Order List */}
       {filtered.length === 0 ? (
@@ -436,7 +474,7 @@ export function MyDeliveriesScreen({
           windowSize={5}
         />
       )}
-    </View>
+    </Box>
   );
 }
 

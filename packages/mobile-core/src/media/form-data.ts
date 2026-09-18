@@ -33,20 +33,22 @@ export async function appendFileToFormData(
       try {
         const response = await fetch(file.uri);
         const blob = await response.blob();
-        form.append(fieldName, blob, fileName);
-        return;
+        if (blob.size > 0) {
+          form.append(fieldName, blob, fileName);
+          return;
+        }
       } catch {
-        // Fall through to fallback if fetch is not supported (e.g. non-browser test environment)
+        // Fall through to the error below when the URI cannot be read.
       }
     }
 
-    try {
-      const blob = new Blob([], { type: mimeType });
-      form.append(fieldName, blob, fileName);
-      return;
-    } catch {
-      // In environments where Blob is not constructible
-    }
+    // Never append an empty placeholder. The API validates magic bytes, so a
+    // zero-byte part is rejected as an unsupported type — which reported a
+    // confusing format error while the real cause (an unreadable image) stayed
+    // hidden, and left the driver stuck on a confirm button that never worked.
+    throw new Error(
+      `Không đọc được dữ liệu ảnh${file.uri ? ` từ ${file.uri.slice(0, 60)}` : ''}.`,
+    );
   }
 
   form.append(fieldName, {
