@@ -238,4 +238,59 @@ describe('RealtimeTrackingScreen', () => {
 
     await screen.unmount();
   });
+
+  it('renders correctly on PICKING_UP leg with route anchored to truck location', async () => {
+    const screen = await render(
+      <RealtimeTrackingScreen
+        driver={mockDriver}
+        trip={{
+          ...mockTrip,
+          status: 'PICKING_UP',
+          originCoords: { lat: 10.8421, lng: 106.6192 },
+          destinationCoords: { lat: 10.7325, lng: 106.7351 },
+          routeCoords: [
+            { lat: 10.8421, lng: 106.6192 },
+            { lat: 10.7325, lng: 106.7351 },
+          ],
+        }}
+        truckLocation={{ lat: 10.85, lng: 106.60, timestamp: '2026-03-31T08:00:00Z' }}
+      />,
+    );
+
+    expect(screen.getByText('Đang đến lấy hàng')).toBeTruthy();
+    expect(screen.getByTestId('realtime-map-area')).toBeTruthy();
+
+    await screen.unmount();
+  });
+
+  it('renders "Đánh giá chuyến đi" card when trip.status is DELIVERED and triggers onReviewTrip on press', async () => {
+    const onReviewTrip = jest.fn();
+    const deliveredTrip: TripBookingDetails = {
+      ...mockTrip,
+      status: 'DELIVERED',
+      etaLabel: 'Đã hoàn tất',
+      distanceRemainingKm: 0,
+    };
+
+    const screen = await render(
+      <RealtimeTrackingScreen
+        driver={mockDriver}
+        onReviewTrip={onReviewTrip}
+        trip={deliveredTrip}
+      />,
+    );
+
+    expect(screen.getByText('Chuyến đi đã hoàn tất')).toBeTruthy();
+    expect(
+      screen.getByText('Vui lòng dành ít phút để đánh giá chất lượng phục vụ của bác tài.'),
+    ).toBeTruthy();
+
+    const reviewBtn = screen.getByLabelText('Đánh giá chuyến đi');
+    expect(reviewBtn).toBeTruthy();
+
+    await fireEvent.press(reviewBtn);
+    expect(onReviewTrip).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
 });

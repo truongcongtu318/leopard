@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   LayoutAnimation,
@@ -11,6 +11,7 @@ import {
   Text,
   UIManager,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -28,12 +29,17 @@ import {
   IconSpeedTruck,
   IconStar,
   LeopardMapView,
+  anchorRouteToTruck,
+  calculateBearing,
+  calculateDynamicVisibleCenterOffset,
   colors,
   control,
   customerPalette,
+  fetchStreetRoute,
   haptic,
   iosContinuousCurve,
   leopardPalette,
+  lerpCoordinate,
   pastelTheme,
   radius,
   spacing,
@@ -104,6 +110,7 @@ export type RealtimeTrackingScreenProps = Readonly<{
   onShowVietQR?: () => void;
   onViewDeliveryProof?: () => void;
   onViewInvoice?: () => void;
+  onReviewTrip?: () => void;
   onBack?: () => void;
 }>;
 
@@ -173,19 +180,32 @@ type TrackingMapLayerProps = Readonly<{
   truckEtaLabel: string;
   truckEtaMinutes: number;
   routeCoords?: readonly { lat: number; lng: number }[];
+  snapPoint?: SnapPoint;
+  distanceRemainingKm?: number;
+  distanceTotalKm?: number;
+  status?: TripBookingDetails['status'];
 }>;
 
 const TrackingMapLayer = React.memo(function TrackingMapLayer({
   destination,
   destinationCoords,
+  distanceRemainingKm,
+  distanceTotalKm,
   origin,
   originCoords,
   routeCoords,
+  snapPoint = 'MINI',
+  status,
   stops,
   truckEtaLabel,
   truckEtaMinutes,
   truckLocation,
 }: TrackingMapLayerProps) {
+  const { height: screenHeight } = useWindowDimensions();
+
+  const isPickupLeg =
+    status === 'ACCEPTED' || status === 'PICKING_UP' || status === 'LOADING';
+
   // Stable object references to avoid re-triggering polyline recalculations
   const memoizedOrigin = useMemo(
     () => ({ label: origin, coords: originCoords }),
@@ -202,26 +222,130 @@ const TrackingMapLayer = React.memo(function TrackingMapLayer({
     [truckLocation?.lat, truckLocation?.lng],
   );
 
+  // When live GPS fix has not arrived yet, interpolate estimated vehicle along the route
+  const effectiveTruckLocation = useMemo(() => {
+    if (memoizedTruckLocation) return memoizedTruckLocation;
+    if (!routeCoords || routeCoords.length < 2) return originCoords;
+    const totalKm = distanceTotalKm || 1;
+    const remainingKm = Math.min(distanceRemainingKm ?? totalKm, totalKm);
+    const progress = Math.max(0, Math.min(1, 1 - remainingKm / totalKm));
+    const targetIndexFloat = progress * (routeCoords.length - 1);
+    const baseIndex = Math.floor(targetIndexFloat);
+    const t = targetIndexFloat - baseIndex;
+    const p1 = routeCoords[baseIndex];
+    const p2 = routeCoords[Math.min(baseIndex + 1, routeCoords.length - 1)];
+    return lerpCoordinate(p1, p2, t);
+  }, [memoizedTruckLocation, routeCoords, originCoords, distanceRemainingKm, distanceTotalKm]);
+
+  const [pickupRoute, setPickupRoute] = useState<readonly { lat: number; lng: number }[] | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!isPickupLeg || !effectiveTruckLocation || !originCoords) {
+      setPickupRoute(null);
+      return;
+    }
+
+    void fetchStreetRoute(effectiveTruckLocation, originCoords, {
+      vietmapApiKey: process.env.EXPO_PUBLIC_VIETMAP_API_KEY,
+      vehicle: 'truck',
+    }).then((res) => {
+      if (!isMounted) return;
+      if (res && res.coordinates.length >= 2) {
+        setPickupRoute(res.coordinates);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    isPickupLeg,
+    effectiveTruckLocation?.lat,
+    effectiveTruckLocation?.lng,
+    originCoords?.lat,
+    originCoords?.lng,
+  ]);
+
+  // Seamlessly anchors the route to the vehicle's position (zero gap)
+  const effectiveRouteCoords = useMemo(() => {
+    if (isPickupLeg) {
+      return anchorRouteToTruck({
+        routeCoords: pickupRoute ?? [],
+        truckLocation: effectiveTruckLocation,
+        originCoords,
+        destinationCoords,
+        isPickupLeg: true,
+      });
+    }
+
+    return anchorRouteToTruck({
+      routeCoords,
+      truckLocation: effectiveTruckLocation,
+      originCoords,
+      destinationCoords,
+      isPickupLeg: false,
+    });
+  }, [isPickupLeg, pickupRoute, routeCoords, effectiveTruckLocation, originCoords, destinationCoords]);
+
+  const bearing = useMemo(() => {
+    if (isPickupLeg) {
+      if (effectiveRouteCoords && effectiveRouteCoords.length >= 2) {
+        return calculateBearing(effectiveRouteCoords[0], effectiveRouteCoords[1]);
+      }
+      if (effectiveTruckLocation && originCoords) {
+        return calculateBearing(effectiveTruckLocation, originCoords);
+      }
+    }
+    if (effectiveRouteCoords && effectiveRouteCoords.length >= 2) {
+      return calculateBearing(effectiveRouteCoords[0], effectiveRouteCoords[1]);
+    }
+    if (!routeCoords || routeCoords.length < 2) return 0;
+    const totalKm = distanceTotalKm || 1;
+    const remainingKm = Math.min(distanceRemainingKm ?? totalKm, totalKm);
+    const progress = Math.max(0, Math.min(1, 1 - remainingKm / totalKm));
+    const targetIndexFloat = progress * (routeCoords.length - 1);
+    const baseIndex = Math.min(Math.floor(targetIndexFloat), routeCoords.length - 2);
+    return calculateBearing(routeCoords[baseIndex], routeCoords[baseIndex + 1]);
+  }, [isPickupLeg, effectiveTruckLocation, originCoords, effectiveRouteCoords, routeCoords, distanceRemainingKm, distanceTotalKm]);
+
+  const sheetHeight =
+    snapPoint === 'FULL' ? screenHeight * 0.85 : snapPoint === 'HALF' ? 420 : 210;
+  const offsetY = calculateDynamicVisibleCenterOffset(screenHeight, sheetHeight, 90);
+
   return (
     <View pointerEvents="box-none" style={styles.mapArea} testID="realtime-map-area">
-      <View style={styles.mapCanvas}>
+      <View
+        style={[
+          styles.mapCanvas,
+          offsetY !== 0
+            ? {
+                transform: [{ translateY: offsetY }],
+                bottom: -Math.abs(offsetY) * 2,
+              }
+            : null,
+        ]}
+      >
         <LeopardMapView
+          bearing={bearing}
           destination={memoizedDestination}
+          followTruckLocation={true}
           height="100%"
+          isPickupLeg={isPickupLeg}
           mode="tracking"
           origin={memoizedOrigin}
-          routeCoords={routeCoords}
+          routeCoords={effectiveRouteCoords}
           stops={stops}
           truckEtaLabel={truckEtaLabel}
           truckEtaMinutes={truckEtaMinutes}
-          truckLocation={memoizedTruckLocation}
+          truckLocation={effectiveTruckLocation}
         />
       </View>
     </View>
   );
 });
 
-// ── Memoized Top Bar ────────────────────────────────────────────────
+// ── Memoized Top Bar with Dynamic Island Floating ETA Pill ──────────
 
 type TrackingTopBarProps = Readonly<{
   status: TripBookingDetails['status'];
@@ -247,7 +371,7 @@ const TrackingTopBar = React.memo(function TrackingTopBar({
 
   return (
     <View pointerEvents="box-none" style={styles.topBarContainer}>
-      {/* Top bar controls */}
+      {/* Top Bar Floating Controls */}
       <View style={styles.mapTopBar}>
         {onBack ? (
           <Pressable
@@ -256,7 +380,7 @@ const TrackingTopBar = React.memo(function TrackingTopBar({
             onPress={handleBackPress}
             style={({ pressed }) => [styles.backBtn, pressed && styles.controlBtnPressed]}
           >
-            <IconChevronLeft color={colors.neutral.text} size={20} strokeWidth={2} />
+            <IconChevronLeft color={customerPalette.primary} size={20} strokeWidth={2.4} />
           </Pressable>
         ) : (
           <View style={styles.backBtnPlaceholder} />
@@ -283,10 +407,10 @@ const TrackingTopBar = React.memo(function TrackingTopBar({
         </View>
       </View>
 
-      {/* Fixed Status Bar: Invariant strictly "ETA dự kiến", Tabular Nums */}
+      {/* Floating Dynamic Island Capsule: ETA dự kiến */}
       <View style={styles.fixedStatusBar}>
         <View style={styles.fixedStatusIconBox}>
-          <IconSpeedTruck color={customerPalette.primary} size={16} strokeWidth={2} />
+          <IconSpeedTruck color={customerPalette.primary} size={16} strokeWidth={2.2} />
         </View>
         <Text style={styles.fixedStatusText}>
           {`ETA dự kiến: ${etaLabel} · Còn ${distanceRemainingKm.toFixed(1)} km`}
@@ -308,7 +432,7 @@ function IconLocateGlyph({ color = customerPalette.primary, size = 20 }: { color
   );
 }
 
-// ── Floating Action Controls (Apple Maps Glass Aesthetic) ─────────────
+// ── Floating Action Controls (Apple Maps Glass Controls) ─────────────
 
 type FloatingActionControlsProps = Readonly<{
   onLocate: () => void;
@@ -322,27 +446,13 @@ const FloatingActionControls = React.memo(function FloatingActionControls({
   snapPoint,
 }: FloatingActionControlsProps) {
   const bottomOffset =
-    snapPoint === 'FULL' ? 120 : snapPoint === 'MINI' ? 172 : 440;
+    snapPoint === 'FULL' ? 140 : snapPoint === 'MINI' ? 225 : 445;
 
   return (
     <View
       pointerEvents="box-none"
       style={[styles.floatingControlsStack, { bottom: bottomOffset }]}
     >
-      {/* SOS Button */}
-      <Pressable
-        accessibilityLabel="Hỗ trợ khẩn cấp SOS"
-        accessibilityRole="button"
-        onPress={onSos}
-        style={({ pressed }) => [
-          styles.floatingControlBtn,
-          styles.sosBtn,
-          pressed && styles.floatingBtnPressed,
-        ]}
-      >
-        <Text style={styles.sosBtnText}>SOS</Text>
-      </Pressable>
-
       {/* Re-center / Locate Button */}
       <Pressable
         accessibilityLabel="Định vị lại lộ trình"
@@ -356,6 +466,20 @@ const FloatingActionControls = React.memo(function FloatingActionControls({
       >
         <IconLocateGlyph color={customerPalette.primary} size={20} />
       </Pressable>
+
+      {/* SOS Button */}
+      <Pressable
+        accessibilityLabel="Hỗ trợ khẩn cấp SOS"
+        accessibilityRole="button"
+        onPress={onSos}
+        style={({ pressed }) => [
+          styles.floatingControlBtn,
+          styles.sosBtn,
+          pressed && styles.floatingBtnPressed,
+        ]}
+      >
+        <Text style={styles.sosBtnText}>SOS</Text>
+      </Pressable>
     </View>
   );
 });
@@ -368,14 +492,18 @@ type VipDriverCardProps = Readonly<{
   formattedRating: string | null;
   onCall: () => void;
   onChat: () => void;
+  onToggleDetails?: () => void;
+  isExpanded?: boolean;
 }>;
 
 const VipDriverCard = React.memo(function VipDriverCard({
   driver,
   formattedRating,
+  isExpanded,
   maskedPhone,
   onCall,
   onChat,
+  onToggleDetails,
 }: VipDriverCardProps) {
   return (
     <View style={styles.vipDriverCardOuter}>
@@ -415,7 +543,7 @@ const VipDriverCard = React.memo(function VipDriverCard({
           </View>
         </View>
 
-        {/* Action Buttons: Micro-interactions with active scale 0.98 */}
+        {/* Action Buttons: Micro-interactions with active scale 0.97 */}
         <View style={styles.driverActions}>
           <Pressable
             accessibilityLabel="Gọi điện tài xế"
@@ -444,6 +572,24 @@ const VipDriverCard = React.memo(function VipDriverCard({
             <IconMessage color={customerPalette.primary} size={16} strokeWidth={2} />
             <Text style={styles.chatBtnText}>Nhắn tin</Text>
           </Pressable>
+
+          {onToggleDetails ? (
+            <Pressable
+              accessibilityLabel={isExpanded ? 'Thu gọn chi tiết' : 'Xem chi tiết đơn hàng'}
+              accessibilityRole="button"
+              onPress={onToggleDetails}
+              style={({ pressed }) => [
+                styles.actionBtn,
+                styles.detailsBtn,
+                pressed && styles.actionBtnPressed,
+              ]}
+            >
+              <IconFileText color={customerPalette.primary} size={16} strokeWidth={2} />
+              <Text style={styles.detailsBtnText}>
+                {isExpanded ? 'Thu gọn' : 'Chi tiết'}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </View>
@@ -461,12 +607,14 @@ type CargoBookingCardProps = Readonly<{
   onShowVietQR?: () => void;
   onViewInvoice?: () => void;
   onViewDeliveryProof?: () => void;
+  onReviewTrip?: () => void;
 }>;
 
 const CargoBookingCard = React.memo(function CargoBookingCard({
   driverCapacity,
   driverPlate,
   driverType,
+  onReviewTrip,
   onShowVietQR,
   onViewDeliveryProof,
   onViewInvoice,
@@ -712,6 +860,36 @@ const CargoBookingCard = React.memo(function CargoBookingCard({
             </View>
           </>
         ) : null}
+
+        {/* Delivery Completion Rating Card */}
+        {trip.status === 'DELIVERED' ? (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.deliveryReviewCard}>
+              <View style={styles.deliveryReviewHeader}>
+                <Text style={styles.deliveryReviewTitle}>Chuyến đi đã hoàn tất</Text>
+                <Text style={styles.deliveryReviewSubtext}>
+                  Vui lòng dành ít phút để đánh giá chất lượng phục vụ của bác tài.
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Đánh giá chuyến đi"
+                accessibilityRole="button"
+                onPress={() => {
+                  haptic.medium();
+                  onReviewTrip?.();
+                }}
+                style={({ pressed }) => [
+                  styles.reviewCtaBtn,
+                  pressed && { transform: [{ scale: 0.97 }] },
+                ]}
+              >
+                <IconStar color={leopardPalette.accentYellow} filled size={18} />
+                <Text style={styles.reviewCtaLabel}>Đánh giá chuyến đi</Text>
+              </Pressable>
+            </View>
+          </>
+        ) : null}
       </View>
     </View>
   );
@@ -729,6 +907,7 @@ type TrackingBottomSheetProps = Readonly<{
   onShowVietQR?: () => void;
   onViewDeliveryProof?: () => void;
   onViewInvoice?: () => void;
+  onReviewTrip?: () => void;
   maskedPhone: string;
   formattedRating: string | null;
   progressPct: number;
@@ -740,6 +919,7 @@ const TrackingBottomSheet = React.memo(function TrackingBottomSheet({
   maskedPhone,
   onCall,
   onChat,
+  onReviewTrip,
   onShowVietQR,
   onToggleSnap,
   onViewDeliveryProof,
@@ -769,6 +949,8 @@ const TrackingBottomSheet = React.memo(function TrackingBottomSheet({
     [onToggleSnap],
   );
 
+  const isExpanded = snapPoint !== 'MINI';
+
   return (
     <View
       style={[
@@ -796,13 +978,15 @@ const TrackingBottomSheet = React.memo(function TrackingBottomSheet({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* VIP Driver Card */}
+        {/* VIP Driver Card with quick actions */}
         <VipDriverCard
           driver={driver}
           formattedRating={formattedRating}
+          isExpanded={isExpanded}
           maskedPhone={maskedPhone}
           onCall={onCall}
           onChat={onChat}
+          onToggleDetails={onToggleSnap}
         />
 
         {/* Cargo & Booking Details Card */}
@@ -810,6 +994,7 @@ const TrackingBottomSheet = React.memo(function TrackingBottomSheet({
           driverCapacity={driver.vehicleCapacity}
           driverPlate={driver.vehiclePlate}
           driverType={driver.vehicleType}
+          onReviewTrip={onReviewTrip}
           onShowVietQR={onShowVietQR}
           onViewDeliveryProof={onViewDeliveryProof}
           onViewInvoice={onViewInvoice}
@@ -829,13 +1014,14 @@ export function RealtimeTrackingScreen({
   onBack,
   onCallDriver,
   onChatDriver,
+  onReviewTrip,
   onShowVietQR,
   onViewDeliveryProof,
   onViewInvoice,
   trip,
   truckLocation,
 }: RealtimeTrackingScreenProps) {
-  const [snapPoint, setSnapPoint] = useState<SnapPoint>('HALF');
+  const [snapPoint, setSnapPoint] = useState<SnapPoint>('MINI');
   const [internalQrModalVisible, setInternalQrModalVisible] = useState(false);
 
   const isSimulated = Boolean(
@@ -908,9 +1094,9 @@ export function RealtimeTrackingScreen({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     haptic.selection();
     setSnapPoint((prev) => {
+      if (prev === 'MINI') return 'HALF';
       if (prev === 'HALF') return 'FULL';
-      if (prev === 'FULL') return 'MINI';
-      return 'HALF';
+      return 'MINI';
     });
   }, []);
 
@@ -942,16 +1128,20 @@ export function RealtimeTrackingScreen({
       <TrackingMapLayer
         destination={trip.destination}
         destinationCoords={trip.destinationCoords}
+        distanceRemainingKm={trip.distanceRemainingKm}
+        distanceTotalKm={trip.distanceTotalKm}
         origin={trip.origin}
         originCoords={trip.originCoords}
         routeCoords={trip.routeCoords}
+        snapPoint={snapPoint}
+        status={trip.status}
         stops={trip.stops}
         truckEtaLabel={trip.etaLabel}
         truckEtaMinutes={trip.etaMinutes}
         truckLocation={truckLocation}
       />
 
-      {/* ── LAYER 1: Floating Header & Fixed Status Bar (Apple HIG) ── */}
+      {/* ── LAYER 1: Floating Header & Dynamic Island Status Bar (Apple HIG) ── */}
       <TrackingTopBar
         distanceRemainingKm={trip.distanceRemainingKm}
         etaLabel={trip.etaLabel}
@@ -967,13 +1157,14 @@ export function RealtimeTrackingScreen({
         snapPoint={snapPoint}
       />
 
-      {/* ── LAYER 3: Interactive Bottom Sheet (3 Snap Points: Mini/Half/Full) ── */}
+      {/* ── LAYER 3: Interactive Map-First Bottom Sheet (Mini/Half/Full) ── */}
       <TrackingBottomSheet
         driver={driver}
         formattedRating={formattedRating}
         maskedPhone={maskedPhone}
         onCall={handleCall}
         onChat={handleChat}
+        onReviewTrip={onReviewTrip}
         onShowVietQR={handleOpenVietQR}
         onToggleSnap={toggleSnap}
         onViewDeliveryProof={onViewDeliveryProof}
@@ -1140,7 +1331,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
 
-  // Fixed Status Bar (Strict "ETA dự kiến", Tabular Nums)
+  // Floating Status Bar (Strict "ETA dự kiến", Tabular Nums)
   fixedStatusBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1300,8 +1491,8 @@ const styles = StyleSheet.create({
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.hairline,
-    backgroundColor: colors.warning.background,
+    gap: 3,
+    backgroundColor: pastelTheme.yellowCard.bg,
     borderColor: pastelTheme.yellowCard.border,
     borderWidth: 1,
     borderRadius: radius.cardSm,
@@ -1309,28 +1500,23 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.hairline,
   },
   ratingText: {
-    color: colors.warning.text,
+    color: customerPalette.textSlateDark,
     ...typeScale.caption2,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   tripsText: {
-    color: customerPalette.textSubtle,
-    ...typeScale.caption1,
-    fontVariant: ['tabular-nums'],
+    color: customerPalette.textMutedSlate,
+    ...typeScale.caption2,
   },
   driverPhoneMasked: {
-    color: colors.brand.blue,
-    ...typeScale.caption1,
-    fontWeight: '600',
-    backgroundColor: colors.info.background,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
-    borderRadius: radius.cardSm,
+    color: customerPalette.textMutedSlate,
+    ...typeScale.caption2,
     fontVariant: ['tabular-nums'],
   },
   driverActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.xs,
   },
   actionBtn: {
@@ -1338,18 +1524,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.card,
+    gap: spacing.xxs,
+    height: 42,
+    borderRadius: radius.control,
     ...iosContinuousCurve,
-    borderWidth: 1,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
   },
   callBtn: {
     backgroundColor: customerPalette.primary,
-    borderColor: customerPalette.primary,
   },
   callBtnText: {
     color: customerPalette.surfaceWhite,
@@ -1358,19 +1548,26 @@ const styles = StyleSheet.create({
   },
   chatBtn: {
     backgroundColor: customerPalette.surfaceWhite,
+    borderWidth: 1,
     borderColor: leopardPalette.inputBorder,
   },
   chatBtnText: {
-    color: customerPalette.textSlateDark,
+    color: customerPalette.primary,
     ...typeScale.footnote,
     fontWeight: '600',
   },
-  actionBtnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+  detailsBtn: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+  },
+  detailsBtnText: {
+    color: customerPalette.primary,
+    ...typeScale.footnote,
+    fontWeight: '700',
   },
 
-  // ── LAYER 4: Cargo Details Card ───────────────────
+  // ── LAYER 4: Cargo & Booking Card ─────────────────
   cargoCardOuter: {
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
@@ -1380,10 +1577,9 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
-    marginBottom: spacing.md,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   cargoCardInner: {
     borderRadius: radius.card,
@@ -1391,26 +1587,18 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.canvas,
     borderWidth: 1,
     borderColor: customerPalette.cardBorder,
-    padding: spacing.sm,
-    gap: spacing.sm,
-  },
-
-  // Progress Section
-  progressSection: {
-    gap: spacing.xs,
-  },
-  progressHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
+    padding: spacing.md,
+    gap: spacing.md,
   },
   sectionTitle: {
     color: customerPalette.textSlateDark,
     ...typeScale.subheadline,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  sectionHeaderBetween: {
+  progressSection: {
+    gap: spacing.xs,
+  },
+  progressHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1425,142 +1613,142 @@ const styles = StyleSheet.create({
   },
   etaBadgeText: {
     color: customerPalette.primary,
-    ...typeScale.caption1,
+    ...typeScale.caption2,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   progressBarContainer: {
-    marginTop: spacing.hairline,
+    marginVertical: spacing.xxs,
   },
   progressBarBg: {
-    height: spacing.xs,
-    borderRadius: spacing.xxs,
-    backgroundColor: customerPalette.cardBorder,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.neutral.surfaceMuted,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: spacing.xxs,
-    backgroundColor: customerPalette.primary,
+    backgroundColor: leopardPalette.accentYellow,
+    borderRadius: 3,
   },
   progressLabelsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
   },
   progressStatCol: {
-    gap: spacing.hairline,
+    gap: 1,
   },
   statAlignEnd: {
     alignItems: 'flex-end',
   },
   progressStatSub: {
-    color: leopardPalette.inputPlaceholder,
     ...typeScale.caption2,
-    fontWeight: '600',
-    letterSpacing: 0.4,
+    color: customerPalette.textMutedSlate,
   },
   progressLabelLeft: {
-    color: customerPalette.textSlateDark,
     ...typeScale.footnote,
-    fontWeight: '700',
+    fontWeight: '600',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
   },
   progressLabelRight: {
-    color: customerPalette.primary,
     ...typeScale.footnote,
     fontWeight: '700',
+    color: leopardPalette.accentYellow,
     fontVariant: ['tabular-nums'],
   },
 
-  // 3-Step Minimal Route Timeline
+  // 3-Step Timeline Box
   timelineBox: {
-    backgroundColor: customerPalette.surfaceWhite,
-    borderColor: customerPalette.cardBorder,
-    borderWidth: 1,
-    borderRadius: radius.card,
-    ...iosContinuousCurve,
-    padding: spacing.sm,
-    gap: 0,
+    marginTop: spacing.xs,
+    gap: spacing.hairline,
   },
   timelineItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    minHeight: 48,
+    gap: spacing.sm,
   },
   timelineItemLast: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    gap: spacing.sm,
   },
   timelineNodeCol: {
     alignItems: 'center',
-    width: 22,
-    marginRight: spacing.xs,
+    width: 20,
   },
   timelineDot: {
     width: 20,
     height: 20,
-    borderRadius: radius.pill,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 2,
   },
   dotDone: {
     backgroundColor: colors.success.text,
   },
   dotActive: {
     backgroundColor: customerPalette.primary,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   dotPending: {
-    backgroundColor: customerPalette.canvas,
+    backgroundColor: colors.neutral.surfaceMuted,
     borderWidth: 1.5,
-    borderColor: customerPalette.cardBorder,
+    borderColor: leopardPalette.inputBorder,
   },
   pendingInnerDot: {
     width: 6,
     height: 6,
-    borderRadius: radius.pill,
-    backgroundColor: leopardPalette.inputBorder,
+    borderRadius: 3,
+    backgroundColor: customerPalette.textSubtle,
   },
   timelineHairline: {
-    width: 1.5,
+    width: 2,
     flex: 1,
-    backgroundColor: customerPalette.cardBorder,
-    marginVertical: spacing.hairline,
+    minHeight: 22,
+    backgroundColor: colors.neutral.surfaceMuted,
   },
   timelineTextCol: {
     flex: 1,
-    paddingBottom: spacing.xs,
-    gap: spacing.hairline,
+    paddingBottom: spacing.sm,
+    gap: 2,
   },
   timelineTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.xs,
   },
   timelineStepLabel: {
-    color: customerPalette.textSlateDark,
     ...typeScale.footnote,
     fontWeight: '600',
+    color: customerPalette.textSlateDark,
   },
   timelineStepLabelActive: {
-    color: customerPalette.primary,
     ...typeScale.footnote,
     fontWeight: '700',
+    color: customerPalette.primary,
   },
   timelineSubBadge: {
-    color: colors.success.text,
     ...typeScale.caption2,
+    color: colors.success.text,
     fontWeight: '600',
   },
   timelineSubBadgeActive: {
-    color: customerPalette.primary,
     ...typeScale.caption2,
+    color: leopardPalette.accentYellow,
     fontWeight: '700',
-    letterSpacing: 0.4,
   },
   timelineAddressText: {
-    color: customerPalette.textSubtle,
     ...typeScale.caption1,
+    color: customerPalette.textMutedSlate,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: customerPalette.cardBorder,
   },
 
   // Booking details
@@ -1568,63 +1756,63 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   detailGrid: {
-    backgroundColor: customerPalette.surfaceWhite,
-    borderColor: customerPalette.cardBorder,
-    borderRadius: radius.control,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    padding: spacing.xs,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.xs,
   },
   detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
+    width: '48%',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.cardSm,
+    padding: spacing.xs,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    gap: 2,
   },
   detailLabel: {
-    color: customerPalette.textSubtle,
-    ...typeScale.caption1,
+    ...typeScale.caption2,
+    color: customerPalette.textMutedSlate,
   },
   detailValue: {
-    color: customerPalette.textSlateDark,
     ...typeScale.footnote,
-    fontWeight: '700',
-    flexShrink: 1,
-    textAlign: 'right',
+    fontWeight: '600',
+    color: customerPalette.textSlateDark,
     fontVariant: ['tabular-nums'],
   },
   pricingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: spacing.xxs,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.cardSm,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    marginTop: spacing.xxs,
   },
   pricingCol: {
-    gap: spacing.hairline,
+    gap: 2,
   },
   pricingLabel: {
-    color: customerPalette.textSubtle,
     ...typeScale.caption2,
+    color: customerPalette.textMutedSlate,
   },
   pricingValue: {
+    ...typeScale.headline,
+    fontWeight: '800',
     color: customerPalette.primary,
-    ...typeScale.body,
-    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   vietQrBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xxs,
-    backgroundColor: customerPalette.primary,
-    borderRadius: radius.card,
-    ...iosContinuousCurve,
-    minHeight: 44,
-    minWidth: 44,
+    backgroundColor: colors.success.text,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    shadowColor: customerPalette.primary,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    shadowColor: colors.success.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -1632,8 +1820,8 @@ const styles = StyleSheet.create({
   },
   vietQrBtnText: {
     color: customerPalette.surfaceWhite,
-    ...typeScale.caption1,
-    fontWeight: '600',
+    ...typeScale.subheadline,
+    fontWeight: '700',
   },
 
   // Invoice Section
@@ -1649,37 +1837,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    flex: 1,
   },
   invoiceSubTitle: {
-    color: customerPalette.textSubtle,
     ...typeScale.caption2,
-    marginTop: spacing.hairline,
+    color: customerPalette.textMutedSlate,
   },
   vatRatePill: {
-    backgroundColor: colors.warning.background,
+    backgroundColor: pastelTheme.yellowCard.bg,
     borderColor: pastelTheme.yellowCard.border,
     borderWidth: 1,
-    borderRadius: radius.cardSm,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
+    paddingVertical: 2,
   },
   vatRatePillText: {
-    color: colors.warning.text,
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: customerPalette.textSlateDark,
   },
   invoiceDownloadBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: customerPalette.surfaceWhite,
-    borderColor: customerPalette.cardBorder,
+    borderRadius: radius.cardSm,
+    padding: spacing.sm,
     borderWidth: 1,
-    borderRadius: radius.card,
-    ...iosContinuousCurve,
-    minHeight: control.stickyPrimaryMinimumHeight,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
+    borderColor: customerPalette.cardBorder,
   },
   invoiceDownloadLeft: {
     flexDirection: 'row',
@@ -1771,6 +1956,44 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  // Delivery Completion Rating Card
+  deliveryReviewCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderWidth: 1,
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  deliveryReviewHeader: {
+    gap: spacing.xxs,
+  },
+  deliveryReviewTitle: {
+    ...typeScale.headline,
+    color: customerPalette.textSlateDark,
+    fontWeight: '700',
+  },
+  deliveryReviewSubtext: {
+    ...typeScale.footnote,
+    color: customerPalette.textSubtle,
+  },
+  reviewCtaBtn: {
+    height: 52,
+    backgroundColor: customerPalette.primary,
+    borderRadius: 14,
+    ...iosContinuousCurve,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  reviewCtaLabel: {
+    color: '#FFFFFF',
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+
   // ── LAYER 5: Interactive Bottom Sheet (Apple Maps Sheet) ──
   bottomSheet: {
     position: 'absolute',
@@ -1825,9 +2048,10 @@ const styles = StyleSheet.create({
   },
 
   // Utilities
-  divider: {
-    height: 1,
-    backgroundColor: customerPalette.cardBorder,
+  sectionHeaderBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   pressedScale: {
     opacity: 0.85,

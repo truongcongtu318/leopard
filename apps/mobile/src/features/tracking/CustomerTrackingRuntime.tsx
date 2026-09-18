@@ -139,6 +139,11 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
           const coords = resolveTrackingCoords(detail.order.tracking);
           if (coords) {
             setTruckPoint((current) => current ?? { ...coords, timestamp: new Date().toISOString() });
+          } else if (detail.order.route.routeCoords && detail.order.route.routeCoords.length > 0) {
+            const firstPoint = detail.order.route.routeCoords[0];
+            setTruckPoint((current) => current ?? { lat: firstPoint.lat, lng: firstPoint.lng, timestamp: new Date().toISOString() });
+          } else if (detail.order.route.origin.coords) {
+            setTruckPoint((current) => current ?? { ...detail.order.route.origin.coords!, timestamp: new Date().toISOString() });
           }
         } else {
           setLoadError(true);
@@ -222,10 +227,18 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
     );
   }
 
+  const handleBack = () => {
+    if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/customer/orders');
+    }
+  };
+
   // Chặn đơn chưa có tài xế: không render màn hình tài xế giả.
   if (order.status === 'REQUESTED' || order.tracking.kind === 'no-driver') {
     return (
-      <ScreenScaffold onBack={() => router.back()} title="Theo dõi đơn hàng">
+      <ScreenScaffold onBack={handleBack} title="Theo dõi đơn hàng">
         <ScreenState
           actionLabel="Xem chi tiết đơn hàng"
           message="Chưa có tài xế nhận chuyến. Bản đồ GPS sẽ khả dụng khi tài xế nhận đơn."
@@ -237,9 +250,22 @@ export function CustomerTrackingRuntime({ initialOrderId }: CustomerTrackingRunt
     );
   }
 
+  const handleReviewTrip = () => {
+    router.push({
+      pathname: '/customer/review/[id]',
+      params: {
+        id: order.id,
+        driverName: order.assignedDriver?.name ?? undefined,
+        licensePlate: order.assignedDriver?.licensePlate ?? undefined,
+        vehicleType: order.assignedDriver?.vehicleType ?? undefined,
+      },
+    });
+  };
+
   return (
     <ActiveTrackingView
-      onBack={() => router.back()}
+      onBack={handleBack}
+      onReviewTrip={handleReviewTrip}
       onShowVietQR={() => router.push(`/customer/orders/${order.id}`)}
       order={order}
       truckPoint={truckPoint}
@@ -252,10 +278,12 @@ type ActiveTrackingViewProps = Readonly<{
   truckPoint: TrackingPoint | null;
   onBack: () => void;
   onShowVietQR: () => void;
+  onReviewTrip?: () => void;
 }>;
 
 function ActiveTrackingView({
   onBack,
+  onReviewTrip,
   onShowVietQR,
   order,
   truckPoint,
@@ -333,6 +361,7 @@ function ActiveTrackingView({
       driver={memoizedDriver}
       isSimulatedData={isSimulated}
       onBack={onBack}
+      onReviewTrip={onReviewTrip}
       onShowVietQR={onShowVietQR}
       trip={memoizedTrip}
       truckLocation={truckPoint ?? undefined}
