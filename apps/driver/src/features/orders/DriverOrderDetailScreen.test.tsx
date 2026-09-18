@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, within } from '@testing-library/react-native';
+import { fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import React from 'react';
 import { DriverOrderDetailScreen } from './DriverOrderDetailScreen';
 import { createDriverDetailFixture } from './fixtures';
@@ -185,7 +185,7 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     expect(screen.queryByText('Công trình Landmark 81, Bình Thạnh')).toBeNull();
 
     // ETA label
-    expect(screen.getByText(/phút|ETA/i)).toBeTruthy();
+    expect(screen.getAllByText(/phút|ETA/i).length).toBeGreaterThan(0);
 
     // Contact button
     expect(screen.getByLabelText('Gọi cho người nhận')).toBeTruthy();
@@ -339,6 +339,57 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
     expect(screen.queryByTestId('btn-navigate-active-leg')).toBeNull();
     expect(screen.queryByTestId('btn-open-incident-modal')).toBeNull();
     expect(screen.queryByTestId('btn-advance-leg-slide')).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('opens ProofSourceSelectModal on proof action and allows selecting photo from library', async () => {
+    const onSelectProof = jest.fn(async () => true);
+    const onExecuteTask = jest.fn();
+    const view = createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED');
+
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onExecuteTask={onExecuteTask}
+        onSelectProof={onSelectProof}
+        view={view}
+      />,
+    );
+
+    // Initial state: modal is not visible
+    expect(screen.queryByTestId('proof-source-modal')).toBeNull();
+
+    // Swipe / activate proof action
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+
+    // Proof source modal opens with options
+    expect(screen.getByTestId('proof-source-modal')).toBeTruthy();
+    expect(screen.getByTestId('btn-source-camera')).toBeTruthy();
+    expect(screen.getByTestId('btn-source-library')).toBeTruthy();
+
+    // Driver can choose photo library
+    await fireEvent.press(screen.getByTestId('btn-source-library'));
+
+    // Modal closes
+    await waitFor(() => expect(screen.queryByTestId('proof-source-modal')).toBeNull());
+
+    await screen.unmount();
+  });
+
+  it('closes ProofSourceSelectModal and resets when driver taps close', async () => {
+    const view = createDriverDetailFixture('D-DETAIL-PROOF-REQUIRED');
+
+    const screen = await render(<DriverOrderDetailScreen view={view} />);
+
+    await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'activate' },
+    });
+    expect(screen.getByTestId('proof-source-modal')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('btn-close-source-modal'));
+    await waitFor(() => expect(screen.queryByTestId('proof-source-modal')).toBeNull());
 
     await screen.unmount();
   });

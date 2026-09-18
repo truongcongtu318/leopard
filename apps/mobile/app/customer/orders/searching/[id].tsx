@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   Platform,
@@ -16,6 +16,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   AppText,
@@ -23,26 +24,33 @@ import {
   colors,
   customerPalette,
   haptic,
+  IconAlertTriangle,
   IconCheck,
+  IconChevronLeft,
+  IconCopy,
   IconRadarPulse,
   IconSecurityShield,
   IconSpeedTruck,
   iosContinuousCurve,
   leopardPalette,
+  LeopardMapView,
   radius,
-  ScreenScaffold,
+  resolveLocationCoords,
   spacing,
   typeScale,
 } from '@leopard/mobile-core';
+import { CancelOrderConfirmModal } from '../../../../src/features/customer/orders/components/CancelOrderConfirmModal';
 import { createCustomerHttpAdapter } from '../../../../src/features/customer/orders/adapter';
 
 export interface OrderSearchingProps {
   orderId?: string;
   initialSeconds?: number;
   initialMatchedDriver?: string;
+  initialCancelledReason?: string;
   onBack?: () => void;
   onCancelSuccess?: () => void;
   onMatched?: (orderId: string) => void;
+  onCancelled?: (orderId: string, reason?: string) => void;
 }
 
 function formatOrderRef(id: string): string {
@@ -72,9 +80,11 @@ function formatVehicleLabel(type?: string): string {
 export default function OrderSearchingScreen({
   initialSeconds = 30,
   initialMatchedDriver,
+  initialCancelledReason,
   onBack,
   onCancelSuccess,
   onMatched,
+  onCancelled,
   orderId: propOrderId,
 }: OrderSearchingProps = {}) {
   const router = useRouter();
@@ -95,13 +105,34 @@ export default function OrderSearchingScreen({
 
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [matchedInfo, setMatchedInfo] = useState<{ driverName?: string } | null>(
-    initialMatchedDriver ? { driverName: initialMatchedDriver } : null,
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [copiedOrderRef, setCopiedOrderRef] = useState(false);
+  const [cancelledInfo, setCancelledInfo] = useState<{ reason?: string } | null>(
+    initialCancelledReason ? { reason: initialCancelledReason } : null,
   );
 
-  // Reanimated 60fps native UI thread pulse wave for radar visual
+  // Geographic coordinates resolution for Lalamove-style interactive map
+  const pickupCoords = useMemo(() => resolveLocationCoords(origin), [origin]);
+  const dropoffCoords = useMemo(
+    () => resolveLocationCoords(destination, pickupCoords),
+    [destination, pickupCoords],
+  );
+
+  // Simulated nearby driver coordinates radiating around pickup point (Lalamove standard)
+  const nearbyDrivers = useMemo(() => {
+    if (!pickupCoords) return [];
+    return [
+      { id: 'drv-1', lat: pickupCoords.lat + 0.0032, lng: pickupCoords.lng + 0.0036, vehicleType: 'VAN' },
+      { id: 'drv-2', lat: pickupCoords.lat - 0.0038, lng: pickupCoords.lng + 0.0028, vehicleType: 'VAN' },
+      { id: 'drv-3', lat: pickupCoords.lat + 0.0025, lng: pickupCoords.lng - 0.0034, vehicleType: 'TRUCK' },
+      { id: 'drv-4', lat: pickupCoords.lat - 0.0021, lng: pickupCoords.lng - 0.0029, vehicleType: 'VAN' },
+    ];
+  }, [pickupCoords]);
+
+  // Reanimated 60fps native UI thread pulse wave for radar visual (Emil Kowalski 3-wave staggered sonar)
   const pulse1 = useSharedValue(0);
   const pulse2 = useSharedValue(0);
+  const pulse3 = useSharedValue(0);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'test') return undefined;
@@ -124,22 +155,43 @@ export default function OrderSearchingScreen({
         -1,
         false,
       );
-    }, 1200);
+    }, 800);
 
-    return () => clearTimeout(timer2);
-  }, [pulse1, pulse2]);
+    const timer3 = setTimeout(() => {
+      pulse3.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 2400, easing: Easing.out(Easing.cubic) }),
+          withTiming(0, { duration: 0 }),
+        ),
+        -1,
+        false,
+      );
+    }, 1600);
+
+    return () => {
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [pulse1, pulse2, pulse3]);
 
   const animatedPulseStyle1 = useAnimatedStyle(() => {
     return {
-      transform: [{ scale: 0.85 + pulse1.value * 0.75 }],
+      transform: [{ scale: 0.75 + pulse1.value * 1.05 }],
       opacity: (1 - pulse1.value) * 0.7,
     };
   });
 
   const animatedPulseStyle2 = useAnimatedStyle(() => {
     return {
-      transform: [{ scale: 0.85 + pulse2.value * 0.75 }],
+      transform: [{ scale: 0.75 + pulse2.value * 1.05 }],
       opacity: (1 - pulse2.value) * 0.7,
+    };
+  });
+
+  const animatedPulseStyle3 = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: 0.75 + pulse3.value * 1.05 }],
+      opacity: (1 - pulse3.value) * 0.6,
     };
   });
 
@@ -157,7 +209,23 @@ export default function OrderSearchingScreen({
     return () => clearInterval(timer);
   }, []);
 
-  // Listen to real order status if driver accepts
+  // When driver accepts, immediately auto-navigate to tracking screen without blocking modal
+  useEffect(() => {
+    if (initialMatchedDriver) {
+      try {
+        haptic.success();
+      } catch {
+        // safe fallback
+      }
+      if (onMatched) {
+        onMatched(id);
+      } else {
+        router.replace(`/customer/tracking?orderId=${id}`);
+      }
+    }
+  }, [initialMatchedDriver, id, onMatched, router]);
+
+  // Listen to real order status if driver accepts or order gets cancelled
   useEffect(() => {
     if (!id || id.startsWith('11111111-1111-4111-8111-')) return undefined;
     if (process.env.NODE_ENV === 'test') return undefined;
@@ -171,13 +239,35 @@ export default function OrderSearchingScreen({
         if (detail.order.requestedVehicleLabel) {
           setFetchedVehicleLabel(detail.order.requestedVehicleLabel);
         }
-        if (detail.order.status !== 'REQUESTED') {
+
+        // If order was cancelled (e.g. timeout / sweep: "Không tìm được tài xế phù hợp")
+        if (detail.order.status === 'CANCELLED' || detail.order.status === 'INCIDENT_CANCELLED') {
           clearInterval(interval);
-          const driver =
-            detail.order.tracking && 'driverLabel' in detail.order.tracking
-              ? detail.order.tracking.driverLabel
-              : 'Tài xế LEOPARD';
-          setMatchedInfo({ driverName: driver });
+          const reason =
+            detail.order.cancelReason || 'Không tìm được tài xế phù hợp trong khu vực của bạn.';
+          setCancelledInfo({ reason });
+          return;
+        }
+
+        // Directly navigate to tracking screen when driver has accepted
+        const isDriverAccepted =
+          detail.order.status === 'ACCEPTED' ||
+          detail.order.status === 'PICKING_UP' ||
+          detail.order.status === 'IN_TRANSIT' ||
+          (detail.order.status !== 'REQUESTED' && Boolean(detail.order.assignedDriver));
+
+        if (isDriverAccepted) {
+          clearInterval(interval);
+          try {
+            haptic.success();
+          } catch {
+            // safe fallback
+          }
+          if (onMatched) {
+            onMatched(id);
+          } else {
+            router.replace(`/customer/tracking?orderId=${id}`);
+          }
         }
       } catch {
         // Safe ignore
@@ -188,30 +278,28 @@ export default function OrderSearchingScreen({
       mounted = false;
       clearInterval(interval);
     };
-  }, [id]);
+  }, [id, onMatched, router]);
 
-  // Transition when matched or countdown completed
-  useEffect(() => {
-    if (secondsLeft === 0) {
-      if (process.env.NODE_ENV === 'test' && onMatched && !matchedInfo) {
-        onMatched(id);
-      }
-    }
-  }, [secondsLeft, id, onMatched, matchedInfo]);
-
-  const handleMatchedConfirm = () => {
+  const handleCancelledConfirm = () => {
     haptic.selection();
-    setMatchedInfo(null);
-    if (onMatched) {
-      onMatched(id);
+    const reason = cancelledInfo?.reason;
+    setCancelledInfo(null);
+    if (onCancelled) {
+      onCancelled(id, reason);
       return;
     }
-    router.replace(`/customer/tracking?orderId=${id}`);
+    router.replace(`/customer/orders/${id}`);
+  };
+
+  const handleRetryBooking = () => {
+    haptic.medium();
+    setCancelledInfo(null);
+    router.replace('/customer/booking');
   };
 
   const handleCancelConfirm = async () => {
     haptic.medium();
-    setShowCancelModal(false);
+    setIsCancelling(true);
     try {
       const port = createCustomerHttpAdapter();
       await port.executeIntent({
@@ -221,12 +309,21 @@ export default function OrderSearchingScreen({
       });
     } catch {
       // Safe fallback
+    } finally {
+      setIsCancelling(false);
+      setShowCancelModal(false);
     }
     if (onCancelSuccess) {
       onCancelSuccess();
     } else {
       router.replace('/customer/orders');
     }
+  };
+
+  const handleCopyOrderRef = () => {
+    haptic.selection();
+    setCopiedOrderRef(true);
+    setTimeout(() => setCopiedOrderRef(false), 2000);
   };
 
   const handleBack = () => {
@@ -244,7 +341,17 @@ export default function OrderSearchingScreen({
 
   if (!id) {
     return (
-      <ScreenScaffold onBack={() => router.replace('/customer/orders')} title="Tìm tài xế nhận chuyến">
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.topSafeArea}>
+          <Pressable
+            accessibilityLabel="Quay lại"
+            accessibilityRole="button"
+            onPress={handleBack}
+            style={styles.floatingBackBtn}
+          >
+            <IconChevronLeft color={customerPalette.textSlateDark} size={22} />
+          </Pressable>
+        </SafeAreaView>
         <View style={styles.notFoundWrap}>
           <AppText tone="primary" variant="headline" style={styles.notFoundText}>
             Không tìm thấy mã đơn hàng cần điều phối.
@@ -257,225 +364,224 @@ export default function OrderSearchingScreen({
             variant="primary"
           />
         </View>
-      </ScreenScaffold>
+      </View>
     );
   }
 
   const timerFormatted = `00:${secondsLeft.toString().padStart(2, '0')}`;
-
-  const stickyCancelFooter = (
-    <View style={styles.fixedBottomBar}>
-      <Button
-        label="Hủy tìm xe"
-        onPress={() => {
-          haptic.light();
-          setShowCancelModal(true);
-        }}
-        size="large"
-        style={styles.cancelBtn}
-        testID="btn-cancel-searching"
-        variant="secondary"
-      />
-    </View>
+  const progressPercent = Math.min(
+    100,
+    Math.max(0, (secondsLeft / Math.max(initialSeconds, 1)) * 100),
   );
 
   return (
-    <ScreenScaffold
-      headerTone="plain"
-      onBack={handleBack}
-      stickyFooter={stickyCancelFooter}
-      stickyFooterBleed={true}
-      subtitle="Hệ thống điều phối thông minh LEOPARD"
-      title="Tìm tài xế nhận chuyến"
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Radar visual container - Apple HIG & Reanimated UI Thread pulse */}
-        <View style={styles.radarSection} testID="radar-visual-container">
-          <View style={styles.radarRingOuter}>
-            {/* Wave 1: Midnight Navy & Cheetah Glow */}
-            <Animated.View
-              style={[
-                styles.radarPulseWavePrimary,
-                animatedPulseStyle1,
-              ]}
-            />
-            {/* Wave 2: Outer Amber Glow */}
-            <Animated.View
-              style={[
-                styles.radarPulseWaveSecondary,
-                animatedPulseStyle2,
-              ]}
-            />
+    <View style={styles.container}>
+      {/* Layer 0: Grab-Style Route Map Canvas */}
+      <View style={styles.mapWrap}>
+        <LeopardMapView
+          destination={{ label: destination, coords: dropoffCoords }}
+          height="100%"
+          interactive={false}
+          mode="route"
+          nearbyDrivers={nearbyDrivers}
+          origin={{ label: origin, coords: pickupCoords }}
+          testID="searching-route-map"
+        />
 
-            {/* Middle decorative concentric ring */}
-            <View style={styles.radarRingMid}>
-              {/* Radar center circle button */}
-              <View style={styles.radarCenterCircle}>
-                <IconRadarPulse color={leopardPalette.accentYellow} size={42} />
-              </View>
-            </View>
-          </View>
-
-          <AppText tone="primary" variant="headline" style={styles.radarStatusText}>
-            Đang quét tìm xe trong bán kính 5km...
-          </AppText>
-          <AppText tone="secondary" variant="footnote" style={styles.radarNoticeText}>
-            Tài xế gần nhất sẽ phản hồi và nhận lệnh trong giây lát.
-          </AppText>
-        </View>
-
-        {/* 30s Countdown timer - Inset Grouped Squircle Card */}
-        <View style={styles.timerCard} testID="searching-countdown-timer">
-          <AppText tone="subtle" variant="caption2" style={styles.timerLabel}>
-            THỜI GIAN CHỜ GHÉP XE TỰ ĐỘNG
-          </AppText>
-          <AppText numeric tone="accent" variant="largeTitle" style={styles.timerValue}>
-            {timerFormatted}
-          </AppText>
-          <View style={styles.timerProgressBarTrack}>
-            <View
-              style={[
-                styles.timerProgressBarFill,
-                {
-                  width: `${Math.min(
-                    100,
-                    Math.max(0, (secondsLeft / Math.max(initialSeconds, 1)) * 100),
-                  )}%`,
-                },
-              ]}
-            />
-          </View>
-        </View>
-
-        {/* Double-Bezel Order Info Card - Apple Inset Grouped */}
-        <View style={styles.orderOuterCard}>
-          <View style={styles.orderInnerCard}>
-            <View style={styles.orderCardHeader}>
-              <View>
-                <AppText tone="subtle" variant="caption2" style={styles.orderLabelSmall}>
-                  MÃ ĐƠN HÀNG
-                </AppText>
-                <AppText numeric tone="primary" variant="subheadline" style={styles.orderIdValue}>
-                  {formatOrderRef(id)}
-                </AppText>
-              </View>
-              <View style={styles.vehicleBadge}>
-                <IconSpeedTruck color={customerPalette.primary} size={16} />
-                <AppText tone="primary" variant="caption1" style={styles.vehicleBadgeText}>
-                  {vehicleLabel}
-                </AppText>
-              </View>
-            </View>
-
-            <View style={styles.dividerLine} />
-
-            {/* Route origin & destination timeline */}
-            <View style={styles.routeTimeline}>
-              <View style={styles.routeItem}>
-                <View style={styles.pickupDot} />
-                <View style={styles.routeTextWrap}>
-                  <AppText tone="subtle" variant="caption2" style={styles.routeTypeLabel}>
-                    ĐIỂM LẤY HÀNG
-                  </AppText>
-                  <AppText numberOfLines={2} tone="primary" variant="subheadline" style={styles.routeAddressText}>
-                    {origin}
-                  </AppText>
-                </View>
-              </View>
-
-              <View style={styles.routeDottedConnector} />
-
-              <View style={styles.routeItem}>
-                <View style={styles.dropoffDot} />
-                <View style={styles.routeTextWrap}>
-                  <AppText tone="subtle" variant="caption2" style={styles.routeTypeLabel}>
-                    ĐIỂM GIAO HÀNG
-                  </AppText>
-                  <AppText numberOfLines={2} tone="primary" variant="subheadline" style={styles.routeAddressText}>
-                    {destination}
-                  </AppText>
-                </View>
-              </View>
+        {/* Layer 0.5: Proportional Sonar Pulse radiating over pickup route */}
+        <View pointerEvents="none" style={styles.radarOverlayContainer} testID="radar-visual-container">
+          <View style={styles.radarPulseCenter}>
+            <Animated.View style={[styles.radarPulseWave, styles.radarPulse1, animatedPulseStyle1]} />
+            <Animated.View style={[styles.radarPulseWave, styles.radarPulse2, animatedPulseStyle2]} />
+            <Animated.View style={[styles.radarPulseWave, styles.radarPulse3, animatedPulseStyle3]} />
+            <View style={styles.radarBeaconCircle}>
+              <IconRadarPulse color={leopardPalette.accentYellow} size={28} />
             </View>
           </View>
         </View>
-      </ScrollView>
+      </View>
 
-      {/* Cancel Confirmation Modal with 100% Escrow refund */}
-      <Modal
-        animationType="fade"
-        onRequestClose={() => setShowCancelModal(false)}
-        transparent={true}
-        visible={showCancelModal}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable onPress={() => setShowCancelModal(false)} style={StyleSheet.absoluteFill} />
-          <View style={styles.modalContentCard}>
-            <View style={styles.modalIconWrap}>
-              <IconSecurityShield color={colors.success.text} size={28} />
-            </View>
+      {/* Layer 1: Floating Top Bar (Floating Glass Back Button & Status Pill) */}
+      <SafeAreaView edges={['top']} pointerEvents="box-none" style={styles.topSafeAreaOverlay}>
+        <View style={styles.topBarRow}>
+          <Pressable
+            accessibilityLabel="Quay lại"
+            accessibilityRole="button"
+            onPress={handleBack}
+            style={({ pressed }) => [
+              styles.floatingBackBtn,
+              pressed && styles.floatingBackBtnPressed,
+            ]}
+            testID="btn-searching-back"
+          >
+            <IconChevronLeft color={customerPalette.textSlateDark} size={22} />
+          </Pressable>
 
-            <AppText tone="primary" variant="headline" style={styles.modalTitle}>
-              Xác nhận hủy tìm xe?
+          <View style={styles.floatingTopPill}>
+            <View style={styles.livePulseDot} />
+            <AppText tone="primary" variant="subheadline" style={styles.floatingTopTitle}>
+              Tìm tài xế nhận chuyến
             </AppText>
+          </View>
 
-            <View style={styles.refundHighlightBox}>
-              <AppText tone="success" variant="footnote" style={styles.refundHighlightText}>
-                Hoàn cọc 100% tức thì về ví hoặc tài khoản ngân hàng của bạn theo chính sách bảo vệ quyền lợi khách hàng LEOPARD.
+          <View style={styles.topBarSpacer} />
+        </View>
+      </SafeAreaView>
+
+      {/* Layer 2: Grab-Style Unified Floating Bottom Sheet */}
+      <View style={styles.bottomSheetCard}>
+        {/* Apple HIG Sheet Pull Handle */}
+        <View style={styles.sheetHandleBar} />
+
+        {/* Section 1: Finding Driver Status & Tabular Countdown Timer */}
+        <View style={styles.statusSection} testID="searching-countdown-timer">
+          <View style={styles.statusHeaderRow}>
+            <View style={styles.statusTextWrap}>
+              <AppText tone="primary" variant="headline" style={styles.statusTitle}>
+                {secondsLeft > 0
+                  ? 'Đang quét tìm xe trong bán kính 5km...'
+                  : 'Đang mở rộng bán kính tìm xe...'}
+              </AppText>
+              <AppText tone="secondary" variant="caption1" style={styles.statusSubtitle}>
+                {secondsLeft > 0
+                  ? 'Tài xế gần nhất sẽ phản hồi và nhận lệnh trong giây lát.'
+                  : 'Hệ thống đang mở rộng phạm vi điều phối tới các tài xế lân cận.'}
               </AppText>
             </View>
 
-            <AppText tone="secondary" variant="footnote" style={styles.modalDescription}>
-              Bạn có thể tạo lại cuốc xe mới bất kỳ lúc nào mà không phát sinh thêm phí.
-            </AppText>
-
-            <View style={styles.modalActionButtons}>
-              <Button
-                label="Xác nhận hủy và hoàn tiền"
-                onPress={handleCancelConfirm}
-                size="large"
-                style={styles.modalConfirmCancelBtn}
-                variant="destructive"
-              />
-
-              <Button
-                label="Tiếp tục tìm xe"
-                onPress={() => {
-                  haptic.light();
-                  setShowCancelModal(false);
-                }}
-                size="large"
-                style={styles.modalKeepWaitingBtn}
-                variant="secondary"
-              />
+            <View style={styles.timerBadge}>
+              <AppText numeric tone="accent" variant="title3" style={styles.timerBadgeText}>
+                {timerFormatted}
+              </AppText>
             </View>
           </View>
-        </View>
-      </Modal>
 
-      {/* Driver Matched Success Modal */}
+          {/* Smooth Progress Bar */}
+          <View style={styles.progressBarTrack}>
+            <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+          </View>
+        </View>
+
+        {/* Section 2: Compact Unified Order & Route Bento */}
+        <View style={styles.tripCard}>
+          {/* Vehicle & Order Ref Line */}
+          <View style={styles.tripHeaderRow}>
+            <View style={styles.vehicleTypeTag}>
+              <IconSpeedTruck color={customerPalette.primary} size={16} />
+              <AppText tone="primary" variant="subheadline" style={styles.vehicleTypeText}>
+                {vehicleLabel}
+              </AppText>
+            </View>
+
+            <Pressable
+              accessibilityLabel="Sao chép mã đơn hàng"
+              accessibilityRole="button"
+              onPress={handleCopyOrderRef}
+              style={({ pressed }) => [
+                styles.orderCodeTag,
+                pressed && styles.orderCodeTagPressed,
+              ]}
+            >
+              <AppText numeric tone="secondary" variant="caption1" style={styles.orderCodeLabel}>
+                {formatOrderRef(id)}
+              </AppText>
+              {copiedOrderRef ? (
+                <IconCheck color={colors.success.text} size={13} />
+              ) : (
+                <IconCopy color={customerPalette.textSubtle} size={13} />
+              )}
+            </Pressable>
+          </View>
+
+          <View style={styles.tripDivider} />
+
+          {/* Route Timeline */}
+          <View style={styles.routeTimelineWrap}>
+            {/* Origin */}
+            <View style={styles.routeRow}>
+              <View style={styles.pickupPinDot} />
+              <View style={styles.routeAddressCol}>
+                <AppText tone="subtle" variant="caption2" style={styles.routeRoleText}>
+                  ĐIỂM LẤY HÀNG
+                </AppText>
+                <AppText numberOfLines={1} tone="primary" variant="subheadline" style={styles.addressText}>
+                  {origin}
+                </AppText>
+              </View>
+            </View>
+
+            {/* Dotted Connector */}
+            <View style={styles.timelineDottedBar} />
+
+            {/* Destination */}
+            <View style={styles.routeRow}>
+              <View style={styles.dropoffPinDot} />
+              <View style={styles.routeAddressCol}>
+                <AppText tone="subtle" variant="caption2" style={styles.routeRoleText}>
+                  ĐIỂM GIAO HÀNG
+                </AppText>
+                <AppText numberOfLines={1} tone="primary" variant="subheadline" style={styles.addressText}>
+                  {destination}
+                </AppText>
+              </View>
+            </View>
+          </View>
+
+          {/* Escrow Guarantee Note */}
+          <View style={styles.escrowRow}>
+            <IconSecurityShield color={colors.success.text} size={15} />
+            <AppText tone="secondary" variant="caption2" style={styles.escrowNote}>
+              Bảo chứng LEOPARD: Hoàn tiền cọc tức thì nếu không ghép được xe phù hợp.
+            </AppText>
+          </View>
+        </View>
+
+        {/* Section 3: Cancel Action Button */}
+        <View style={styles.actionFooter}>
+          <Button
+            label="Hủy tìm xe"
+            onPress={() => {
+              haptic.light();
+              setShowCancelModal(true);
+            }}
+            size="large"
+            style={styles.cancelBtn}
+            testID="btn-cancel-searching"
+            variant="secondary"
+          />
+        </View>
+      </View>
+
+      {/* Cancel Confirmation Modal with Apple HIG & Emil Kowalski Design Engineering */}
+      <CancelOrderConfirmModal
+        isCancelling={isCancelling}
+        onClose={() => setShowCancelModal(false)}
+        onConfirmCancel={handleCancelConfirm}
+        visible={showCancelModal}
+      />
+
+
+      {/* Driver Cancelled / Not Found Modal */}
       <Modal
         animationType="fade"
-        onRequestClose={handleMatchedConfirm}
+        onRequestClose={handleCancelledConfirm}
         transparent={true}
-        visible={Boolean(matchedInfo)}
+        visible={Boolean(cancelledInfo)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.matchedModalCard}>
-            <View style={styles.matchedIconWrap}>
-              <IconCheck color={colors.success.text} size={32} />
+          <View style={styles.cancelledModalCard}>
+            <View style={styles.cancelledIconWrap}>
+              <IconAlertTriangle color={colors.danger.text} size={32} />
             </View>
-            <AppText tone="primary" variant="title3" style={styles.matchedTitle}>
-              Tài xế đã nhận đơn!
+            <AppText tone="primary" variant="title3" style={styles.cancelledTitle}>
+              Chưa tìm được tài xế phù hợp
             </AppText>
-            <AppText tone="secondary" variant="footnote" style={styles.matchedSubtitle}>
-              {matchedInfo?.driverName || 'Tài xế'} đã nhận lệnh và đang di chuyển tới điểm lấy hàng.
+            <AppText tone="secondary" variant="footnote" style={styles.cancelledSubtitle}>
+              {cancelledInfo?.reason ||
+                'Hệ thống đã quét các tài xế trong khu vực nhưng hiện tại chưa có xe phù hợp nhận chuyến.'}
             </AppText>
 
-            <View style={styles.matchedOrderBox}>
+            <View style={styles.cancelledOrderBox}>
               <AppText numeric tone="primary" variant="subheadline" style={styles.matchedOrderRef}>
                 {formatOrderRef(id)}
               </AppText>
@@ -484,21 +590,45 @@ export default function OrderSearchingScreen({
               </AppText>
             </View>
 
-            <Button
-              label="Theo dõi hành trình"
-              onPress={handleMatchedConfirm}
-              size="large"
-              style={styles.matchedActionBtn}
-              variant="prominent"
-            />
+            <View style={styles.cancelledRefundBox}>
+              <IconSecurityShield color={colors.success.text} size={18} />
+              <AppText tone="success" variant="caption1" style={styles.cancelledRefundText}>
+                Hoàn cọc 100% tự động về ví hoặc tài khoản ngân hàng theo chính sách bảo đảm của LEOPARD.
+              </AppText>
+            </View>
+
+            <View style={styles.cancelledActionButtons}>
+              <Button
+                label="Thử tìm xe lại"
+                onPress={handleRetryBooking}
+                size="large"
+                style={styles.cancelledRetryBtn}
+                variant="prominent"
+              />
+              <Button
+                label="Xem chi tiết đơn"
+                onPress={handleCancelledConfirm}
+                size="large"
+                style={styles.cancelledDetailBtn}
+                variant="secondary"
+              />
+            </View>
           </View>
         </View>
       </Modal>
-    </ScreenScaffold>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: customerPalette.surfaceWhite,
+  },
+  topSafeArea: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+  },
   notFoundWrap: {
     flex: 1,
     justifyContent: 'center',
@@ -512,224 +642,323 @@ const styles = StyleSheet.create({
   notFoundBtn: {
     minWidth: 200,
   },
-  scrollContent: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-  },
-  radarSection: {
-    alignItems: 'center',
-    marginVertical: spacing.md,
+
+  // Map & Full-screen Backdrop
+  mapWrap: {
+    flex: 1,
     width: '100%',
+    position: 'relative',
+    backgroundColor: '#E2E8F0',
   },
-  radarRingOuter: {
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    borderWidth: 1.5,
-    borderColor: 'rgba(11, 37, 69, 0.12)',
+  radarOverlayContainer: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radarPulseCenter: {
+    width: 140,
+    height: 140,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    marginBottom: spacing.md,
   },
-  radarPulseWavePrimary: {
+  radarPulseWave: {
     position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(11, 37, 69, 0.14)',
+    borderRadius: 9999,
   },
-  radarPulseWaveSecondary: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 2,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-  },
-  radarRingMid: {
-    width: 124,
-    height: 124,
-    borderRadius: 62,
+  radarPulse1: {
+    width: 130,
+    height: 130,
+    backgroundColor: 'rgba(11, 37, 69, 0.08)',
     borderWidth: 1.5,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.04)',
+    borderColor: 'rgba(11, 37, 69, 0.25)',
   },
-  radarCenterCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: customerPalette.surfaceWhite,
-    justifyContent: 'center',
-    alignItems: 'center',
+  radarPulse2: {
+    width: 130,
+    height: 130,
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+  },
+  radarPulse3: {
+    width: 130,
+    height: 130,
+    backgroundColor: 'rgba(245, 158, 11, 0.04)',
     borderWidth: 1,
     borderColor: 'rgba(245, 158, 11, 0.25)',
+  },
+  radarBeaconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: customerPalette.surfaceWhite,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
     shadowColor: leopardPalette.accentYellow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     elevation: 5,
   },
-  radarStatusText: {
-    textAlign: 'center',
-    marginBottom: spacing.xxs,
+
+  // Floating Top Bar Overlay
+  topSafeAreaOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
-  radarNoticeText: {
-    textAlign: 'center',
-    paddingHorizontal: spacing.lg,
+  topBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingTop: Platform.select({ ios: spacing.xs, default: spacing.sm }),
   },
-  timerCard: {
-    backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: radius.cardLg,
+  floatingBackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(11, 37, 69, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  floatingBackBtnPressed: {
+    transform: [{ scale: 0.95 }],
+    opacity: 0.85,
+  },
+  floatingTopPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
     ...iosContinuousCurve,
     borderWidth: 1,
     borderColor: 'rgba(11, 37, 69, 0.08)',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    gap: spacing.xs,
+  },
+  livePulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.success.text,
+  },
+  floatingTopTitle: {
+    fontWeight: '600',
+  },
+  topBarSpacer: {
+    width: 44,
+  },
+
+  // Grab-Style Unified Floating Bottom Sheet
+  bottomSheetCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    ...iosContinuousCurve,
+    paddingTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingBottom: Platform.select({ ios: spacing.lg, default: spacing.md }),
     shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  timerLabel: {
-    letterSpacing: 0.5,
-    marginBottom: spacing.xxs,
+  sheetHandleBar: {
+    width: 38,
+    height: 4.5,
+    borderRadius: 2.25,
+    backgroundColor: 'rgba(11, 37, 69, 0.15)',
+    alignSelf: 'center',
+    marginBottom: spacing.xs,
   },
-  timerValue: {
-    marginVertical: spacing.xxs,
+
+  // Status & Timer Section
+  statusSection: {
+    paddingVertical: spacing.xs,
   },
-  timerProgressBarTrack: {
+  statusHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  statusTextWrap: {
+    flex: 1,
+    paddingRight: spacing.sm,
+  },
+  statusTitle: {
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  statusSubtitle: {
+    lineHeight: 16,
+  },
+  timerBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderRadius: radius.cardSm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timerBadgeText: {
+    fontWeight: '800',
+  },
+  progressBarTrack: {
     width: '100%',
-    height: 6,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: colors.neutral.surfaceMuted,
     overflow: 'hidden',
-    marginTop: spacing.xxs,
   },
-  timerProgressBarFill: {
+  progressBarFill: {
     height: '100%',
     backgroundColor: leopardPalette.accentYellow,
-    borderRadius: 3,
+    borderRadius: 2,
   },
-  orderOuterCard: {
-    width: '100%',
-    borderRadius: radius.cardLg,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    borderColor: 'rgba(11, 37, 69, 0.08)',
-    backgroundColor: customerPalette.surfaceWhite,
-    padding: spacing.md,
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-    shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  orderInnerCard: {
+
+  // Compact Trip Card
+  tripCard: {
+    backgroundColor: '#F8FAFC',
     borderRadius: radius.card,
     ...iosContinuousCurve,
-    backgroundColor: customerPalette.canvas,
     borderWidth: 1,
-    borderColor: 'rgba(11, 37, 69, 0.04)',
+    borderColor: customerPalette.cardBorder,
     padding: spacing.sm,
+    marginVertical: spacing.xs,
   },
-  orderCardHeader: {
+  tripHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  orderLabelSmall: {
-    letterSpacing: 0.4,
-  },
-  orderIdValue: {
-    marginTop: 2,
-  },
-  vehicleBadge: {
+  vehicleTypeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: customerPalette.cardBorder,
-    borderRadius: radius.control,
-    ...iosContinuousCurve,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs,
+    gap: spacing.xs,
   },
-  vehicleBadgeText: {
-    fontWeight: '600',
-    marginLeft: spacing.xs,
+  vehicleTypeText: {
+    fontWeight: '700',
   },
-  dividerLine: {
-    height: 1,
-    backgroundColor: customerPalette.cardBorder,
-    marginVertical: spacing.sm,
-  },
-  routeTimeline: {
-    paddingLeft: spacing.xxs,
-  },
-  routeItem: {
+  orderCodeTag: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    backgroundColor: customerPalette.surfaceWhite,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    gap: 4,
   },
-  pickupDot: {
+  orderCodeTagPressed: {
+    opacity: 0.6,
+  },
+  orderCodeLabel: {
+    fontWeight: '600',
+  },
+  tripDivider: {
+    height: 1,
+    backgroundColor: 'rgba(11, 37, 69, 0.06)',
+    marginVertical: spacing.xs,
+  },
+
+  // Route Timeline
+  routeTimelineWrap: {
+    paddingVertical: 2,
+  },
+  routeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  pickupPinDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: leopardPalette.accentYellow,
-    marginTop: 5,
-    marginRight: spacing.sm,
+    borderWidth: 2,
+    borderColor: customerPalette.surfaceWhite,
+    shadowColor: leopardPalette.accentYellow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
-  dropoffDot: {
+  dropoffPinDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: colors.success.text,
-    marginTop: 5,
-    marginRight: spacing.sm,
+    borderWidth: 2,
+    borderColor: customerPalette.surfaceWhite,
+    shadowColor: colors.success.text,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
-  routeDottedConnector: {
+  timelineDottedBar: {
     width: 2,
-    height: 20,
-    backgroundColor: colors.neutral.subtleBorder,
+    height: 12,
+    backgroundColor: 'rgba(11, 37, 69, 0.15)',
     marginLeft: 4,
     marginVertical: 2,
+    borderRadius: 1,
   },
-  routeTextWrap: {
+  routeAddressCol: {
     flex: 1,
   },
-  routeTypeLabel: {
+  routeRoleText: {
     letterSpacing: 0.4,
   },
-  routeAddressText: {
+  addressText: {
     fontWeight: '600',
-    marginTop: 1,
   },
-  fixedBottomBar: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: Platform.select({ ios: spacing.md, default: spacing.sm }),
-    backgroundColor: customerPalette.surfaceWhite,
+  escrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: customerPalette.cardBorder,
-    shadowColor: customerPalette.textSlateDark,
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 6,
-    width: '100%',
+    borderTopColor: 'rgba(11, 37, 69, 0.05)',
+  },
+  escrowNote: {
+    flex: 1,
+    color: customerPalette.textMutedSlate,
+    lineHeight: 15,
+  },
+
+  // Action Footer
+  actionFooter: {
+    marginTop: spacing.xs,
   },
   cancelBtn: {
-    minHeight: 52,
-    borderColor: 'rgba(255, 59, 48, 0.25)',
+    minHeight: 50,
+    borderColor: 'rgba(255, 59, 48, 0.3)',
   },
+
+  // Modals
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
@@ -737,63 +966,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.lg,
   },
-  modalContentCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.modal,
-    ...iosContinuousCurve,
-    padding: spacing.lg,
-    width: '100%',
-    maxWidth: 340,
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 28,
-    elevation: 10,
-  },
-  modalIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#F0FDF4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  modalTitle: {
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  refundHighlightBox: {
-    backgroundColor: '#F0FDF4',
-    borderRadius: radius.control,
-    ...iosContinuousCurve,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.xs,
-    width: '100%',
-  },
-  refundHighlightText: {
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  modalDescription: {
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.xxs,
-  },
-  modalActionButtons: {
-    width: '100%',
-    gap: spacing.xs,
-  },
-  modalConfirmCancelBtn: {
-    minHeight: 48,
-  },
-  modalKeepWaitingBtn: {
-    minHeight: 46,
-  },
-  matchedModalCard: {
+  cancelledModalCard: {
     backgroundColor: customerPalette.surfaceWhite,
     borderRadius: radius.modal,
     ...iosContinuousCurve,
@@ -808,23 +981,23 @@ const styles = StyleSheet.create({
     elevation: 10,
     gap: spacing.sm,
   },
-  matchedIconWrap: {
+  cancelledIconWrap: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.success.background,
+    backgroundColor: colors.danger.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.xxs,
   },
-  matchedTitle: {
+  cancelledTitle: {
     textAlign: 'center',
   },
-  matchedSubtitle: {
+  cancelledSubtitle: {
     textAlign: 'center',
     lineHeight: 19,
   },
-  matchedOrderBox: {
+  cancelledOrderBox: {
     width: '100%',
     backgroundColor: customerPalette.canvas,
     borderRadius: radius.card,
@@ -839,9 +1012,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   matchedOrderRoute: {},
-  matchedActionBtn: {
+  cancelledRefundBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: spacing.xs,
+    width: '100%',
+  },
+  cancelledRefundText: {
+    flex: 1,
+    lineHeight: 16,
+  },
+  cancelledActionButtons: {
+    width: '100%',
+    gap: spacing.xs,
+    marginTop: spacing.xxs,
+  },
+  cancelledRetryBtn: {
     width: '100%',
     minHeight: 52,
-    marginTop: spacing.xxs,
+  },
+  cancelledDetailBtn: {
+    width: '100%',
+    minHeight: 46,
   },
 });

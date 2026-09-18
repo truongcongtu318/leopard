@@ -1475,6 +1475,19 @@ export function createDriverHttpAdapter(
       return { success: true, message: 'Đã xác nhận thu tiền mặt thành công.' };
     },
 
+    async declineOrder(orderId: string): Promise<void> {
+      const activeClient = getClient();
+      const validId = parseDriverOrderId(orderId);
+      if (!validId) {
+        return;
+      }
+      try {
+        await activeClient.post(`/driver/orders/${validId}/decline`, {});
+      } catch {
+        // Safe fallback if order was already expired or declined
+      }
+    },
+
     async getRouteEta(orderId: string): Promise<RouteEtaResponse> {
       const activeClient = getClient();
       const validId = parseDriverOrderId(orderId);

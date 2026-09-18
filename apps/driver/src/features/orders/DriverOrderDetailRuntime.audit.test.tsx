@@ -5,7 +5,15 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import type { DriverAssignedDetailView, DriverDetailView } from './model';
 
 const mockRouterBack = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockRouterBack }) }));
+const mockRouterReplace = jest.fn();
+const mockRouterCanGoBack = jest.fn(() => true);
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    back: mockRouterBack,
+    replace: mockRouterReplace,
+    canGoBack: mockRouterCanGoBack,
+  }),
+}));
 // The proof flow opens the real device camera and stamps the real GPS fix.
 jest.mock('expo-image-picker', () => ({
   requestCameraPermissionsAsync: async () => ({ granted: true }),
@@ -107,6 +115,7 @@ describe('DriverOrderDetailRuntime audit: asynchronous user actions', () => {
       expect(screen.getByRole('button', { name: 'Thêm ảnh xác nhận giao hàng' })).toBeTruthy(),
     );
     await fireEvent.press(screen.getByRole('button', { name: 'Thêm ảnh xác nhận giao hàng' }));
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
     await waitFor(() => expect(screen.getByTestId('proof-capture-sheet')).toBeTruthy());
     await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
 
@@ -153,6 +162,7 @@ describe('DriverOrderDetailRuntime audit: asynchronous user actions', () => {
       ).toBeTruthy(),
     );
     await fireEvent.press(screen.getByRole('button', { name: 'Chụp ảnh xác nhận đã lấy hàng' }));
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
     await waitFor(() => expect(screen.getByTestId('proof-capture-sheet')).toBeTruthy());
     await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
 

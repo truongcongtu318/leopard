@@ -199,10 +199,11 @@ describe('DriverOrderDetailScreen', () => {
     expect(screen.getByText('Vuốt và chụp ảnh xác nhận')).toBeTruthy();
     expect(screen.queryByText('Xác nhận đã giao')).toBeNull();
 
-    // Swiping opens the camera directly — no intermediate picker, no modal.
+    // Swiping opens the proof source selector modal (camera vs library)
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
 
     // The review sheet shows the real captured photo.
     const sheet = await screen.findByTestId('proof-capture-sheet');
@@ -240,6 +241,7 @@ describe('DriverOrderDetailScreen', () => {
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
     await screen.findByTestId('proof-capture-sheet');
     await fireEvent.press(screen.getByTestId('btn-confirm-proof'));
 
@@ -265,6 +267,7 @@ describe('DriverOrderDetailScreen', () => {
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
 
     // No capture -> no review sheet, no upload, no transition.
     await waitFor(() => expect(screen.queryByTestId('proof-capture-sheet')).toBeNull());
@@ -287,6 +290,7 @@ describe('DriverOrderDetailScreen', () => {
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
     await screen.findByTestId('proof-capture-sheet');
 
     mockLaunchCameraAsync.mockResolvedValueOnce({
@@ -301,6 +305,7 @@ describe('DriverOrderDetailScreen', () => {
       ],
     });
     await fireEvent.press(screen.getByTestId('btn-retake-proof'));
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
 
     await waitFor(() =>
       expect(screen.getByTestId('proof-capture-photo').props.source).toEqual({

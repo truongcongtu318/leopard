@@ -250,7 +250,7 @@ describe('New Customer Screens (Task 4)', () => {
       await screen.unmount();
     });
 
-    it('displays matched driver alert modal when driver accepts order', async () => {
+    it('automatically navigates to tracking when driver accepts order without blocking modal', async () => {
       mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
       const onMatched = jest.fn();
 
@@ -258,13 +258,56 @@ describe('New Customer Screens (Task 4)', () => {
         <OrderSearchingScreen initialMatchedDriver="Nguyễn Văn A" onMatched={onMatched} />,
       );
 
-      expect(screen.getByText('Tài xế đã nhận đơn!')).toBeTruthy();
-      expect(screen.getByText(/Nguyễn Văn A đã nhận lệnh/)).toBeTruthy();
-
-      const trackBtn = screen.getByRole('button', { name: 'Theo dõi hành trình' });
-      await fireEvent.press(trackBtn);
-
+      // Must NOT display blocking alert modal
+      expect(screen.queryByText('Tài xế đã nhận đơn!')).toBeNull();
+      // Automatically triggered navigation to tracking
       expect(onMatched).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111001');
+
+      await screen.unmount();
+    });
+
+    it('displays not found / cancelled alert modal and NOT matched modal when no driver was found', async () => {
+      mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
+      const onCancelled = jest.fn();
+
+      const screen = await render(
+        <OrderSearchingScreen
+          initialCancelledReason="Không tìm được tài xế phù hợp"
+          onCancelled={onCancelled}
+        />,
+      );
+
+      // Must NOT display "Tài xế đã nhận đơn!"
+      expect(screen.queryByText('Tài xế đã nhận đơn!')).toBeNull();
+
+      // Must display "Chưa tìm được tài xế phù hợp"
+      expect(screen.getByText('Chưa tìm được tài xế phù hợp')).toBeTruthy();
+      expect(screen.getByText('Không tìm được tài xế phù hợp')).toBeTruthy();
+      expect(screen.getByText(/Hoàn cọc 100% tự động/)).toBeTruthy();
+
+      // Buttons
+      expect(screen.getByRole('button', { name: 'Thử tìm xe lại' })).toBeTruthy();
+      const detailBtn = screen.getByRole('button', { name: 'Xem chi tiết đơn' });
+      await fireEvent.press(detailBtn);
+
+      expect(onCancelled).toHaveBeenCalledWith(
+        '11111111-1111-4111-8111-111111111001',
+        'Không tìm được tài xế phù hợp',
+      );
+      await screen.unmount();
+    });
+
+    it('navigates to booking screen when pressing retry button in cancelled modal', async () => {
+      mockSearchParams = { id: '11111111-1111-4111-8111-111111111001' };
+
+      const screen = await render(
+        <OrderSearchingScreen initialCancelledReason="Không tìm được tài xế phù hợp" />,
+      );
+
+      const retryBtn = screen.getByRole('button', { name: 'Thử tìm xe lại' });
+      await fireEvent.press(retryBtn);
+
+      expect(mockReplace).toHaveBeenCalledWith('/customer/booking');
       await screen.unmount();
     });
   });

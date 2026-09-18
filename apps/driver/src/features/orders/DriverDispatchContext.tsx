@@ -128,11 +128,17 @@ export function DriverDispatchProvider({
     };
   }, [isDispatchActive, listener]);
 
-  const declineOffer = useCallback((_orderId?: string) => {
-    if (isMountedRef.current) {
-      setOffer(null);
-    }
-  }, []);
+  const declineOffer = useCallback(
+    (orderId?: string) => {
+      if (isMountedRef.current) {
+        setOffer(null);
+      }
+      if (orderId && port.declineOrder) {
+        void port.declineOrder(orderId);
+      }
+    },
+    [port],
+  );
 
   const acceptOffer = useCallback(
     async (orderId: string) => {

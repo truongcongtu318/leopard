@@ -11,10 +11,24 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.leopard.driver",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "VietMapURL": "https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$(EXPO_PUBLIC_VIETMAP_API_KEY)",
+        "VietMapAPIBaseURL": "https://maps.vietmap.vn/api/navigations/route/",
+        "VietMapAccessToken": "$(EXPO_PUBLIC_VIETMAP_API_KEY)",
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
-      "package": "com.leopard.driver"
+      "package": "com.leopard.driver",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "bundler": "metro",

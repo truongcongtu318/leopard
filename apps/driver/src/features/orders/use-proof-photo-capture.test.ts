@@ -119,5 +119,41 @@ describe('useProofPhotoCapture', () => {
     expect(second).toEqual({ kind: 'canceled' });
     expect(capture).toHaveBeenCalledTimes(1);
   });
+
+  it('directly opens the library when source is library', async () => {
+    const capture = jest.fn(async () => REAL_ASSET);
+    const pick = jest.fn(async () => REAL_ASSET);
+    const { result } = await renderHook(() => useProofPhotoCapture({ capture, pick }));
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.captureProofPhoto('library');
+    });
+
+    expect(outcome).toMatchObject({
+      kind: 'captured',
+      photo: { uri: REAL_ASSET.uri },
+    });
+    expect(pick).toHaveBeenCalledTimes(1);
+    expect(capture).not.toHaveBeenCalled();
+  });
+
+  it('opens camera when source is camera', async () => {
+    const capture = jest.fn(async () => REAL_ASSET);
+    const pick = jest.fn(async () => null);
+    const { result } = await renderHook(() => useProofPhotoCapture({ capture, pick }));
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.captureProofPhoto('camera');
+    });
+
+    expect(outcome).toMatchObject({
+      kind: 'captured',
+      photo: { uri: REAL_ASSET.uri },
+    });
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(pick).not.toHaveBeenCalled();
+  });
 });
 

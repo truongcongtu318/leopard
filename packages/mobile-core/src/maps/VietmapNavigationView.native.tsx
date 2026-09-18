@@ -17,7 +17,57 @@ const loadVietmapNav = () => {
   }
 };
 const VietmapNavModule = loadVietmapNav();
-const VietmapNavigation: any = VietmapNavModule?.default || VietmapNavModule;
+const VietMapNavigation: any = VietmapNavModule?.default || VietmapNavModule;
+const VietMapNavigationController: any = VietmapNavModule?.VietMapNavigationController;
+
+export const LeopardNavigationController = {
+  recenter: () => {
+    try {
+      VietMapNavigationController?.recenter?.();
+    } catch {}
+  },
+  overview: () => {
+    try {
+      VietMapNavigationController?.overView?.();
+    } catch {}
+  },
+  finishNavigation: () => {
+    try {
+      VietMapNavigationController?.finishNavigation?.();
+    } catch {}
+  },
+  startNavigation: () => {
+    try {
+      VietMapNavigationController?.startNavigation?.();
+    } catch {}
+  },
+  buildRoute: (
+    coordinates: { lat: number; lng: number }[],
+    profile: 'truck' | 'driving-traffic' | 'motorcycle' | 'cycling' | 'walking' = 'truck',
+  ) => {
+    try {
+      VietMapNavigationController?.buildRoute?.(
+        coordinates.map((c) => ({ lat: c.lat, long: c.lng })),
+        profile,
+      );
+    } catch {}
+  },
+  startSpeedAlert: () => {
+    try {
+      VietMapNavigationController?.startSpeedAlert?.();
+    } catch {}
+  },
+  stopSpeedAlert: () => {
+    try {
+      VietMapNavigationController?.stopSpeedAlert?.();
+    } catch {}
+  },
+  configureAlertAPI: (apiKey: string, apiID: string) => {
+    try {
+      VietMapNavigationController?.configureAlertAPI?.(apiKey, apiID);
+    } catch {}
+  },
+};
 
 export function VietmapNavigationView({
   origin,
@@ -26,11 +76,20 @@ export function VietmapNavigationView({
   routeCoords = [],
   vietmapApiKey,
   vehicleType = 'truck',
+  truckLocation,
   isSimulating = false,
   speechVoiceLanguage = 'vi-VN',
+  speedAlertEnabled = false,
+  apiKeyAlert,
+  apiIDAlert,
+  navigationZoomLevel = 17,
+  navigationTiltAnchor = 0.8,
   onNavigationFinished,
   onReroute,
   onLocationUpdate,
+  onRouteProgress,
+  onMilestoneEvent,
+  onWaypointArrival,
   onMuteToggle,
   onClose,
   testID = 'vietmap-navigation-view',
@@ -46,44 +105,96 @@ export function VietmapNavigationView({
     );
   }, [vietmapApiKey]);
 
+  const profile = useMemo<'truck' | 'driving-traffic' | 'motorcycle' | 'cycling' | 'walking'>(() => {
+    const v = (vehicleType || '').toLowerCase();
+    if (v.includes('bike') || v.includes('motor') || v.includes('xe_may')) return 'motorcycle';
+    if (v.includes('cycle') || v.includes('dap')) return 'cycling';
+    if (v.includes('walk') || v.includes('bo')) return 'walking';
+    if (v.includes('truck') || v.includes('tai') || v.includes('container') || v.includes('trailer')) return 'truck';
+    return 'driving-traffic';
+  }, [vehicleType]);
+
+  const startPoint = truckLocation || origin.coords;
+
+  const handleMapReady = () => {
+    try {
+      if (VietMapNavigationController?.buildRoute) {
+        const validStops = stops
+          .filter((s) => s.coords)
+          .map((s) => ({ lat: s.coords!.lat, long: s.coords!.lng }));
+        const coords = [
+          { lat: startPoint.lat, long: startPoint.lng },
+          ...validStops,
+          { lat: destination.coords.lat, long: destination.coords.lng },
+        ];
+        VietMapNavigationController.buildRoute(coords, profile);
+      }
+      if (speedAlertEnabled && apiKeyAlert && apiIDAlert && VietMapNavigationController?.configureAlertAPI) {
+        VietMapNavigationController.configureAlertAPI(apiKeyAlert, apiIDAlert);
+        VietMapNavigationController.startSpeedAlert?.();
+      }
+    } catch (e) {
+      console.warn('[VietmapNavigationView] onMapReady error:', e);
+    }
+  };
+
+  const handleRouteBuilt = () => {
+    try {
+      VietMapNavigationController?.startNavigation?.();
+    } catch (e) {
+      console.warn('[VietmapNavigationView] onRouteBuilt error:', e);
+    }
+  };
+
+  const handleRouteProgress = (event: any) => {
+    const raw = event?.nativeEvent || event;
+    const data = raw?.data || raw;
+    onRouteProgress?.({
+      distanceRemaining: raw?.distanceRemaining,
+      durationRemaining: raw?.durationRemaining,
+      distanceToNextTurn: raw?.distanceToNextTurn,
+      currentStepInstruction: data?.currentStepInstruction,
+      currentModifier: data?.currentModifier,
+      currentModifierType: data?.currentModifierType,
+    });
+    if (data?.latitude && data?.longitude) {
+      onLocationUpdate?.({
+        lat: data.latitude,
+        lng: data.longitude,
+        heading: data.heading,
+        speed: data.speed,
+      });
+    }
+  };
+
   const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
 
-  if (VietmapNavigation && !isTestEnv && VietmapNavigation.NavigationView) {
-    const waypoints = stops
-      .filter((s) => s.coords)
-      .map((s) => ({ latitude: s.coords!.lat, longitude: s.coords!.lng }));
-
+  if (VietMapNavigation && typeof VietMapNavigation === 'function' && !isTestEnv) {
     return (
       <View style={[styles.container, style]} testID={testID}>
-        <VietmapNavigation.NavigationView
+        <VietMapNavigation
           apiKey={resolvedApiKey}
-          destination={{
-            latitude: destination.coords.lat,
-            longitude: destination.coords.lng,
+          apiKeyAlert={apiKeyAlert}
+          apiIDAlert={apiIDAlert}
+          initialLatLngZoom={{
+            lat: startPoint.lat,
+            lng: startPoint.lng,
+            zoom: navigationZoomLevel,
           }}
-          language={speechVoiceLanguage}
-          mute={isMuted}
+          navigationTiltAnchor={navigationTiltAnchor}
+          navigationZoomLevel={navigationZoomLevel}
           onArrival={onNavigationFinished}
-          onLocationChange={(event: any) => {
-            const loc = event?.nativeEvent || event;
-            if (loc?.latitude && loc?.longitude) {
-              onLocationUpdate?.({
-                lat: loc.latitude,
-                lng: loc.longitude,
-                heading: loc.heading,
-                speed: loc.speed,
-              });
-            }
-          }}
+          onMapReady={handleMapReady}
+          onMilestoneEvent={onMilestoneEvent}
+          onNavigationCancelled={onNavigationFinished}
+          onNavigationFinished={onNavigationFinished}
           onReroute={onReroute}
-          origin={{
-            latitude: origin.coords.lat,
-            longitude: origin.coords.lng,
-          }}
-          simulateRoute={isSimulating}
+          onRouteBuilt={handleRouteBuilt}
+          onRouteProgressChange={handleRouteProgress}
+          onUserOffRoute={onReroute}
+          onWaypointArrival={onWaypointArrival}
+          shouldSimulateRoute={isSimulating}
           style={StyleSheet.absoluteFill}
-          vehicleType={vehicleType === 'truck' ? 'truck' : 'car'}
-          waypoints={waypoints}
         />
 
         {onClose && (

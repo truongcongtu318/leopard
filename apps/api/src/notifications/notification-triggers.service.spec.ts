@@ -82,11 +82,14 @@ describe('NotificationTriggers', () => {
       );
     });
 
-    test('notifies only the customer when no driver is assigned', async () => {
+    test('notifies only the customer when no driver is assigned and includes cancellation reason', async () => {
       ordersRepository.findById.mockResolvedValue({
         id: 'order-1',
         customerId: 'customer-1',
         driverId: null,
+        statusHistory: [
+          { toStatus: 'CANCELLED', reason: 'Không tìm được tài xế phù hợp' },
+        ],
       });
       createTriggers();
 
@@ -100,6 +103,14 @@ describe('NotificationTriggers', () => {
       await flushMicrotasks();
 
       expect(notificationsService.create).toHaveBeenCalledTimes(1);
+      expect(notificationsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'customer-1',
+          type: 'ORDER',
+          title: 'Đơn hàng đã bị hủy',
+          body: 'Đơn hàng đã bị hủy: Không tìm được tài xế phù hợp',
+        }),
+      );
     });
 
     test('does nothing when the order can no longer be found', async () => {

@@ -1,17 +1,24 @@
 import React from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { DriverMapDispatchContext, useDriverMapDirector } from '../../../../navigation/DriverMapDirectorContext';
 import {
   IconClock,
   IconExternalLink,
   IconLocationPin,
   IconRoute,
   LeopardMapView,
+  VietmapNavigationView,
   colors,
   leopardPalette,
   radius,
   typeScale,
+  fetchStreetRoute,
+  haversineDistanceMeters,
   type MapCoordinate,
   type RoutePolylineSegment,
+  type ManeuverStep,
+  type StreetRouteResult,
 } from '@leopard/mobile-core';
 import type { RouteCoordinate, VehicleType } from '@leopard/shared';
 import type {
@@ -37,23 +44,69 @@ export type MissionMapCanvasProps = Readonly<{
   truckLocation?: MapCoordinate;
   /** Real device heading in degrees, when the GPS fix provides one. */
   truckHeading?: number | null;
-  /**
-   * Cargo at a glance, surfaced on the map header instead of a separate card
-   * over the sheet. The driver still sees what is being carried without the
-   * sheet losing a third of its height.
-   */
   cargoSummary?: string | null;
   cargoWeightKg?: number | null;
-  /**
-   * 'overview' frames the whole A → B route (with every stop).
-   * 'turn-by-turn' locks a 3D driving camera onto the vehicle, like Google Maps.
-   */
   navMode?: 'overview' | 'turn-by-turn';
   testID?: string;
-  // Legacy string labels for backward compatibility
   originLabel?: string;
   destinationLabel?: string;
+  isPickupLeg?: boolean;
 }>;
+
+function ManeuverIcon({ type, size = 26 }: { type?: string; size?: number }) {
+  if (type === 'turn-left' || type === 'sharp-left') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M9 4L4 9L9 14" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M4 9H14C17.3137 9 20 11.6863 20 15V20" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  if (type === 'turn-right' || type === 'sharp-right') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M15 4L20 9L15 14" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M20 9H10C6.68629 9 4 11.6863 4 15V20" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  if (type === 'slight-left') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M7 6L7 13L14 13" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M7 6L18 17" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" />
+      </Svg>
+    );
+  }
+  if (type === 'slight-right') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M17 6L17 13L10 13" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M17 6L6 17" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" />
+      </Svg>
+    );
+  }
+  if (type === 'uturn') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M7 10L4 7L7 4" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M4 7H14C17.3137 7 20 9.68629 20 13C20 16.3137 17.3137 19 14 19H8" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  if (type === 'arrive') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Path d="M4 15C4 15 5 14 8 14C11 14 13 16 16 16C19 16 20 15 20 15V3C20 3 19 4 16 4C13 4 11 2 8 2C5 2 4 3 4 3V22" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+    );
+  }
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 19V5M5 12L12 5L19 12" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
 
 export type OpenExternalNavigationOptions = {
   target?: { lat?: number; lng?: number; label?: string } | string | null;
@@ -163,9 +216,13 @@ export function MissionMapCanvas({
   testID = 'route-map-schematic',
   originLabel,
   destinationLabel,
+  isPickupLeg = false,
 }: MissionMapCanvasProps) {
   // Turn-by-turn mirrors how Google Maps behaves once navigation starts.
   const isTurnByTurn = navMode === 'turn-by-turn';
+
+  const [streetRoute, setStreetRoute] = React.useState<StreetRouteResult | null>(null);
+  const [isAudioMuted, setIsAudioMuted] = React.useState(false);
 
   const resolvedOrigin = origin ?? { label: originLabel ?? 'Điểm lấy hàng' };
   const resolvedDestination = destination ?? {
@@ -187,6 +244,22 @@ export function MissionMapCanvas({
   // Active navigation target: prioritized from navigationTarget prop,
   // then first uncompleted stop, then destination.
   const resolvedTarget = React.useMemo(() => {
+    if (isPickupLeg) {
+      if (
+        resolvedOrigin.coords &&
+        typeof resolvedOrigin.coords.lat === 'number' &&
+        typeof resolvedOrigin.coords.lng === 'number' &&
+        !isNaN(resolvedOrigin.coords.lat) &&
+        !isNaN(resolvedOrigin.coords.lng)
+      ) {
+        return {
+          lat: resolvedOrigin.coords.lat,
+          lng: resolvedOrigin.coords.lng,
+          label: resolvedOrigin.label,
+        };
+      }
+    }
+
     if (
       navigationTarget &&
       typeof navigationTarget.lat === 'number' &&
@@ -227,7 +300,7 @@ export function MissionMapCanvas({
     }
 
     return null;
-  }, [navigationTarget, stops, resolvedDestination]);
+  }, [isPickupLeg, navigationTarget, stops, resolvedDestination, resolvedOrigin]);
 
   const hasValidNavigationTarget = Boolean(
     resolvedTarget &&
@@ -254,22 +327,90 @@ export function MissionMapCanvas({
   );
 
   // Resolved geometry
-  const effectiveRouteSegments = eta?.polylineSegments ?? routeSegments;
+  const effectiveRouteSegments = isPickupLeg ? undefined : (eta?.polylineSegments ?? routeSegments);
   const etaRouteCoords = eta?.polylineCoords && eta.polylineCoords.length >= 2
     ? eta.polylineCoords
     : routeCoords && routeCoords.length >= 2
     ? routeCoords
     : [];
 
+  React.useEffect(() => {
+    let isMounted = true;
+    const from = truckLocation ?? resolvedOrigin.coords;
+    const rawTo = isPickupLeg
+      ? (resolvedOrigin.coords ?? (resolvedTarget && typeof resolvedTarget.lat === 'number' && typeof resolvedTarget.lng === 'number' ? { lat: resolvedTarget.lat, lng: resolvedTarget.lng } : resolvedDestination.coords))
+      : (resolvedTarget && typeof resolvedTarget.lat === 'number' && typeof resolvedTarget.lng === 'number'
+          ? { lat: resolvedTarget.lat, lng: resolvedTarget.lng }
+          : resolvedDestination.coords);
+
+    if (
+      !from ||
+      !rawTo ||
+      typeof from.lat !== 'number' ||
+      typeof from.lng !== 'number' ||
+      typeof rawTo.lat !== 'number' ||
+      typeof rawTo.lng !== 'number'
+    ) {
+      setStreetRoute(null);
+      return;
+    }
+
+    const to: MapCoordinate = { lat: rawTo.lat, lng: rawTo.lng };
+    void fetchStreetRoute(from, to, {
+      vietmapApiKey: process.env.EXPO_PUBLIC_VIETMAP_API_KEY,
+      vehicle: 'truck',
+    }).then((res) => {
+      if (!isMounted) return;
+      if (res && res.coordinates.length >= 2) {
+        setStreetRoute(res);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    isPickupLeg,
+    truckLocation?.lat,
+    truckLocation?.lng,
+    resolvedOrigin.coords?.lat,
+    resolvedOrigin.coords?.lng,
+    resolvedTarget?.lat,
+    resolvedTarget?.lng,
+    resolvedDestination.coords?.lat,
+    resolvedDestination.coords?.lng,
+  ]);
+
   const fallbackRouteCoords = React.useMemo(() => {
+    if (isPickupLeg) {
+      if (truckLocation && resolvedOrigin.coords) {
+        return [truckLocation, resolvedOrigin.coords];
+      }
+      return null;
+    }
     if (etaRouteCoords.length >= 2) return null;
     if (resolvedOrigin.coords == null || resolvedDestination.coords == null) {
       return null;
     }
     return [resolvedOrigin.coords, resolvedDestination.coords];
-  }, [etaRouteCoords, resolvedDestination.coords, resolvedOrigin.coords]);
+  }, [isPickupLeg, truckLocation, etaRouteCoords, resolvedDestination.coords, resolvedOrigin.coords]);
 
-  const effectiveRouteCoords = etaRouteCoords.length >= 2 ? etaRouteCoords : (fallbackRouteCoords ?? []);
+  const effectiveRouteCoords = React.useMemo(() => {
+    if (isPickupLeg) {
+      if (streetRoute && streetRoute.coordinates.length >= 2) {
+        return streetRoute.coordinates;
+      }
+      return fallbackRouteCoords ?? [];
+    }
+    if (streetRoute && streetRoute.coordinates.length >= 2) {
+      return streetRoute.coordinates;
+    }
+    if (etaRouteCoords.length >= 2) {
+      return etaRouteCoords;
+    }
+    return fallbackRouteCoords ?? [];
+  }, [isPickupLeg, streetRoute, etaRouteCoords, fallbackRouteCoords]);
+
   const isRoutePreview = fallbackRouteCoords != null && etaRouteCoords.length < 2;
 
   // Bottom left ETA text formatting
@@ -358,29 +499,133 @@ export function MissionMapCanvas({
     truckLocation,
   ]);
 
+  const hasDirectorHost = Boolean(React.useContext(DriverMapDispatchContext));
+
+  const nextStep = streetRoute?.steps && streetRoute.steps.length > 0 ? streetRoute.steps[0] : null;
+  const nextStepDistText = nextStep
+    ? nextStep.distanceMeters < 1000
+      ? `Sau ${Math.round(nextStep.distanceMeters)}m`
+      : `Sau ${(nextStep.distanceMeters / 1000).toFixed(1)} km`
+    : isTurnByTurn
+    ? 'Sau 200m'
+    : '';
+  const nextStepAction = nextStep?.instruction
+    ? nextStep.instruction
+    : resolvedTarget?.label
+    ? `Tiếp tục đến ${resolvedTarget.label}`
+    : 'Bám theo lộ trình';
+  const maneuverType = nextStep?.maneuverType ?? 'straight';
+
+  const liveDistanceKm = streetRoute
+    ? `${(streetRoute.distanceMeters / 1000).toFixed(1).replace('.', ',')} km`
+    : distanceLabel ?? (eta?.distanceMeters != null ? `${(eta.distanceMeters / 1000).toFixed(1).replace('.', ',')} km` : '');
+  const liveDurationMin = streetRoute
+    ? `${Math.round(streetRoute.durationSeconds / 60)} phút`
+    : etaLabel ?? (eta?.durationSeconds != null ? `${Math.round(eta.durationSeconds / 60)} phút` : '');
+  const tripMetricsText = liveDistanceKm && liveDurationMin ? `${liveDistanceKm} · ${liveDurationMin}` : liveDistanceKm || liveDurationMin;
+
+  const directorConfig = React.useMemo(() => {
+    if (isTripEnded) {
+      return {
+        mode: 'overview' as const,
+        origin: resolvedOrigin,
+        destination: resolvedDestination,
+        stops: mapStops,
+        routeCoords: effectiveRouteCoords,
+        routeSegments: effectiveRouteSegments,
+        interactive: false,
+        isPickupLeg,
+      };
+    }
+
+    return {
+      mode: isTurnByTurn ? ('turn-by-turn' as const) : ('overview' as const),
+      origin: resolvedOrigin,
+      destination: resolvedDestination,
+      stops: mapStops,
+      truckLocation,
+      bearing: followBearing,
+      pitch: isTurnByTurn ? 55 : 0,
+      zoom: isTurnByTurn ? 17 : 13.5,
+      followTruckLocation: isTurnByTurn,
+      routeCoords: effectiveRouteCoords,
+      routeSegments: effectiveRouteSegments,
+      viewportInsets: {
+        bottom: 380,
+      },
+      interactive: true,
+      isPickupLeg,
+      vehicleType: (vehicleType as string) ?? 'truck',
+    };
+  }, [
+    effectiveRouteCoords,
+    effectiveRouteSegments,
+    followBearing,
+    isPickupLeg,
+    isTripEnded,
+    isTurnByTurn,
+    mapStops,
+    resolvedDestination,
+    resolvedOrigin,
+    truckLocation,
+    vehicleType,
+  ]);
+
+  useDriverMapDirector(hasDirectorHost ? directorConfig : null, 10);
+
   return (
     <View
-      style={[styles.mapCanvasContainer, fillContainer ? styles.mapCanvasContainerFill : null]}
+      pointerEvents={hasDirectorHost ? 'none' : 'auto'}
+      style={[
+        styles.mapCanvasContainer,
+        fillContainer ? styles.mapCanvasContainerFill : null,
+        hasDirectorHost ? styles.mapCanvasContainerTransparent : null,
+      ]}
       testID={testID}
     >
-      {/* Dual-resolution Vietmap Vector GL engine (same renderer as the customer app) */}
-      <LeopardMapView
-        bearing={followBearing}
-        destination={resolvedDestination}
-        followTruckLocation={showLiveOverlays && isTurnByTurn}
-        height="100%"
-        interactive={!isTripEnded}
-        mode={isTripEnded || !isTurnByTurn ? 'route' : 'tracking'}
-        origin={resolvedOrigin}
-        pitch={showLiveOverlays && isTurnByTurn ? 55 : 0}
-        routeCoords={effectiveRouteCoords}
-        routeResolutionPolicy="PROVIDED_ONLY"
-        routeSegments={effectiveRouteSegments}
-        stops={mapStops}
-        truckEtaLabel=""
-        truckLocation={truckLocation}
-        zoom={showLiveOverlays && isTurnByTurn ? 17 : 13.5}
-      />
+      {/* Dual-resolution Vietmap Vector GL / Turn-by-Turn engine */}
+      {!hasDirectorHost ? (
+        showLiveOverlays &&
+        isTurnByTurn &&
+        resolvedOrigin.coords &&
+        resolvedDestination.coords ? (
+          <VietmapNavigationView
+            destination={{
+              label: resolvedDestination.label,
+              coords: resolvedDestination.coords,
+            }}
+            origin={{
+              label: resolvedOrigin.label,
+              coords: resolvedOrigin.coords,
+            }}
+            routeCoords={effectiveRouteCoords}
+            speedAlertEnabled={true}
+            stops={mapStops}
+            style={StyleSheet.absoluteFill}
+            truckLocation={truckLocation}
+            vehicleType={(vehicleType as string) ?? 'truck'}
+          />
+        ) : (
+          <LeopardMapView
+            bearing={followBearing}
+            destination={resolvedDestination}
+            followTruckLocation={showLiveOverlays && isTurnByTurn}
+            height="100%"
+            interactive={!isTripEnded}
+            isPickupLeg={isPickupLeg}
+            mode={isTripEnded || !isTurnByTurn ? 'route' : 'tracking'}
+            origin={resolvedOrigin}
+            pitch={showLiveOverlays && isTurnByTurn ? 55 : 0}
+            routeCoords={effectiveRouteCoords}
+            routeResolutionPolicy="PROVIDED_ONLY"
+            routeSegments={effectiveRouteSegments}
+            stops={mapStops}
+            truckEtaLabel=""
+            truckLocation={truckLocation}
+            zoom={showLiveOverlays && isTurnByTurn ? 17 : 13.5}
+          />
+        )
+      ) : null}
 
       {/* Cargo at a glance, pinned to the map header. Sits above the mode card
           (top: 56) so it never competes with navigation guidance. */}
@@ -392,44 +637,60 @@ export function MissionMapCanvas({
         </View>
       ) : null}
 
-      {/* Overview: make the A → B frame explicit, just like a route preview. */}
-      {showLiveOverlays && !isTurnByTurn ? (
-        <View pointerEvents="none" style={styles.overviewFrameBadge} testID="badge-route-overview">
-          <IconLocationPin color={leopardPalette.primary} size={12} />
-          <Text numberOfLines={1} style={styles.overviewFrameText}>
-            {`Toàn cảnh · ${resolvedOrigin.label} ➔ ${resolvedDestination.label}`}
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Turn-by-turn: Google-Maps-style guidance card with a one-tap handoff. */}
+      {/* Turn-by-turn: Grab/Lalamove/Google-Maps-style HUD */}
       {showLiveOverlays && isTurnByTurn ? (
         <View pointerEvents="box-none" style={styles.turnByTurnHudWrap} testID="turn-by-turn-hud">
           <View style={styles.turnByTurnCard}>
-            <View style={styles.turnByTurnManeuver}>
-              <IconRoute color="#FFFFFF" size={22} />
+            <View style={styles.turnByTurnManeuverBox}>
+              <ManeuverIcon size={26} type={maneuverType} />
+              {nextStepDistText ? (
+                <Text numberOfLines={1} style={styles.turnByTurnDistanceHighlight}>
+                  {nextStepDistText}
+                </Text>
+              ) : null}
             </View>
+
             <View style={styles.turnByTurnBody}>
-              <Text numberOfLines={1} style={styles.turnByTurnTitle}>
-                {resolvedTarget?.label ? `Đến ${resolvedTarget.label}` : 'Bám theo lộ trình'}
+              <Text numberOfLines={1} style={styles.turnByTurnActionText}>
+                {nextStepAction}
               </Text>
               <Text numberOfLines={1} style={styles.turnByTurnSubtitle}>
-                {etaText}
+                {resolvedTarget?.label ? `Điểm đến: ${resolvedTarget.label}` : etaText}
               </Text>
+              {tripMetricsText ? (
+                <View style={styles.turnByTurnMetricsPill}>
+                  <Text style={styles.turnByTurnMetricsText}>
+                    {tripMetricsText} · ETA dự kiến
+                  </Text>
+                </View>
+              ) : null}
             </View>
-            <Pressable
-              accessibilityHint="Mở Google Maps để dẫn đường turn-by-turn bằng giọng nói"
-              accessibilityLabel="Mở Google Maps chỉ đường turn-by-turn"
-              accessibilityRole="button"
-              onPress={() =>
-                openExternalNavigation({ target: resolvedTarget, vehicleType, onWarning: onNavigationWarning })
-              }
-              style={({ pressed }) => [styles.turnByTurnCta, pressed ? styles.pressed : null]}
-              testID="btn-turn-by-turn-google-maps"
-            >
-              <IconExternalLink color={leopardPalette.primary} size={16} />
-              <Text style={styles.turnByTurnCtaText}>Google Maps</Text>
-            </Pressable>
+
+            <View style={styles.turnByTurnActions}>
+              <Pressable
+                accessibilityHint="Bật hoặc tắt âm thanh dẫn đường"
+                accessibilityLabel={isAudioMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+                accessibilityRole="button"
+                onPress={() => setIsAudioMuted((prev) => !prev)}
+                style={({ pressed }) => [styles.turnByTurnMuteBtn, pressed ? styles.pressed : null]}
+              >
+                <Text style={styles.turnByTurnMuteIcon}>{isAudioMuted ? '🔇' : '🔊'}</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityHint="Mở Google Maps để dẫn đường turn-by-turn bằng giọng nói"
+                accessibilityLabel="Mở Google Maps chỉ đường turn-by-turn"
+                accessibilityRole="button"
+                onPress={() =>
+                  openExternalNavigation({ target: resolvedTarget, vehicleType, onWarning: onNavigationWarning })
+                }
+                style={({ pressed }) => [styles.turnByTurnCta, pressed ? styles.pressed : null]}
+                testID="btn-turn-by-turn-google-maps"
+              >
+                <IconExternalLink color={leopardPalette.primary} size={14} />
+                <Text style={styles.turnByTurnCtaText}>Google Maps</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       ) : null}
@@ -519,6 +780,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     width: '100%',
+  },
+  mapCanvasContainerTransparent: {
+    backgroundColor: 'transparent',
   },
   mapCanvasContainerFill: {
     borderRadius: 0,
@@ -706,19 +970,34 @@ const styles = StyleSheet.create({
   },
   turnByTurnCard: {
     alignItems: 'center',
-    backgroundColor: 'rgba(11, 37, 69, 0.94)',
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    borderRadius: radius.card,
+    backgroundColor: '#0B2545',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: radius.cardLg,
     borderWidth: 1,
     elevation: 6,
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
     shadowColor: '#0B2545',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
     shadowRadius: 10,
+  },
+  turnByTurnManeuverBox: {
+    alignItems: 'center',
+    backgroundColor: '#10B981',
+    borderRadius: radius.control,
+    justifyContent: 'center',
+    minWidth: 54,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  turnByTurnDistanceHighlight: {
+    ...typeScale.caption2,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    marginTop: 2,
   },
   turnByTurnManeuver: {
     alignItems: 'center',
@@ -732,15 +1011,49 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
+  turnByTurnActionText: {
+    ...typeScale.subheadline,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   turnByTurnTitle: {
     ...typeScale.subheadline,
     color: '#FFFFFF',
     fontWeight: '700',
   },
   turnByTurnSubtitle: {
-    ...typeScale.caption1,
+    ...typeScale.caption2,
     color: 'rgba(255, 255, 255, 0.78)',
-    fontWeight: '600',
+    fontWeight: '500',
+  },
+  turnByTurnMetricsPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: radius.cardSm,
+    marginTop: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  turnByTurnMetricsText: {
+    ...typeScale.caption2,
+    color: '#FCD34D',
+    fontWeight: '700',
+  },
+  turnByTurnActions: {
+    alignItems: 'flex-end',
+    flexDirection: 'column',
+    gap: 6,
+  },
+  turnByTurnMuteBtn: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderRadius: radius.cardSm,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
+  turnByTurnMuteIcon: {
+    fontSize: 13,
   },
   turnByTurnCta: {
     alignItems: 'center',
@@ -748,11 +1061,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.control,
     flexDirection: 'row',
     gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   turnByTurnCtaText: {
-    ...typeScale.caption1,
+    ...typeScale.caption2,
     color: leopardPalette.primary,
     fontWeight: '700',
   },

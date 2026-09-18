@@ -17,7 +17,11 @@ export default function DriverProfileEditRoute() {
     mutationFn: (input: { name: string; email: string }) => port.updateProfile(input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['driver', 'profile'] });
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/profile');
+      }
     },
     onError: (error: unknown) => setErrorMessage(error instanceof Error ? error.message : 'Không thể lưu hồ sơ.'),
   });
@@ -43,7 +47,7 @@ export default function DriverProfileEditRoute() {
       initialEmail={initialEmail}
       initialName={initialName}
       isSaving={saveMutation.isPending}
-      onBack={() => router.back()}
+      onBack={() => (router.canGoBack() ? router.back() : router.replace('/profile'))}
       onPickAvatar={(file) => avatarMutation.mutate(file)}
       onSave={(input) => {
         setErrorMessage(undefined);

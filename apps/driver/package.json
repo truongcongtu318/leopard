@@ -17,6 +17,7 @@
   "dependencies": {
     "@leopard/mobile-core": "workspace:*",
     "@tanstack/react-query": "5.101.2",
+    "@vietmap/vietmap-react-native-navigation": "^3.0.0",
     "expo": "57.0.4",
     "expo-image-picker": "~57.0.12",
     "expo-location": "~57.0.16",

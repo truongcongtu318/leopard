@@ -10,7 +10,7 @@ interface StatusMessage {
   readonly body: string;
 }
 
-function describeStatus(status: OrderStatus): StatusMessage {
+function describeStatus(status: OrderStatus, reason?: string | null): StatusMessage {
   switch (status) {
     case 'ACCEPTED':
       return { title: 'Tài xế đã nhận đơn', body: 'Một tài xế đã nhận đơn hàng của bạn.' };
@@ -20,8 +20,10 @@ function describeStatus(status: OrderStatus): StatusMessage {
       return { title: 'Đang giao hàng', body: 'Đơn hàng của bạn đang được vận chuyển.' };
     case 'DELIVERED':
       return { title: 'Giao hàng thành công', body: 'Đơn hàng của bạn đã được giao thành công.' };
-    case 'CANCELLED':
-      return { title: 'Đơn hàng đã bị hủy', body: 'Đơn hàng đã bị hủy.' };
+    case 'CANCELLED': {
+      const cancelNote = reason?.trim() ? `: ${reason.trim()}` : '.';
+      return { title: 'Đơn hàng đã bị hủy', body: `Đơn hàng đã bị hủy${cancelNote}` };
+    }
     case 'REQUESTED':
     default:
       return { title: 'Cập nhật đơn hàng', body: `Trạng thái đơn hàng đã thay đổi thành ${status}.` };
@@ -81,7 +83,11 @@ export class NotificationTriggers {
       return;
     }
 
-    const message = describeStatus(event.currentStatus);
+    const cancelReason =
+      event.currentStatus === 'CANCELLED'
+        ? order.statusHistory?.find((h) => h.toStatus === 'CANCELLED')?.reason
+        : undefined;
+    const message = describeStatus(event.currentStatus, cancelReason);
     const data = { orderId: event.orderId, status: event.currentStatus };
 
     await this.notificationsService.create({

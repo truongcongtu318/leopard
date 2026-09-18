@@ -6,6 +6,7 @@ import {
   IconCamera,
   IconCheck,
   IconTxPayment,
+  LeopardNavigationController,
   colors,
   iosContinuousCurve,
   leopardPalette,
@@ -23,6 +24,7 @@ import { CompletionSummaryCard } from './CompletionSummaryCard';
 import { DriverMissionBackButton } from './DriverMissionBackButton';
 import { DriverMissionActionBar } from './DriverMissionActionBar';
 import { DriverMissionExtras } from './DriverMissionExtras';
+import { DriverMapDispatchContext } from '../../../../navigation/DriverMapDirectorContext';
 
 export type AssignedDetailViewProps = Readonly<{
   view: DriverAssignedDetailView;
@@ -59,7 +61,7 @@ export function AssignedDetailView({
   inFlightStopCommand,
 }: AssignedDetailViewProps) {
   const [isMapOffCenter, setIsMapOffCenter] = useState(false);
-  const [navMode, setNavMode] = useState<'overview' | 'turn-by-turn'>('overview');
+  const [navMode, setNavMode] = useState<'overview' | 'turn-by-turn'>('turn-by-turn');
 
   const isPickupLeg = view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
   const isReturning = view.order.status === 'RETURNING';
@@ -83,9 +85,13 @@ export function AssignedDetailView({
     });
   }, [isTerminal, truckLocation, view.order.route.distanceLabel]);
 
+  const { triggerRecenter } = React.useContext(DriverMapDispatchContext) ?? {};
+
   const handleRecenterDriverLocation = () => {
     setIsMapOffCenter(false);
     postMapMessageToFrames({ type: 'LEOPARD_MAP_RECENTER' });
+    LeopardNavigationController.recenter();
+    triggerRecenter?.();
   };
 
   const handleToggleNavigationMode = () => {
@@ -95,6 +101,11 @@ export function AssignedDetailView({
       type: 'LEOPARD_MAP_SET_VIEW_MODE',
       mode: nextMode === 'overview' ? 'overview' : 'driving',
     });
+    if (nextMode === 'overview') {
+      LeopardNavigationController.overview();
+    } else {
+      LeopardNavigationController.recenter();
+    }
   };
 
   /** Pickup point (A) — the fixed first stop of the order, never the vehicle. */
@@ -175,6 +186,7 @@ export function AssignedDetailView({
             : undefined
         }
         fillContainer
+        isPickupLeg={isPickupLeg}
         navMode={navMode}
         navigationTarget={activeNavigationTarget}
         origin={mapOrigin}

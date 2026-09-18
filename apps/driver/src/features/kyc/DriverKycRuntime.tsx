@@ -18,7 +18,7 @@ export function DriverKycRuntime() {
       documents={query.data ?? []}
       isError={query.isError}
       isLoading={query.isLoading}
-      onBack={() => router.back()}
+      onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
       onRetry={() => void query.refetch()}
     />
   );

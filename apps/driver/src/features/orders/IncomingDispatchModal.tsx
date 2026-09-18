@@ -155,18 +155,16 @@ const FareCardSection = memo(function FareCardSection({
   isUrgent,
 }: FareCardSectionProps) {
   return (
-    <Card style={[styles.fareBezelOuter, isUrgent ? styles.fareBezelOuterUrgent : null]}>
-      <View style={[styles.fareBezelInner, isUrgent ? styles.fareBezelInnerUrgent : null]}>
-        <HStack style={styles.fareHeaderRow}>
-          <Text style={styles.fareCaption}>Cước thực nhận dự kiến</Text>
-          <Badge action="warning" variant="solid" style={styles.fareNetPill}>
-            <Badge.Text style={styles.fareNetPillText}>Thu nhập ròng</Badge.Text>
-          </Badge>
-        </HStack>
-        <Text style={styles.fareAmount}>{fareAmount}</Text>
-        <Text style={styles.fareSub}>Thực nhận sau chiết khấu</Text>
+    <View style={[styles.fareCard, isUrgent ? styles.fareCardUrgent : null]}>
+      <View style={styles.fareHeaderRow}>
+        <Text style={styles.fareCaption}>Cước thực nhận dự kiến</Text>
+        <View style={styles.fareNetPill}>
+          <Text style={styles.fareNetPillText}>Thu nhập ròng</Text>
+        </View>
       </View>
-    </Card>
+      <Text style={[styles.fareAmount, isUrgent ? styles.fareAmountUrgent : null]}>{fareAmount}</Text>
+      <Text style={styles.fareSub}>Thực nhận sau chiết khấu</Text>
+    </View>
   );
 });
 
@@ -186,56 +184,52 @@ const RouteSpineSection = memo(function RouteSpineSection({
   tripDistText,
 }: RouteSpineSectionProps) {
   return (
-    <Card style={styles.routeBezelOuter}>
-      <View style={styles.routeBezelInner}>
-        <View style={styles.routeSpineColumn}>
-          <View style={styles.spineOriginCircle}>
-            <Text style={styles.spinePointTextA}>A</Text>
-          </View>
-          <View style={styles.spineTrackDotted} />
-          <View style={styles.spineDestSquare}>
-            <Text style={styles.spinePointTextB}>B</Text>
-          </View>
+    <View style={styles.routeCard}>
+      <View style={styles.routeSpineColumn}>
+        <View style={styles.spineOriginCircle}>
+          <Text style={styles.spinePointTextA}>A</Text>
         </View>
-
-        <View style={styles.routeAddressesColumn}>
-          <View style={styles.addressBlock}>
-            <HStack style={styles.addressTitleRow}>
-              <Text style={styles.addressTypeLabel}>Điểm lấy hàng</Text>
-              {pickupBadgeText ? (
-                <Badge action="info" variant="solid" style={styles.pickupDistBadge}>
-                  <HStack space="hairline">
-                    <IconLocationPin color={leopardPalette.primary} size={12} />
-                    <Badge.Text style={styles.pickupDistText}>{pickupBadgeText}</Badge.Text>
-                  </HStack>
-                </Badge>
-              ) : null}
-            </HStack>
-            <Text numberOfLines={2} style={styles.addressNameText}>
-              {pickupDisplay}
-            </Text>
-          </View>
-
-          {tripDistText ? (
-            <HStack space="xs" style={styles.transitMetaRow}>
-              <IconRoute color={colors.neutral.subtleText} size={13} />
-              <Text style={styles.transitMetaText}>
-                {etaLabel
-                  ? `Lộ trình ${tripDistText} · Khoảng ${etaLabel}`
-                  : `Lộ trình ${tripDistText}`}
-              </Text>
-            </HStack>
-          ) : null}
-
-          <View style={styles.addressBlock}>
-            <Text style={styles.addressTypeLabelDropoff}>Điểm giao hàng</Text>
-            <Text numberOfLines={2} style={styles.addressNameText}>
-              {dropoffDisplay}
-            </Text>
-          </View>
+        <View style={styles.spineTrackDotted} />
+        <View style={styles.spineDestSquare}>
+          <Text style={styles.spinePointTextB}>B</Text>
         </View>
       </View>
-    </Card>
+
+      <View style={styles.routeAddressesColumn}>
+        <View style={styles.addressBlock}>
+          <View style={styles.addressTitleRow}>
+            <Text style={styles.addressTypeLabel}>Điểm lấy hàng</Text>
+            {pickupBadgeText ? (
+              <View style={styles.pickupDistBadge}>
+                <IconLocationPin color={leopardPalette.primary} size={11} />
+                <Text style={styles.pickupDistText}>{pickupBadgeText}</Text>
+              </View>
+            ) : null}
+          </View>
+          <Text numberOfLines={2} style={styles.addressNameText}>
+            {pickupDisplay}
+          </Text>
+        </View>
+
+        {tripDistText ? (
+          <View style={styles.transitMetaRow}>
+            <IconRoute color="#64748B" size={13} />
+            <Text style={styles.transitMetaText}>
+              {etaLabel
+                ? `Lộ trình ${tripDistText} · Khoảng ${etaLabel}`
+                : `Lộ trình ${tripDistText}`}
+            </Text>
+          </View>
+        ) : null}
+
+        <View style={styles.addressBlock}>
+          <Text style={styles.addressTypeLabelDropoff}>Điểm giao hàng</Text>
+          <Text numberOfLines={2} style={styles.addressNameText}>
+            {dropoffDisplay}
+          </Text>
+        </View>
+      </View>
+    </View>
   );
 });
 
@@ -261,74 +255,72 @@ const CargoBentoSection = memo(function CargoBentoSection({
   vehicleLabel,
 }: CargoBentoSectionProps) {
   return (
-    <Card style={styles.cargoBentoOuter} testID="cargo-bento-card">
-      <View style={styles.cargoBentoInner}>
-        <HStack style={styles.cargoHeaderRow}>
-          <HStack space="xs" style={styles.cargoTitleRow}>
-            <IconOrders color={leopardPalette.primary} size={15} />
-            <Text style={styles.cargoHeaderTitle}>Thông tin hàng hóa</Text>
-          </HStack>
-          {vehicleLabel ? (
-            <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
-              <IconSpeedTruck color={leopardPalette.primary} size={14} />
-              <Text style={styles.specChipText}>{vehicleLabel}</Text>
+    <View style={styles.cargoCard} testID="cargo-bento-card">
+      <View style={styles.cargoHeaderRow}>
+        <View style={styles.cargoTitleRow}>
+          <IconOrders color={leopardPalette.primary} size={15} />
+          <Text style={styles.cargoHeaderTitle}>Thông tin hàng hóa</Text>
+        </View>
+        {vehicleLabel ? (
+          <View style={styles.specChip} testID="dispatch-vehicle-spec-chip">
+            <IconSpeedTruck color={leopardPalette.primary} size={13} />
+            <Text style={styles.specChipText}>{vehicleLabel}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles.cargoBodyRow}>
+        <View style={styles.cargoInfoColumn}>
+          <Text numberOfLines={2} style={styles.cargoNameText}>
+            {cargoName}
+          </Text>
+
+          {(cargoWeightKg !== undefined || cargoDimensions) ? (
+            <View style={styles.cargoSpecsRow}>
+              {cargoWeightKg !== undefined ? (
+                <View style={styles.cargoSpecPill}>
+                  <Text style={styles.cargoSpecValue}>{cargoWeightKg} kg</Text>
+                </View>
+              ) : null}
+              {cargoDimensions ? (
+                <View style={styles.cargoSpecPill}>
+                  <Text style={styles.cargoSpecValue}>{cargoDimensions}</Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
-        </HStack>
 
-        <View style={styles.cargoBodyRow}>
-          <View style={styles.cargoInfoColumn}>
-            <Text numberOfLines={2} style={styles.cargoNameText}>
-              {cargoName}
-            </Text>
-
-            {(cargoWeightKg !== undefined || cargoDimensions) ? (
-              <HStack space="xs" style={styles.cargoSpecsRow}>
-                {cargoWeightKg !== undefined ? (
-                  <View style={styles.cargoSpecPill}>
-                    <Text style={styles.cargoSpecValue}>{cargoWeightKg} kg</Text>
-                  </View>
-                ) : null}
-                {cargoDimensions ? (
-                  <View style={styles.cargoSpecPill}>
-                    <Text style={styles.cargoSpecValue}>{cargoDimensions}</Text>
-                  </View>
-                ) : null}
-              </HStack>
-            ) : null}
-
-            {loadingBadgeLabel ? (
-              <Badge action="warning" variant="solid" style={styles.loadingFeeBadge}>
-                <Badge.Text style={styles.loadingFeeBadgeText}>{loadingBadgeLabel}</Badge.Text>
-              </Badge>
-            ) : null}
-          </View>
-
-          {cargoPhotoUrl ? (
-            <Pressable
-              accessibilityHint="Chạm để phóng to xem chi tiết hàng hóa"
-              accessibilityLabel="Xem ảnh hàng hóa"
-              accessibilityRole="button"
-              onPress={onOpenPhotoPreview}
-              style={styles.cargoThumbnailWrapper}
-              testID="cargo-photo-thumbnail"
-            >
-              <Image
-                accessibilityLabel="Ảnh hàng hóa"
-                source={{ uri: cargoPhotoUrl }}
-                style={styles.cargoThumbnailImage}
-              />
-            </Pressable>
+          {loadingBadgeLabel ? (
+            <View style={styles.loadingFeeBadge}>
+              <Text style={styles.loadingFeeBadgeText}>{loadingBadgeLabel}</Text>
+            </View>
           ) : null}
         </View>
 
-        {specialNotes ? (
-          <Box style={styles.notesBox}>
-            <Text style={styles.notesText}>{specialNotes}</Text>
-          </Box>
+        {cargoPhotoUrl ? (
+          <Pressable
+            accessibilityHint="Chạm để phóng to xem chi tiết hàng hóa"
+            accessibilityLabel="Xem ảnh hàng hóa"
+            accessibilityRole="button"
+            onPress={onOpenPhotoPreview}
+            style={styles.cargoThumbnailWrapper}
+            testID="cargo-photo-thumbnail"
+          >
+            <Image
+              accessibilityLabel="Ảnh hàng hóa"
+              source={{ uri: cargoPhotoUrl }}
+              style={styles.cargoThumbnailImage}
+            />
+          </Pressable>
         ) : null}
       </View>
-    </Card>
+
+      {specialNotes ? (
+        <View style={styles.notesBox}>
+          <Text style={styles.notesText}>{specialNotes}</Text>
+        </View>
+      ) : null}
+    </View>
   );
 });
 
@@ -916,27 +908,24 @@ const styles = StyleSheet.create({
     ...typeScale.caption2,
     fontWeight: '600',
   },
-  fareBezelOuter: {
-    backgroundColor: '#F0F4FA',
-    borderRadius: radius.bezelOuter,
-    padding: spacing.hairline + 1,
-  },
-  fareBezelOuterUrgent: {
-    backgroundColor: '#FCA5A5',
-  },
-  fareBezelInner: {
-    alignItems: 'center',
+  fareCard: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-    borderRadius: radius.bezelInner,
+    borderRadius: radius.cardLg,
     borderWidth: 1,
-    gap: spacing.hairline,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    borderColor: '#E2E8F0',
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xxs,
+    ...iosContinuousCurve,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  fareBezelInnerUrgent: {
-    backgroundColor: '#FFF1F2',
+  fareCardUrgent: {
     borderColor: '#FECACA',
+    backgroundColor: '#FFF1F2',
   },
   fareHeaderRow: {
     alignItems: 'center',
@@ -950,7 +939,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
+    paddingVertical: 2,
+    ...iosContinuousCurve,
   },
   fareNetPillText: {
     color: '#D97706',
@@ -961,54 +951,59 @@ const styles = StyleSheet.create({
     color: '#64748B',
     ...typeScale.caption2,
     fontWeight: '700',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   fareAmount: {
     color: leopardPalette.primary,
     ...typeScale.largeTitle,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    letterSpacing: -0.8,
+    marginTop: spacing.xxs,
+  },
+  fareAmountUrgent: {
+    color: colors.danger.text,
   },
   fareSub: {
-    color: colors.neutral.mutedText,
-    ...typeScale.caption2,
+    color: '#64748B',
+    ...typeScale.footnote,
     textAlign: 'center',
   },
-  routeBezelOuter: {
-    backgroundColor: colors.neutral.border,
-    borderRadius: radius.bezelOuter,
-    padding: spacing.hairline + 1,
-  },
-  routeBezelInner: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.bezelInner,
+  routeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.cardLg,
     borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: spacing.md,
     flexDirection: 'row',
     gap: spacing.sm,
-    padding: spacing.sm + spacing.xxs,
+    ...iosContinuousCurve,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   routeSpineColumn: {
     alignItems: 'center',
-    paddingTop: spacing.xxs,
-    width: 16,
+    width: 20,
+    paddingTop: 2,
   },
   spineOriginCircle: {
     alignItems: 'center',
     backgroundColor: '#16A34A',
     borderRadius: radius.pill,
-    height: 16,
+    height: 18,
+    width: 18,
     justifyContent: 'center',
-    width: 16,
   },
   spinePointTextA: {
-    color: colors.neutral.surface,
+    color: '#FFFFFF',
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
   },
   spineTrackDotted: {
-    backgroundColor: leopardPalette.inputBorder,
+    backgroundColor: '#CBD5E1',
     flex: 1,
     marginVertical: spacing.xxs,
     minHeight: 28,
@@ -1017,61 +1012,64 @@ const styles = StyleSheet.create({
   spineDestSquare: {
     alignItems: 'center',
     backgroundColor: colors.danger.text,
-    borderRadius: 3,
-    height: 16,
+    borderRadius: 4,
+    height: 18,
+    width: 18,
     justifyContent: 'center',
-    width: 16,
   },
   spinePointTextB: {
-    color: colors.neutral.surface,
+    color: '#FFFFFF',
     ...typeScale.caption2,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
   },
   routeAddressesColumn: {
     flex: 1,
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   addressBlock: {
-    gap: spacing.hairline,
+    gap: 2,
   },
   addressTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xxs,
+    gap: spacing.xs,
     justifyContent: 'space-between',
   },
   addressTypeLabel: {
     color: '#16A34A',
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   addressTypeLabelDropoff: {
     color: colors.danger.text,
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   pickupDistBadge: {
     alignItems: 'center',
-    backgroundColor: leopardPalette.primaryBg,
-    borderColor: leopardPalette.primaryBorder,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
     borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: spacing.hairline + 1,
+    gap: spacing.xxs,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
+    paddingVertical: 2,
+    ...iosContinuousCurve,
   },
   pickupDistText: {
-    color: leopardPalette.textSlateDark,
+    color: '#1D4ED8',
     ...typeScale.caption2,
     fontWeight: '600',
   },
   addressNameText: {
-    color: leopardPalette.textSlateDark,
+    color: '#0F172A',
     ...typeScale.subheadline,
     fontWeight: '600',
     lineHeight: 20,
@@ -1084,24 +1082,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.xs,
-    paddingVertical: spacing.hairline,
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    alignSelf: 'flex-start',
+    ...iosContinuousCurve,
   },
   transitMetaText: {
-    color: leopardPalette.textMutedSlate,
+    color: '#64748B',
     ...typeScale.caption1,
+    fontWeight: '500',
   },
-  cargoBentoOuter: {
-    backgroundColor: colors.neutral.border,
-    borderRadius: radius.bezelOuter,
-    padding: spacing.hairline + 1,
-  },
-  cargoBentoInner: {
-    backgroundColor: colors.neutral.surface,
-    borderColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.bezelInner,
+  cargoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.cardLg,
     borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.sm + spacing.xxs,
+    borderColor: '#E2E8F0',
+    padding: spacing.md,
+    gap: spacing.sm,
+    ...iosContinuousCurve,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cargoHeaderRow: {
     alignItems: 'center',
@@ -1115,10 +1122,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   cargoHeaderTitle: {
-    color: leopardPalette.primary,
+    color: '#0B2545',
     ...typeScale.caption2,
-    fontWeight: '600',
-    letterSpacing: 0.6,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   cargoBodyRow: {
     alignItems: 'center',
@@ -1131,7 +1138,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   cargoNameText: {
-    color: colors.neutral.text,
+    color: '#0F172A',
     ...typeScale.subheadline,
     fontWeight: '600',
     lineHeight: 20,
@@ -1143,15 +1150,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   cargoSpecPill: {
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderColor: leopardPalette.inputBorder,
-    borderRadius: radius.control / 2,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.pill,
     borderWidth: 1,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline + 1,
+    paddingVertical: 2,
+    ...iosContinuousCurve,
   },
   cargoSpecValue: {
-    color: colors.neutral.text,
+    color: '#334155',
     ...typeScale.caption1,
     fontVariant: ['tabular-nums'],
     fontWeight: '600',
@@ -1163,36 +1171,39 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline + 1,
+    paddingVertical: 2,
+    ...iosContinuousCurve,
   },
   loadingFeeBadgeText: {
     color: '#1D4ED8',
     ...typeScale.caption2,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   cargoThumbnailWrapper: {
-    backgroundColor: colors.neutral.text,
-    borderColor: leopardPalette.inputBorder,
+    backgroundColor: '#0F172A',
+    borderColor: '#E2E8F0',
     borderRadius: radius.cardSm,
-    borderWidth: 1.5,
+    borderWidth: 1,
     height: 56,
     overflow: 'hidden',
     width: 56,
+    ...iosContinuousCurve,
   },
   cargoThumbnailImage: {
     height: '100%',
     width: '100%',
   },
   notesBox: {
-    backgroundColor: leopardPalette.accentYellowBg,
-    borderColor: leopardPalette.accentYellowBorder,
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
     borderRadius: radius.cardSm,
     borderWidth: 1,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    ...iosContinuousCurve,
   },
   notesText: {
-    color: leopardPalette.textMutedSlate,
+    color: '#B45309',
     ...typeScale.caption1,
   },
   actionsContainer: {
@@ -1202,9 +1213,9 @@ const styles = StyleSheet.create({
   },
   declineButton: {
     alignItems: 'center',
-    backgroundColor: colors.neutral.surface,
+    backgroundColor: '#FFFFFF',
     borderColor: '#CBD5E1',
-    borderRadius: radius.pill,
+    borderRadius: radius.cardLg,
     ...iosContinuousCurve,
     borderWidth: 1,
     height: 52,
@@ -1213,7 +1224,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   declineButtonPressed: {
-    backgroundColor: colors.neutral.surfaceMuted,
+    backgroundColor: '#F1F5F9',
     opacity: 0.88,
     transform: [{ scale: 0.985 }],
   },
@@ -1221,7 +1232,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   declineButtonText: {
-    color: colors.neutral.subtleText,
+    color: '#64748B',
     ...typeScale.subheadline,
     fontWeight: '700',
   },

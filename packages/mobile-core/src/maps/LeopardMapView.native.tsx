@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { LeopardMapViewProps } from './types';
+import { anchorRouteToTruck } from './map-geospatial';
 import { colors } from '../theme/tokens';
 import { IconLocationPin, IconSpeedTruck } from '../ui/icons/CoreIcons';
+import { SmoothVehicleMarker } from './SmoothVehicleMarker';
 
 const loadVietmapGL = () => {
   try {
@@ -37,11 +39,23 @@ export function LeopardMapView({
   routeSegments = [],
   nearbyDrivers = [],
   zoom = 14,
+  minZoom,
+  maxZoom,
+  maxBounds,
   bearing = 0,
   pitch = 0,
   followTruckLocation = false,
+  isPickupLeg = false,
 }: LeopardMapViewProps) {
   const cameraRef = useRef<any>(null);
+  const defaultMinZoom = mode === 'tracking' ? 8.5 : 7.5;
+  const effectiveMinZoom = typeof minZoom === 'number' ? minZoom : defaultMinZoom;
+  const effectiveMaxZoom = typeof maxZoom === 'number' ? maxZoom : 19;
+  const defaultMaxBounds: [[number, number], [number, number]] = [
+    [101.0, 7.5],
+    [111.5, 24.5],
+  ];
+  const effectiveMaxBounds = maxBounds ?? defaultMaxBounds;
 
   const resolvedApiKey = useMemo(() => {
     return (
@@ -60,10 +74,17 @@ export function LeopardMapView({
   const centerCoords = useMemo<[number, number]>(() => {
     if (initialPinCoords) return [initialPinCoords.lng, initialPinCoords.lat];
     if (truckLocation) return [truckLocation.lng, truckLocation.lat];
+    if (origin?.coords && destination?.coords) {
+      return [
+        (origin.coords.lng + destination.coords.lng) / 2,
+        (origin.coords.lat + destination.coords.lat) / 2,
+      ];
+    }
     if (origin?.coords) return [origin.coords.lng, origin.coords.lat];
     if (destination?.coords) return [destination.coords.lng, destination.coords.lat];
+    if (routeCoords.length > 0 && routeCoords[0]) return [routeCoords[0].lng, routeCoords[0].lat];
     return [106.660172, 10.762622];
-  }, [initialPinCoords, truckLocation, origin, destination]);
+  }, [initialPinCoords, truckLocation, origin, destination, routeCoords]);
 
   // Turn-by-turn: the camera must ride with the vehicle, so the truck position
   // wins over every other candidate. Without a live fix there is nothing to
@@ -91,7 +112,7 @@ export function LeopardMapView({
               seg.kind === 'completed'
                 ? '#94A3B8'
                 : seg.kind === 'active'
-                ? '#0B2545'
+                ? '#2563EB'
                 : '#CBD5E1',
           },
           geometry: {
@@ -102,39 +123,78 @@ export function LeopardMapView({
       };
     }
 
-    if (routeCoords.length >= 2) {
+    const effectiveRouteCoords =
+      mode === 'tracking' && truckLocation
+        ? anchorRouteToTruck({
+            routeCoords,
+            truckLocation,
+            originCoords: origin?.coords,
+            destinationCoords: destination?.coords,
+            isPickupLeg: Boolean(isPickupLeg),
+          })
+        : routeCoords;
+
+    if (effectiveRouteCoords.length >= 2) {
       return {
         type: 'FeatureCollection' as const,
         features: [
           {
             type: 'Feature' as const,
             id: 'route-main',
-            properties: { kind: 'active', color: '#0B2545' },
+            properties: { kind: 'active', color: '#2563EB' },
             geometry: {
               type: 'LineString' as const,
-              coordinates: routeCoords.map((c) => [c.lng, c.lat]),
+              coordinates: effectiveRouteCoords.map((c) => [c.lng, c.lat]),
             },
           },
         ],
       };
     }
 
+    // Connect origin -> intermediate stops -> destination so route line always renders
     if (origin?.coords && destination?.coords) {
+      if (isPickupLeg) {
+        if (truckLocation && origin.coords) {
+          return {
+            type: 'FeatureCollection' as const,
+            features: [
+              {
+                type: 'Feature' as const,
+                id: 'route-main',
+                properties: { kind: 'active', color: '#2563EB' },
+                geometry: {
+                  type: 'LineString' as const,
+                  coordinates: [
+                    [truckLocation.lng, truckLocation.lat],
+                    [origin.coords.lng, origin.coords.lat],
+                  ],
+                },
+              },
+            ],
+          };
+        }
+        return null;
+      }
+
       const validStops: [number, number][] = stops
         .filter((s) => s.coords)
         .map((s) => [s.coords!.lng, s.coords!.lat]);
-      const coords: [number, number][] = [
+      const baseCoords: [number, number][] = [
         [origin.coords.lng, origin.coords.lat],
         ...validStops,
         [destination.coords.lng, destination.coords.lat],
       ];
+      const coords: [number, number][] =
+        mode === 'tracking' && truckLocation
+          ? [[truckLocation.lng, truckLocation.lat], ...baseCoords]
+          : baseCoords;
       return {
         type: 'FeatureCollection' as const,
         features: [
           {
             type: 'Feature' as const,
             id: 'route-main',
-            properties: { kind: 'active', color: '#0B2545' },
+            properties: { kind: 'active', color: '#2563EB' },
             geometry: {
               type: 'LineString' as const,
               coordinates: coords,
@@ -145,7 +205,7 @@ export function LeopardMapView({
     }
 
     return null;
-  }, [routeCoords, routeSegments, origin?.coords, destination?.coords, stops]);
+  }, [routeCoords, routeSegments, origin?.coords, destination?.coords, stops, mode, truckLocation, isPickupLeg]);
 
   const displayEta = useMemo(() => {
     if (truckEtaLabel) return truckEtaLabel;
@@ -165,7 +225,7 @@ export function LeopardMapView({
           pitchEnabled={interactive}
           rotateEnabled={interactive}
           scrollEnabled={interactive}
-          style={styles.map}
+          style={StyleSheet.absoluteFill}
           styleURL={styleUrl}
           zoomEnabled={interactive}
         >
@@ -176,7 +236,13 @@ export function LeopardMapView({
             heading={shouldFollowTruck ? bearing : 0}
             pitch={shouldFollowTruck ? pitch : 0}
             ref={cameraRef}
-            zoomLevel={shouldFollowTruck ? Math.max(zoom, 16) : zoom}
+            zoomLevel={shouldFollowTruck ? Math.max(zoom, 16) : Math.max(zoom, effectiveMinZoom)}
+            minZoomLevel={effectiveMinZoom}
+            maxZoomLevel={effectiveMaxZoom}
+            maxBounds={{
+              ne: effectiveMaxBounds[1],
+              sw: effectiveMaxBounds[0],
+            }}
           />
 
           {routeGeoJSON && (
@@ -195,7 +261,7 @@ export function LeopardMapView({
                 id="vietmapRouteLine"
                 style={{
                   lineColor: ['get', 'color'],
-                  lineWidth: 4.5,
+                  lineWidth: 5,
                   lineJoin: 'round',
                   lineCap: 'round',
                 }}
@@ -205,6 +271,7 @@ export function LeopardMapView({
 
           {origin?.coords && (
             <VietmapGL.PointAnnotation
+              anchor={{ x: 0.5, y: 1.0 }}
               coordinate={[origin.coords.lng, origin.coords.lat]}
               id="origin-marker"
             >
@@ -216,6 +283,7 @@ export function LeopardMapView({
 
           {destination?.coords && (
             <VietmapGL.PointAnnotation
+              anchor={{ x: 0.5, y: 1.0 }}
               coordinate={[destination.coords.lng, destination.coords.lat]}
               id="dest-marker"
             >
@@ -256,14 +324,11 @@ export function LeopardMapView({
               id="truck-marker"
             >
               <View style={styles.truckWrapper}>
-                <View
-                  style={[
-                    styles.truckIconBadge,
-                    shouldFollowTruck ? { transform: [{ rotate: `${bearing}deg` }] } : null,
-                  ]}
-                >
-                  <IconSpeedTruck color="#FFFFFF" size={16} />
-                </View>
+                <SmoothVehicleMarker
+                  heading={bearing || 0}
+                  isActive={true}
+                  size={36}
+                />
                 {displayEta && !shouldFollowTruck && (
                   <View style={styles.etaBadge}>
                     <Text style={styles.etaText}>{displayEta}</Text>
@@ -317,9 +382,11 @@ export function LeopardMapView({
 
       {(mode === 'tracking' || (mode === 'location' && truckLocation) || truckLocation) && (
         <View style={styles.truckMarkerWrap}>
-          <View style={styles.truckMarker}>
-            <IconSpeedTruck color="#FFFFFF" size={14} />
-          </View>
+          <SmoothVehicleMarker
+            heading={shouldFollowTruck ? bearing : 0}
+            isActive={shouldFollowTruck}
+            size={36}
+          />
           {displayEta ? (
             <View style={styles.truckEtaBadge}>
               <Text style={styles.truckEtaText}>{displayEta}</Text>

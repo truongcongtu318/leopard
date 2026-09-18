@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { DriverMapDispatchContext, useDriverMapDirector } from '../../navigation/DriverMapDirectorContext';
 
 import {
   Box,
@@ -25,7 +26,6 @@ import type { IncomingDispatchOffer } from './IncomingDispatchModal';
 import type { DriverListView } from './model';
 
 import { DriverConnectionCapsule } from './components/DriverConnectionCapsule';
-import { DriverRadarScanner } from './components/DriverRadarScanner';
 import { DriverConnectionStatusRow } from './components/DriverConnectionStatusRow';
 import { DriverMapControlStack } from './components/DriverMapControlStack';
 import { DriverQuickActionGrid } from './components/DriverQuickActionGrid';
@@ -198,54 +198,91 @@ export function DriverOrdersScreen({
     .filter((part): part is string => Boolean(part))
     .join(' · ');
 
-  return (
-    <View style={styles.screenRoot}>
-      {/* ── Layer 0: full-bleed live map ── */}
-      <View style={styles.mapLayer} testID="driver-map-canvas">
-        <LeopardMapView
-          destination={
-            activeTrip
-              ? {
-                  coords:
-                    activeTrip.route.destination.coords ||
-                    resolveLocationCoords(activeTrip.route.destination.label),
-                  label: activeTrip.route.destination.label,
-                }
-              : undefined
-          }
-          height="100%"
-          initialPinCoords={truckCoords}
-          interactive={isContent}
-          mode={activeTrip ? 'tracking' : 'location'}
-          origin={
-            activeTrip
-              ? {
-                  coords:
-                    activeTrip.route.origin.coords ||
-                    resolveLocationCoords(activeTrip.route.origin.label),
-                  label: activeTrip.route.origin.label,
-                }
-              : undefined
-          }
-          stops={
-            activeTrip
-              ? activeTrip.route.stops.map((stop) => ({
-                  id: stop.id,
-                  label: stop.label,
-                  coords: resolveLocationCoords(stop.label),
-                }))
-              : undefined
-          }
-          style={StyleSheet.absoluteFill}
-          truckEtaLabel={activeTrip ? activeTrip.route.distanceLabel : undefined}
-          truckLocation={truckCoords}
-        />
-      </View>
+  const { triggerRecenter } = useContext(DriverMapDispatchContext) ?? {};
+  const hasDirectorHost = Boolean(useContext(DriverMapDispatchContext));
 
-      {/* ── Layer 0.5: Apple Minimal Luxury Radar Scanner (Active when online and idle) ── */}
-      {isContent && isOnline && !activeTrip ? (
-        <DriverRadarScanner isActive={isOnline} />
-      ) : null}
+  const directorOrigin = useMemo(() => {
+    if (!activeTrip) return undefined;
+    return {
+      coords:
+        activeTrip.route.origin.coords ||
+        resolveLocationCoords(activeTrip.route.origin.label),
+      label: activeTrip.route.origin.label,
+    };
+  }, [activeTrip]);
+
+  const directorDestination = useMemo(() => {
+    if (!activeTrip) return undefined;
+    return {
+      coords:
+        activeTrip.route.destination.coords ||
+        resolveLocationCoords(activeTrip.route.destination.label),
+      label: activeTrip.route.destination.label,
+    };
+  }, [activeTrip]);
+
+  const directorStops = useMemo(() => {
+    if (!activeTrip) return undefined;
+    return activeTrip.route.stops.map((stop) => ({
+      id: stop.id,
+      label: stop.label,
+      coords: resolveLocationCoords(stop.label),
+    }));
+  }, [activeTrip]);
+
+  const directorConfig = useMemo(() => {
+    if (!isContent && view.kind !== 'loading') {
+      return { mode: 'idle' as const, interactive: true };
+    }
+    return {
+      mode: activeTrip ? ('tracking' as const) : ('location' as const),
+      origin: directorOrigin,
+      destination: directorDestination,
+      stops: directorStops,
+      truckLocation: truckCoords,
+      truckEtaLabel: activeTrip ? activeTrip.route.distanceLabel : undefined,
+      viewportInsets: {
+        bottom: activeTrip ? 340 : idlePanelHeight > 0 ? idlePanelHeight : 260,
+      },
+      interactive: true,
+    };
+  }, [
+    activeTrip,
+    directorDestination,
+    directorOrigin,
+    directorStops,
+    idlePanelHeight,
+    isContent,
+    truckCoords,
+    view.kind,
+  ]);
+
+  useDriverMapDirector(hasDirectorHost ? directorConfig : null, 1);
+
+  const handleRecenter = useCallback(() => {
+    retryCurrentLocation();
+    triggerRecenter?.();
+  }, [triggerRecenter]);
+
+  return (
+    <View pointerEvents="box-none" style={styles.screenRoot}>
+      {/* ── Layer 0: persistent map canvas bounds ── */}
+      <View style={styles.mapLayer} testID="driver-map-canvas" pointerEvents="box-none">
+        {!hasDirectorHost ? (
+          <LeopardMapView
+            destination={directorDestination}
+            height="100%"
+            initialPinCoords={truckCoords}
+            interactive={isContent}
+            mode={activeTrip ? 'tracking' : 'location'}
+            origin={directorOrigin}
+            stops={directorStops}
+            style={StyleSheet.absoluteFill}
+            truckEtaLabel={activeTrip ? activeTrip.route.distanceLabel : undefined}
+            truckLocation={truckCoords}
+          />
+        ) : null}
+      </View>
 
       {/* ── Layer 1: right-edge map control stack (Grab-style) ── */}
       <View pointerEvents="box-none" style={styles.mapControlLayer}>
@@ -253,10 +290,11 @@ export function DriverOrdersScreen({
         <DriverMapControlStack
           isLocating={driverLocation.kind === 'loading'}
           onOpenRadiusSettings={() => setIsSettingsOpen(true)}
-          onRecenter={retryCurrentLocation}
+          onRecenter={handleRecenter}
           onRefreshOffers={onRetry}
         />
       </View>
+
 
       {/* ── Layer 2: duty pill pinned just above the sheet's top edge ── */}
       {isContent && !activeTrip ? (
@@ -420,7 +458,7 @@ const styles = StyleSheet.create({
     boxShadow: 'none',
   },
   screenRoot: {
-    backgroundColor: colors.neutral.canvas,
+    backgroundColor: 'transparent',
     flex: 1,
     overflow: 'hidden',
     position: 'relative',

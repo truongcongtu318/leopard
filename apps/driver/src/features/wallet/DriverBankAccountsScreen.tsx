@@ -1,26 +1,31 @@
 import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import {
-  Alert,
   Badge,
   Box,
+  Button,
   Card,
   Divider,
   HStack,
   IconBank,
+  IconClose,
   IconSecurityShield,
   ScreenScaffold,
   VStack,
   colors,
   driverPrimitives,
+  haptic,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -28,21 +33,27 @@ import {
   typeScale,
 } from '@leopard/mobile-core';
 
-function BackArrowIcon({ size = 20, color = driverPrimitives.colors.gray900 }: { size?: number; color?: string }) {
-  return (
-    <Svg height={size} viewBox="0 0 24 24" width={size}>
-      <Path
-        d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
+const POPULAR_BANKS = [
+  'Vietcombank',
+  'MB Bank',
+  'Techcombank',
+  'ACB',
+  'VPBank',
+  'BIDV',
+  'VietinBank',
+  'TPBank',
+];
 
 export type DriverBankAccountsScreenProps = Readonly<{
   bankName: string | null;
   bankAccountNumber: string | null;
   bankAccountName: string | null;
+  onUpdateBankAccount?: (input: {
+    bankName: string;
+    bankAccountNumber: string;
+    bankAccountName: string;
+  }) => Promise<unknown> | void;
+  isUpdating?: boolean;
 }>;
 
 // Single linked bank account from GET /driver/wallet (bankName,
@@ -52,14 +63,85 @@ export function DriverBankAccountsScreen({
   bankAccountName,
   bankAccountNumber,
   bankName,
+  isUpdating = false,
+  onUpdateBankAccount,
 }: DriverBankAccountsScreenProps) {
   const router = useRouter();
   const hasLinkedAccount = Boolean(bankName && bankAccountNumber);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBank, setSelectedBank] = useState(bankName || 'Vietcombank');
+  const [accountNum, setAccountNum] = useState(bankAccountNumber || '');
+  const [accName, setAccName] = useState(bankAccountName || '');
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const handleOpenModal = useCallback(() => {
+    setSelectedBank(bankName || 'Vietcombank');
+    setAccountNum(bankAccountNumber || '');
+    setAccName(bankAccountName || '');
+    setFormError(null);
+    setIsModalOpen(true);
+  }, [bankAccountName, bankAccountNumber, bankName]);
+
+  const handleCloseModal = useCallback(() => {
+    if (isUpdating) return;
+    setIsModalOpen(false);
+    setFormError(null);
+  }, [isUpdating]);
+
+  const handleSubmit = useCallback(async () => {
+    const trimmedNum = accountNum.trim();
+    const trimmedName = accName.trim();
+
+    if (!selectedBank) {
+      setFormError('Vui lòng chọn ngân hàng');
+      return;
+    }
+    if (!trimmedNum || trimmedNum.length < 6) {
+      setFormError('Số tài khoản không hợp lệ (tối thiểu 6 chữ số)');
+      return;
+    }
+    if (!trimmedName || trimmedName.length < 2) {
+      setFormError('Tên chủ tài khoản không được để trống');
+      return;
+    }
+
+    setFormError(null);
+    if (!onUpdateBankAccount) {
+      setIsModalOpen(false);
+      return;
+    }
+
+    try {
+      await onUpdateBankAccount({
+        bankName: selectedBank,
+        bankAccountNumber: trimmedNum,
+        bankAccountName: trimmedName.toUpperCase(),
+      });
+      haptic.success();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      haptic.warning();
+      setFormError(err?.message || 'Không thể cập nhật tài khoản ngân hàng. Vui lòng thử lại.');
+    }
+  }, [accName, accountNum, onUpdateBankAccount, selectedBank]);
+
   return (
     <ScreenScaffold
       headerTone="plain"
-      onBack={() => router.back()}
+      onBack={() => {
+        if (typeof router.canGoBack === 'function') {
+          if (router.canGoBack()) {
+            router.back();
+          } else if (typeof router.push === 'function') {
+            router.push('/wallet');
+          }
+        } else if (typeof router.back === 'function') {
+          router.back();
+        } else if (typeof router.push === 'function') {
+          router.push('/wallet');
+        }
+      }}
       title="Tài khoản thụ hưởng"
     >
       <ScrollView
@@ -85,9 +167,22 @@ export function DriverBankAccountsScreen({
 
         {/* Linked Bank Account (BE) */}
         <VStack style={styles.accountSection}>
-          <Text style={styles.sectionTitle}>
-            Tài khoản đã liên kết ({hasLinkedAccount ? 1 : 0})
-          </Text>
+          <HStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.sectionTitle}>
+              Tài khoản đã liên kết ({hasLinkedAccount ? 1 : 0})
+            </Text>
+            {hasLinkedAccount && onUpdateBankAccount ? (
+              <Pressable
+                accessibilityLabel="Thay đổi tài khoản ngân hàng"
+                accessibilityRole="button"
+                onPress={handleOpenModal}
+                style={({ pressed }) => [styles.setDefaultButton, pressed ? styles.pressed : null]}
+                testID="btn-edit-bank-account"
+              >
+                <Text style={styles.setDefaultText}>Thay đổi</Text>
+              </Pressable>
+            ) : null}
+          </HStack>
 
           {hasLinkedAccount ? (
             <Card style={styles.bankCard}>
@@ -119,12 +214,138 @@ export function DriverBankAccountsScreen({
             <Card style={styles.bankCard}>
               <Text style={styles.emptyText}>Chưa liên kết tài khoản ngân hàng</Text>
               <Text style={styles.emptySub}>
-                Tài khoản thụ hưởng được lưu trong hồ sơ ví của bạn. Liên hệ điều hành để cập nhật.
+                Tài khoản thụ hưởng dùng để nhận tiền khi thực hiện rút tiền từ ví.
               </Text>
+              {onUpdateBankAccount ? (
+                <Pressable
+                  accessibilityLabel="Liên kết tài khoản ngân hàng ngay"
+                  accessibilityRole="button"
+                  onPress={handleOpenModal}
+                  style={({ pressed }) => [styles.addAccountBtn, pressed ? styles.pressed : null]}
+                  testID="btn-add-bank-account"
+                >
+                  <Text style={styles.addAccountBtnText}>Liên kết tài khoản ngay</Text>
+                </Pressable>
+              ) : null}
             </Card>
           )}
         </VStack>
       </ScrollView>
+
+      {/* Edit / Link Bank Account Modal */}
+      <Modal
+        animationType="slide"
+        onRequestClose={handleCloseModal}
+        transparent
+        visible={isModalOpen}
+      >
+        <View style={styles.modalBackdrop}>
+          <Pressable
+            accessibilityLabel="Đóng modal"
+            accessibilityRole="button"
+            onPress={handleCloseModal}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalDragHandle} />
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderLeft}>
+                <IconBank color={colors.brand.primary} size={20} />
+                <Text style={styles.modalTitle}>
+                  {hasLinkedAccount ? 'Cập nhật tài khoản' : 'Liên kết tài khoản'}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Đóng"
+                accessibilityRole="button"
+                onPress={handleCloseModal}
+                style={styles.modalCloseBtn}
+                testID="btn-close-bank-modal"
+              >
+                <IconClose color={colors.neutral.mutedText} size={18} />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              contentContainerStyle={styles.modalFormContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.fieldLabel}>Chọn ngân hàng</Text>
+              <View style={styles.bankGrid}>
+                {POPULAR_BANKS.map((b) => {
+                  const isSelected = selectedBank === b;
+                  return (
+                    <Pressable
+                      accessibilityLabel={`Chọn ngân hàng ${b}`}
+                      accessibilityRole="button"
+                      key={b}
+                      onPress={() => setSelectedBank(b)}
+                      style={[
+                        styles.bankSelectChip,
+                        isSelected ? styles.bankSelectChipActive : null,
+                      ]}
+                      testID={`bank-chip-${b}`}
+                    >
+                      <Text
+                        style={[
+                          styles.bankSelectChipText,
+                          isSelected ? styles.bankSelectChipTextActive : null,
+                        ]}
+                      >
+                        {b}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.fieldLabel}>Số tài khoản ngân hàng</Text>
+              <TextInput
+                accessibilityLabel="Số tài khoản"
+                autoCapitalize="none"
+                keyboardType="number-pad"
+                onChangeText={setAccountNum}
+                placeholder="Nhập số tài khoản"
+                placeholderTextColor={colors.neutral.mutedText}
+                style={styles.textInput}
+                testID="input-bank-account-number"
+                value={accountNum}
+              />
+
+              <Text style={styles.fieldLabel}>Tên chủ tài khoản</Text>
+              <TextInput
+                accessibilityLabel="Tên chủ tài khoản"
+                autoCapitalize="characters"
+                onChangeText={setAccName}
+                placeholder="NGUYEN VAN A"
+                placeholderTextColor={colors.neutral.mutedText}
+                style={styles.textInput}
+                testID="input-bank-account-name"
+                value={accName}
+              />
+
+              {formError ? (
+                <View style={styles.formErrorBox} testID="bank-form-error">
+                  <Text style={styles.formErrorText}>{formError}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.modalActions}>
+                <Button
+                  disabled={isUpdating}
+                  isLoading={isUpdating}
+                  label={hasLinkedAccount ? 'Cập nhật tài khoản' : 'Xác nhận liên kết'}
+                  loadingLabel="Đang lưu..."
+                  onPress={() => void handleSubmit()}
+                  size="driver-primary"
+                  testID="btn-submit-bank-account"
+                />
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScreenScaffold>
   );
 }

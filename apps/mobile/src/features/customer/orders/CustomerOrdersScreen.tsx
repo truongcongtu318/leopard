@@ -208,7 +208,7 @@ function AppleSegmentedControl({
           numberOfLines={1}
           style={[s.segmentLabel, activeSegment === 'active' && s.segmentLabelActive]}
         >
-          Đang thực hiện
+          Đang giao
         </Text>
         {activeCount > 0 ? (
           <View style={[s.segmentBadge, activeSegment === 'active' && s.segmentBadgeActive]}>
@@ -325,71 +325,78 @@ const ActiveOrderHeroCard = React.memo(function ActiveOrderHeroCard({
       }}
       style={({ pressed }) => [s.heroCard, pressed && s.cardPressed]}
     >
-      {/* Dark gradient route strip */}
-      <Box style={s.heroMapStrip}>
-        <Box style={s.heroMapGradient} />
-        {/* Route line overlay */}
-        <HStack style={s.heroRouteLine}>
-          <Box style={[s.heroRouteEndpoint, { backgroundColor: colors.success.text }]} />
-          <Box style={s.heroRouteDash} />
-          <Box style={s.heroRouteDash} />
-          <Box style={s.heroRouteDash} />
-          <Box style={[s.heroRouteEndpoint, { backgroundColor: colors.danger.text }]} />
+      {/* Header: Truck Icon + Order Ref + Live Status Pill */}
+      <HStack style={s.heroHeaderRow}>
+        <HStack style={s.heroHeaderLeft}>
+          <Box style={s.heroTruckIconBox}>
+            <IconSpeedTruck color={customerPalette.primary} size={16} />
+          </Box>
+          <VStack style={s.heroRefWrap}>
+            <Text style={s.heroRefLabel}>ĐƠN HÀNG</Text>
+            <Text style={s.heroRefCode}>{order.reference}</Text>
+          </VStack>
         </HStack>
-        {/* Status overlay pill */}
-        <HStack style={[s.heroStatusPill, { backgroundColor: accentColor }]}>
-          <PulseDot color={colors.neutral.surface} size={4} />
-          <Text style={s.heroStatusText}>{statusLabel}</Text>
-        </HStack>
-      </Box>
 
-      {/* Content */}
-      <VStack style={s.heroContent}>
-        {/* Route info */}
-        <VStack style={s.heroRouteInfo}>
-          <HStack style={s.heroRoutePoint}>
+        {/* Dynamic Status Pill */}
+        <HStack style={[s.heroStatusPill, { backgroundColor: `${accentColor}18` }]}>
+          <PulseDot color={accentColor} size={4} />
+          <Text style={[s.heroStatusText, { color: accentColor }]}>{statusLabel}</Text>
+        </HStack>
+      </HStack>
+
+      <Box style={s.heroDivider} />
+
+      {/* Route Timeline */}
+      <VStack style={s.heroRouteTimeline}>
+        <HStack style={s.heroRouteItem}>
+          <VStack style={s.heroRail}>
             <Box style={s.heroOriginDot} />
-            <VStack style={s.heroRouteTextWrap}>
-              <Text style={s.heroRouteLabel}>Lấy hàng</Text>
-              <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.origin.label}</Text>
-            </VStack>
-          </HStack>
-          <Box style={s.heroRouteSeparator} />
-          <HStack style={s.heroRoutePoint}>
-            <Box style={s.heroDestDot} />
-            <VStack style={s.heroRouteTextWrap}>
-              <Text style={s.heroRouteLabel}>Giao hàng</Text>
-              <Text numberOfLines={1} style={s.heroRouteAddress}>{order.route.destination.label}</Text>
-            </VStack>
-          </HStack>
-        </VStack>
+            <Box style={s.heroConnectorLine} />
+          </VStack>
+          <VStack style={s.heroRouteTextWrap}>
+            <Text style={s.heroRouteTag}>LẤY HÀNG</Text>
+            <Text numberOfLines={1} style={s.heroRouteAddress}>
+              {order.route.origin.label}
+            </Text>
+          </VStack>
+        </HStack>
 
-        {/* Footer: Reference + ETA + Price */}
-        <HStack style={s.heroFooter}>
-          <HStack style={s.heroRefWrap}>
-            <IconSpeedTruck color={colors.neutral.subtleText} size={14} />
-            <Text style={s.heroRef}>{order.reference}</Text>
-          </HStack>
-          <HStack style={s.heroMetaRight}>
-            {order.etaLabel ? (
-              <HStack style={s.heroEtaPill}>
-                <IconClock color={customerPalette.primary} size={12} />
-                <Text style={s.heroEtaText}>ETA dự kiến: {order.etaLabel}</Text>
-              </HStack>
-            ) : null}
-            {order.priceLabel ? (
-              <Text style={s.heroPrice}>{order.priceLabel}</Text>
-            ) : null}
-          </HStack>
+        <HStack style={s.heroRouteItem}>
+          <VStack style={s.heroRail}>
+            <Box style={s.heroDestDot} />
+          </VStack>
+          <VStack style={s.heroRouteTextWrap}>
+            <Text style={s.heroRouteTag}>GIAO HÀNG</Text>
+            <Text numberOfLines={1} style={s.heroRouteAddress}>
+              {order.route.destination.label}
+            </Text>
+          </VStack>
         </HStack>
       </VStack>
 
-      {/* Track CTA strip */}
-      <HStack style={s.heroTrackStrip}>
-        <IconRoute color={colors.neutral.surface} size={14} />
-        <Text style={s.heroTrackText}>Theo dõi chuyến hàng</Text>
-        <Text style={s.heroTrackArrow}>→</Text>
+      {/* Meta & Price Row */}
+      <HStack style={s.heroMetaPriceRow}>
+        {order.etaLabel ? (
+          <HStack style={s.heroEtaPill}>
+            <IconClock color={customerPalette.primary} size={13} />
+            <Text style={s.heroEtaText}>ETA dự kiến: {order.etaLabel}</Text>
+          </HStack>
+        ) : (
+          <Box />
+        )}
+        {order.priceLabel ? (
+          <Text style={s.heroPriceText}>{order.priceLabel}</Text>
+        ) : null}
       </HStack>
+
+      {/* Primary CTA Button inside card */}
+      <Box style={s.heroCtaBtnWrap}>
+        <HStack style={s.heroCtaBtn}>
+          <IconRoute color={colors.neutral.surface} size={16} />
+          <Text style={s.heroCtaBtnText}>Theo dõi chuyến hàng</Text>
+          <Text style={s.heroCtaBtnArrow}>→</Text>
+        </HStack>
+      </Box>
     </Pressable>
   );
 });
@@ -868,147 +875,133 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ─── Hero Active Order Card (Inset Grouped) ───────────────────
+  // ─── Hero Active Order Card (Apple Inset Grouped) ───────────────────
   heroCard: {
     backgroundColor: colors.neutral.surface,
     borderRadius: radius.cardLg,
     ...iosContinuousCurve,
-    overflow: 'hidden',
+    padding: spacing.md,
+    gap: spacing.xs,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.neutral.border,
-    boxShadow: '0 4px 12px rgba(11, 37, 69, 0.06)',
+    boxShadow: '0 3px 12px rgba(11, 37, 69, 0.05)',
     elevation: 2,
   },
-
-  // Map strip
-  heroMapStrip: {
-    height: 72,
-    backgroundColor: colors.neutral.text,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  heroMapGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.neutral.text,
-    opacity: 0.92,
-  },
-  heroRouteLine: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    top: '50%',
-    marginTop: -3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  heroRouteEndpoint: {
-    width: 10,
-    height: 10,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.7)',
-  },
-  heroRouteDash: {
-    flex: 1,
-    height: 2,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 1,
-  },
-  heroStatusPill: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xxs,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
-    borderRadius: radius.pill,
-  },
-  heroStatusText: {
-    color: colors.neutral.surface,
-    ...typeScale.caption2,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-
-  // Content
-  heroContent: {
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  heroRouteInfo: {
-    gap: spacing.xs,
-  },
-  heroRoutePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  heroOriginDot: {
-    width: 10,
-    height: 10,
-    borderRadius: radius.pill,
-    backgroundColor: colors.success.text,
-  },
-  heroDestDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 3,
-    backgroundColor: colors.danger.text,
-  },
-  heroRouteTextWrap: {
-    flex: 1,
-  },
-  heroRouteLabel: {
-    ...typeScale.caption2,
-    fontWeight: '600',
-    color: colors.neutral.subtleText,
-    letterSpacing: 0.5,
-  },
-  heroRouteAddress: {
-    ...typeScale.subheadline,
-    fontWeight: '600',
-    color: colors.neutral.text,
-    marginTop: spacing.hairline,
-  },
-  heroRouteSeparator: {
-    marginLeft: spacing.xxs,
-    width: 2,
-    height: 8,
-    backgroundColor: colors.neutral.border,
-    borderRadius: 1,
-  },
-
-  // Footer
-  heroFooter: {
+  heroHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.neutral.surfaceMuted,
-    paddingTop: spacing.xs,
+    gap: spacing.xs,
   },
-  heroRefWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xxs,
-  },
-  heroRef: {
-    ...typeScale.caption1,
-    fontWeight: '600',
-    color: colors.neutral.subtleText,
-    fontVariant: ['tabular-nums'],
-  },
-  heroMetaRight: {
+  heroHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+  },
+  heroTruckIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    backgroundColor: customerPalette.bgMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroRefWrap: {
+    gap: 1,
+  },
+  heroRefLabel: {
+    ...typeScale.caption2,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.neutral.subtleText,
+    letterSpacing: 0.5,
+  },
+  heroRefCode: {
+    ...typeScale.subheadline,
+    fontWeight: '700',
+    color: colors.neutral.text,
+    fontVariant: ['tabular-nums'],
+  },
+  heroStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs + 1,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.pill,
+  },
+  heroStatusText: {
+    ...typeScale.caption2,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  heroDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.neutral.border,
+    marginVertical: spacing.xxs,
+  },
+
+  // Route Timeline
+  heroRouteTimeline: {
+    gap: 0,
+    paddingVertical: spacing.xxs,
+  },
+  heroRouteItem: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.xs,
+  },
+  heroRail: {
+    alignItems: 'center',
+    width: 14,
+    paddingTop: 3,
+  },
+  heroOriginDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.pill,
+    backgroundColor: colors.success.text,
+  },
+  heroConnectorLine: {
+    width: 1.5,
+    flex: 1,
+    minHeight: 14,
+    backgroundColor: colors.neutral.border,
+    marginVertical: 2,
+  },
+  heroDestDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.accent,
+  },
+  heroRouteTextWrap: {
+    flex: 1,
+    paddingBottom: spacing.xs,
+    gap: 1,
+  },
+  heroRouteTag: {
+    ...typeScale.caption2,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.neutral.subtleText,
+    letterSpacing: 0.4,
+  },
+  heroRouteAddress: {
+    ...typeScale.footnote,
+    fontWeight: '600',
+    color: colors.neutral.text,
+    lineHeight: 18,
+  },
+
+  // Meta & Price Row
+  heroMetaPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+    paddingTop: spacing.xxs,
   },
   heroEtaPill: {
     flexDirection: 'row',
@@ -1017,7 +1010,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.neutral.canvas,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.hairline,
+    paddingVertical: spacing.hairline + 1,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.neutral.border,
   },
@@ -1027,31 +1020,37 @@ const s = StyleSheet.create({
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
-  heroPrice: {
-    ...typeScale.subheadline,
-    fontWeight: '700',
+  heroPriceText: {
+    ...typeScale.title3,
+    fontWeight: '800',
     color: customerPalette.primary,
     fontVariant: ['tabular-nums'],
   },
 
-  // Track strip
-  heroTrackStrip: {
+  // Primary CTA Button inside card
+  heroCtaBtnWrap: {
+    marginTop: spacing.xxs,
+  },
+  heroCtaBtn: {
+    height: 44,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    backgroundColor: customerPalette.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    backgroundColor: customerPalette.primary,
-    paddingVertical: spacing.sm,
+    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.2)',
   },
-  heroTrackText: {
+  heroCtaBtnText: {
     color: colors.neutral.surface,
     ...typeScale.footnote,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  heroTrackArrow: {
-    color: 'rgba(255,255,255,0.6)',
+  heroCtaBtnArrow: {
+    color: 'rgba(255, 255, 255, 0.7)',
     ...typeScale.callout,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   // ─── Completed Order Card (Inset Grouped) ─────────────────────

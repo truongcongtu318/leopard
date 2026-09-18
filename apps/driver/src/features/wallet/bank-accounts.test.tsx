@@ -61,4 +61,71 @@ describe('DriverBankAccountsScreen', () => {
 
     await screen.unmount();
   });
+
+  it('opens modal, validates input and calls onUpdateBankAccount', async () => {
+    const mockUpdate = jest.fn(async () => {});
+    const screen = await render(
+      <DriverBankAccountsScreen
+        bankAccountName="NGUYEN VAN A"
+        bankAccountNumber="0987654321"
+        bankName="MB Bank"
+        onUpdateBankAccount={mockUpdate}
+      />,
+    );
+
+    const editBtn = screen.getByTestId('btn-edit-bank-account');
+    await fireEvent.press(editBtn);
+
+    // Modal opens
+    expect(screen.getAllByText('Cập nhật tài khoản').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('input-bank-account-number')).toBeTruthy();
+
+    // Select different bank chip
+    const vcbChip = screen.getByTestId('bank-chip-Vietcombank');
+    await fireEvent.press(vcbChip);
+
+    // Fill account number and name
+    const numInput = screen.getByTestId('input-bank-account-number');
+    await fireEvent.changeText(numInput, '0071000123456');
+
+    const nameInput = screen.getByTestId('input-bank-account-name');
+    await fireEvent.changeText(nameInput, 'tran van b');
+
+    const submitBtn = screen.getByTestId('btn-submit-bank-account');
+    await fireEvent.press(submitBtn);
+
+    expect(mockUpdate).toHaveBeenCalledWith({
+      bankName: 'Vietcombank',
+      bankAccountNumber: '0071000123456',
+      bankAccountName: 'TRAN VAN B',
+    });
+
+    await screen.unmount();
+  });
+
+  it('validates short account number and shows error', async () => {
+    const mockUpdate = jest.fn(async () => {});
+    const screen = await render(
+      <DriverBankAccountsScreen
+        bankAccountName={null}
+        bankAccountNumber={null}
+        bankName={null}
+        onUpdateBankAccount={mockUpdate}
+      />,
+    );
+
+    const addBtn = screen.getByTestId('btn-add-bank-account');
+    await fireEvent.press(addBtn);
+
+    const numInput = screen.getByTestId('input-bank-account-number');
+    await fireEvent.changeText(numInput, '123'); // too short
+
+    const submitBtn = screen.getByTestId('btn-submit-bank-account');
+    await fireEvent.press(submitBtn);
+
+    expect(screen.getByText('Số tài khoản không hợp lệ (tối thiểu 6 chữ số)')).toBeTruthy();
+    expect(mockUpdate).not.toHaveBeenCalled();
+
+    await screen.unmount();
+  });
 });

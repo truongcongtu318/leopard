@@ -17,6 +17,8 @@ export type LocationProvider = Readonly<{
     options: Location.LocationOptions,
     callback: (position: Location.LocationObject) => void,
   ) => Promise<{ remove: () => void }>;
+  getLastKnownPositionAsync?: () => Promise<Location.LocationObject | null>;
+  getCurrentPositionAsync?: (options?: Location.LocationOptions) => Promise<Location.LocationObject>;
 }>;
 
 const expoProvider: LocationProvider = {
@@ -25,6 +27,8 @@ const expoProvider: LocationProvider = {
     Location.watchPositionAsync(options, callback) as unknown as Promise<{
       remove: () => void;
     }>,
+  getLastKnownPositionAsync: () => Location.getLastKnownPositionAsync(),
+  getCurrentPositionAsync: (options) => Location.getCurrentPositionAsync(options),
 };
 
 function isValidCoordinate(latitude: number, longitude: number): boolean {
@@ -73,6 +77,26 @@ export function useLiveTruckLocation(
         }
 
         setIsPermissionDenied(false);
+
+        // Immediately seed initial location from last known fix to display vehicle marker with zero lag
+        try {
+          const quickFix =
+            (await provider.getLastKnownPositionAsync?.()) ??
+            (await provider.getCurrentPositionAsync?.({ accuracy: Location.Accuracy.Balanced }));
+          if (
+            quickFix &&
+            !cancelled &&
+            isValidCoordinate(quickFix.coords.latitude, quickFix.coords.longitude)
+          ) {
+            setCoords({ lat: quickFix.coords.latitude, lng: quickFix.coords.longitude });
+            if (typeof quickFix.coords.heading === 'number' && quickFix.coords.heading >= 0) {
+              setHeading(quickFix.coords.heading);
+            }
+          }
+        } catch {
+          // Non-blocking initial fix attempt
+        }
+
         subscription = await provider.watchPositionAsync(
           { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 10 },
           (position) => {

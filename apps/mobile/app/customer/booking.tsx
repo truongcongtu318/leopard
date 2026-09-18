@@ -23,13 +23,11 @@ export default function CustomerBookingPage() {
       ? { lat: defaultAddr.latitude, lng: defaultAddr.longitude }
       : undefined;
 
-  // No fallback address: only use pickup/dropoff if explicitly passed in params.
-  // Never auto-populate defaultAddr so entering booking always starts blank.
-  const pickup = params.pickup || '';
+  const pickup = params.pickup || defaultAddr?.address || '';
   const pickupCoords =
     params.pickupLat && params.pickupLng
       ? { lat: parseFloat(params.pickupLat), lng: parseFloat(params.pickupLng) }
-      : undefined;
+      : defaultCoords;
 
   const dropoff = params.dropoff || '';
   const dropoffCoords =

@@ -61,7 +61,7 @@ export function DriverContractScreen({ isError, isLoading, onRetry, status }: Dr
   return (
     <ScreenScaffold
       headerTone="plain"
-      onBack={() => router.back()}
+      onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
       title="Hợp đồng đối tác"
     >
       <ScrollView

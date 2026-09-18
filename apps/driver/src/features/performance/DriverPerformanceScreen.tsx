@@ -63,7 +63,7 @@ export function DriverPerformanceScreen({
   return (
     <ScreenScaffold
       headerTone="plain"
-      onBack={() => router.back()}
+      onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
       title="Điểm hiệu suất"
     >
       <ScrollView

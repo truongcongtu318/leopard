@@ -110,15 +110,15 @@ describe('Driver order detail route', () => {
     expect(screen.getByText('Vận chuyển (IN_TRANSIT)')).toBeTruthy();
     expect(screen.getByText('Giao hàng (DELIVERED)')).toBeTruthy();
 
-    // Swiping opens the camera itself: no picker prompt, no intermediate modal,
-    // and no placeholder signature panel.
+    // Swiping opens the proof source selector modal (camera vs library)
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
     expect(screen.queryByTestId('modal-delivery-verification')).toBeNull();
     expect(screen.queryByTestId('epod-signature-pad')).toBeNull();
 
-    // The review sheet previews the real asset the camera returned.
+    // Selecting camera opens the camera and shows review sheet
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
     await screen.findByTestId('proof-capture-sheet');
     expect(screen.getByTestId('proof-capture-photo').props.source).toEqual({
       uri: 'file:///var/mobile/cargo-proof.jpg',
@@ -140,6 +140,7 @@ describe('Driver order detail route', () => {
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
 
     expect(await screen.findByText('Chưa có vị trí GPS')).toBeTruthy();
     expect(screen.queryByText(/GPS lock/)).toBeNull();
@@ -168,6 +169,7 @@ describe('Driver order detail route', () => {
     await fireEvent(screen.getByTestId('btn-advance-leg-slide'), 'accessibilityAction', {
       nativeEvent: { actionName: 'activate' },
     });
+    await fireEvent.press(screen.getByTestId('btn-source-camera'));
     await screen.findByTestId('proof-capture-sheet');
 
     // Capturing alone does not upload: the driver reviews first.

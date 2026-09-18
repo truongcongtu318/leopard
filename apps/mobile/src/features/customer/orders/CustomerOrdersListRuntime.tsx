@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { OrderStatus } from '@leopard/shared';
 import { createSocketFactory, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 import { CustomerOrdersScreen } from './CustomerOrdersScreen';
@@ -7,7 +8,7 @@ import { useCustomerOrdersList } from './hooks/useCustomerOrdersList';
 
 export type CustomerOrdersListRuntimeProps = Readonly<{
   onCreate: () => void;
-  onOpenOrder: (orderId: string) => void;
+  onOpenOrder: (orderId: string, status?: OrderStatus) => void;
   focusKey?: number;
 }>;
 
@@ -48,13 +49,19 @@ export function CustomerOrdersListRuntime({
     );
   }
 
+  const handleOpenOrder = (selectedOrderId: string) => {
+    const orders = query.data?.kind === 'content' ? query.data.orders : [];
+    const target = orders.find((o) => o.id === selectedOrderId);
+    onOpenOrder(selectedOrderId, target?.status);
+  };
+
   return (
     <CustomerOrdersScreen
       isRefreshing={query.isRefetching}
       onClearFilters={() => setFilter('ALL')}
       onCreate={onCreate}
       onLoadMore={undefined}
-      onOpenOrder={onOpenOrder}
+      onOpenOrder={handleOpenOrder}
       onRefresh={async () => {
         await query.refetch();
       }}

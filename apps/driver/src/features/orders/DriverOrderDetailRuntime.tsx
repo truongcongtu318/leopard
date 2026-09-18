@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -46,12 +46,20 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
     selectProof,
   } = useDriverOrderMutations({ orderId, port, proofPort });
 
+  const handleBack = useCallback(() => {
+    if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/orders');
+    }
+  }, [router]);
+
   if (query.isPending) {
     return (
       <ScreenScaffold
         eyebrow="DRIVER · FIELD COCKPIT"
         headerTone="ink"
-        onBack={() => router.back()}
+        onBack={handleBack}
         title="Chi tiết đơn"
       >
         <ScreenState state="loading" />
@@ -64,7 +72,7 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
       <ScreenScaffold
         eyebrow="DRIVER · FIELD COCKPIT"
         headerTone="ink"
-        onBack={() => router.back()}
+        onBack={handleBack}
         title="Chi tiết đơn"
       >
         <ScreenState actionLabel="Thử lại" onAction={() => query.refetch()} state="error" />
@@ -73,39 +81,38 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
   }
 
   async function handleReportIncident(payload: DriverIncidentSubmitPayload) {
-    if (!port.reportIncident) return;
     setIsReportingIncident(true);
     try {
-      const next = await port.reportIncident(orderId, payload);
-      queryClient.setQueryData(queryKey, next);
+      if (port.reportIncident) {
+        await port.reportIncident(orderId, payload);
+      }
+      await queryClient.invalidateQueries({ queryKey });
       setIncidentModalVisible(false);
+      Alert.alert('Đã gửi báo cáo sự cố', 'Bộ phận vận hành sẽ liên hệ hỗ trợ bạn sớm nhất.');
+    } catch (error) {
+      Alert.alert(
+        'Không thể gửi báo cáo',
+        error instanceof Error ? error.message : 'Vui lòng thử lại sau ít phút.',
+      );
     } finally {
       setIsReportingIncident(false);
     }
   }
 
   async function handleConfirmCashPayment() {
-    if (!port.confirmCashPayment || isConfirmingCash) return;
     setIsConfirmingCash(true);
     try {
-      await port.confirmCashPayment(orderId);
-      queryClient.setQueryData(queryKey, (current: typeof query.data) => {
-        if (!current || current.kind !== 'content' || current.accessScope !== 'ASSIGNED_FULL') {
-          return current;
+      if (port.confirmCashPayment) {
+        const response = await port.confirmCashPayment(orderId);
+        if (!response.success) {
+          throw new Error(response.message || 'Không thể xác nhận thu tiền mặt.');
         }
-        return {
-          ...current,
-          order: {
-            ...current.order,
-            isCashConfirmed: true,
-            paymentStatus: 'PAID_MANUAL',
-          },
-        };
-      });
-      Alert.alert('Thành công', 'Đã xác nhận thu tiền mặt từ khách hàng.');
+      }
+      await queryClient.invalidateQueries({ queryKey });
+      Alert.alert('Thành công', 'Đã xác nhận thu đủ tiền mặt từ khách hàng.');
     } catch (error) {
       Alert.alert(
-        'Lỗi',
+        'Xác nhận thất bại',
         error instanceof Error
           ? error.message
           : 'Không thể xác nhận thu tiền mặt. Vui lòng thử lại.',
@@ -120,13 +127,13 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
       <DriverOrderDetailScreen
         inFlightStopCommand={inFlightStopCommand}
         isConfirmingCash={isConfirmingCash}
-        onBack={() => router.back()}
+        onBack={handleBack}
         onConfirmCashPayment={() => void handleConfirmCashPayment()}
         onExecuteTask={(commandId) => void executeTask(commandId)}
         onOpenIncidentModal={() => setIncidentModalVisible(true)}
         onOpenLocationSettings={() => void Linking.openSettings()}
         onRecordStopProgress={recordStopProgress}
-        onResolveConflict={() => router.back()}
+        onResolveConflict={handleBack}
         onRetry={() => {
           void query.refetch();
           void sender.retryConnection(orderId);

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Animated,
   Keyboard,
@@ -21,7 +21,11 @@ import {
   httpClient,
   spacing,
   typeScale,
+  type NearbyDriver,
 } from '@leopard/mobile-core';
+import * as Location from 'expo-location';
+import { addressStore } from '../addresses/address-store';
+import { reverseGeocodeCoords } from '../../home/components/MapAddressPickerModal';
 import { createCustomerHttpAdapter } from '../orders/adapter';
 import { calculateBookingFare, type VehicleTypeId } from './booking-pricing';
 import {
@@ -95,22 +99,65 @@ export function BookingScreen({
 }: BookingScreenProps) {
   const insets = useSafeInsets();
 
-  // Initialize store draft synchronously
-  const [draft, setDraft] = useState<BookingDraftState>(() => {
-    // Fresh initialization from props: do not preserve stale address from past store sessions if initial is empty
-    const resolvedPickup = initialPickup ?? '';
+  // Initialize store draft synchronously on mount
+  useMemo(() => {
+    const defaultAddr = addressStore.getDefaultAddress();
+    const resolvedPickup = initialPickup || defaultAddr?.address || '';
+    const resolvedPickupLat =
+      initialPickupLat ?? (defaultAddr?.latitude ? defaultAddr.latitude : undefined);
+    const resolvedPickupLng =
+      initialPickupLng ?? (defaultAddr?.longitude ? defaultAddr.longitude : undefined);
     const resolvedDropoff = initialDropoff ?? '';
     bookingDraftStore.initDraft({
       pickupAddress: resolvedPickup,
-      ...(initialPickupLat !== undefined ? { pickupLat: initialPickupLat } : { pickupLat: undefined }),
-      ...(initialPickupLng !== undefined ? { pickupLng: initialPickupLng } : { pickupLng: undefined }),
+      ...(resolvedPickupLat !== undefined ? { pickupLat: resolvedPickupLat } : { pickupLat: undefined }),
+      ...(resolvedPickupLng !== undefined ? { pickupLng: resolvedPickupLng } : { pickupLng: undefined }),
       dropoffAddress: resolvedDropoff,
       ...(initialDropoffLat !== undefined ? { dropoffLat: initialDropoffLat } : { dropoffLat: undefined }),
       ...(initialDropoffLng !== undefined ? { dropoffLng: initialDropoffLng } : { dropoffLng: undefined }),
       ...(initialVehicleId ? { vehicleId: initialVehicleId } : {}),
     });
-    return bookingDraftStore.getDraft();
-  });
+  }, []);
+
+  // If pickup was not provided or has no coordinates, query GPS
+  useEffect(() => {
+    if (initialPickup && initialPickupLat !== undefined) return;
+    let isCancelled = false;
+    (async () => {
+      try {
+        const perm = await Location.requestForegroundPermissionsAsync();
+        if (perm.status === 'granted') {
+          const pos = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          } as any);
+          if (isCancelled) return;
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+          const rev = await reverseGeocodeCoords({ lat, lng }, apiKey);
+          if (isCancelled) return;
+          const currentDraft = bookingDraftStore.getDraft();
+          if (!currentDraft.pickupAddress || currentDraft.pickupLat === undefined) {
+            bookingDraftStore.updateDraft({
+              pickupAddress: rev || 'Vị trí hiện tại',
+              pickupLat: lat,
+              pickupLng: lng,
+            });
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    })();
+    return () => {
+      isCancelled = true;
+    };
+  }, [initialPickup, initialPickupLat]);
+
+  const draft = useSyncExternalStore(
+    bookingDraftStore.subscribe,
+    bookingDraftStore.getDraft,
+  );
 
   const [showPriceDetail, setShowPriceDetail] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -126,14 +173,50 @@ export function BookingScreen({
     Readonly<{ distanceKm: number; etaMinutes: number }> | null
   >(null);
   const [isEstimatingRoute, setIsEstimatingRoute] = useState(false);
+  const [nearbyDrivers, setNearbyDrivers] = useState<readonly NearbyDriver[]>([]);
 
-  // Subscribe to store updates and clean up on unmount
+  // Fetch nearby drivers matching selected vehicle category from backend DB
   useEffect(() => {
-    const unsub = bookingDraftStore.subscribe(() => {
-      setDraft({ ...bookingDraftStore.getDraft() });
-    });
+    let isMounted = true;
+    async function loadNearbyDrivers() {
+      const lat = draft.pickupLat;
+      const lng = draft.pickupLng;
+      if (typeof lat !== 'number' || typeof lng !== 'number') {
+        return;
+      }
+      const vehicleType = resolveVehicleOrderType(draft.vehicleId).vehicleType;
+      try {
+        const queryParams = `lat=${lat}&lng=${lng}&radiusM=15000&vehicleType=${vehicleType}&limit=20`;
+        const res = await httpClient.get<{
+          source: string;
+          drivers: Array<NearbyDriver>;
+        }>(`/maps/nearby-drivers?${queryParams}`);
+        if (isMounted && res && Array.isArray(res.drivers)) {
+          setNearbyDrivers(res.drivers);
+        } else if (isMounted) {
+          setNearbyDrivers([]);
+        }
+      } catch {
+        if (isMounted) {
+          setNearbyDrivers([]);
+        }
+      }
+    }
+
+    void loadNearbyDrivers();
+    const intervalTimer = setInterval(() => {
+      void loadNearbyDrivers();
+    }, 20_000);
+
     return () => {
-      unsub();
+      isMounted = false;
+      clearInterval(intervalTimer);
+    };
+  }, [draft.pickupLat, draft.pickupLng, draft.vehicleId]);
+
+  // Clean up store on unmount
+  useEffect(() => {
+    return () => {
       bookingDraftStore.reset();
     };
   }, []);
@@ -142,7 +225,7 @@ export function BookingScreen({
     if (initialVehicleId && initialVehicleId !== draft.vehicleId) {
       bookingDraftStore.updateDraft({ vehicleId: initialVehicleId });
     }
-  }, [initialVehicleId]);
+  }, [initialVehicleId, draft.vehicleId]);
 
   // Fetch real street routing via backend estimate API
   useEffect(() => {
@@ -522,6 +605,7 @@ export function BookingScreen({
                 : undefined
             }
             mapHeight={isSearchingAddress ? 130 : 210}
+            nearbyDrivers={nearbyDrivers}
             onBack={handleBack}
             pickupAddress={draft.pickupAddress}
             pickupCoords={

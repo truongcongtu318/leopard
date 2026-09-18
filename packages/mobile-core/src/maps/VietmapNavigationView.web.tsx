@@ -20,6 +20,17 @@ const maplibregl: any = loadMaplibreGL();
 
 const VIETMAP_DEFAULT_STYLE = 'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=';
 
+export const LeopardNavigationController = {
+  recenter: () => {},
+  overview: () => {},
+  finishNavigation: () => {},
+  startNavigation: () => {},
+  buildRoute: (_coordinates: { lat: number; lng: number }[], _profile?: string) => {},
+  startSpeedAlert: () => {},
+  stopSpeedAlert: () => {},
+  configureAlertAPI: (_apiKey: string, _apiID: string) => {},
+};
+
 export function VietmapNavigationView({
   origin,
   destination,

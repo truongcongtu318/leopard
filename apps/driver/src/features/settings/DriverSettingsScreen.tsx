@@ -119,7 +119,7 @@ export function DriverSettingsScreen() {
         </Pressable>
       }
       headerTone="plain"
-      onBack={() => router.back()}
+      onBack={() => (router.canGoBack() ? router.back() : router.push('/orders'))}
       title="Cài đặt"
     >
       <ScrollView

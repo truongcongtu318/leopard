@@ -8,6 +8,7 @@ import {
   IconAlertTriangle,
   IconBike,
   IconChevron,
+  IconCrosshair,
   IconPin,
   IconReceipt,
   IconShield,
@@ -33,6 +34,7 @@ describe('SVG Icons System', () => {
         'IconAlertTriangle',
         'IconBike',
         'IconChevron',
+        'IconCrosshair',
         'IconPin',
         'IconReceipt',
         'IconShield',
@@ -77,6 +79,7 @@ describe('SVG Icons System', () => {
     const icons = [
       { name: 'IconBike', Component: IconBike, defaultTestID: 'icon-bike' },
       { name: 'IconPin', Component: IconPin, defaultTestID: 'icon-pin' },
+      { name: 'IconCrosshair', Component: IconCrosshair, defaultTestID: 'icon-crosshair' },
       { name: 'IconReceipt', Component: IconReceipt, defaultTestID: 'icon-receipt' },
       { name: 'IconAlertTriangle', Component: IconAlertTriangle, defaultTestID: 'icon-alert-triangle' },
     ];

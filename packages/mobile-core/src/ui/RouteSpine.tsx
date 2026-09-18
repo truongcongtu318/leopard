@@ -1,6 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing, typography } from '../theme/tokens';
+import {
+  colors,
+  customerPalette,
+  radius,
+  spacing,
+  typeScale,
+  typography,
+} from '../theme/tokens';
 
 export type RoutePoint = Readonly<{
   id: string;
@@ -21,9 +28,17 @@ type RouteNodeProps = Readonly<{
   kind: 'origin' | 'stop' | 'destination';
   point: RoutePoint;
   title: string;
+  isLast?: boolean;
 }>;
 
-function RouteNode({ accessibilityLabel, hasConnector, kind, point, title }: RouteNodeProps) {
+function RouteNode({
+  accessibilityLabel,
+  hasConnector,
+  isLast,
+  kind,
+  point,
+  title,
+}: RouteNodeProps) {
   return (
     <View
       accessibilityLabel={accessibilityLabel}
@@ -35,7 +50,7 @@ function RouteNode({ accessibilityLabel, hasConnector, kind, point, title }: Rou
         <View style={[styles.marker, markerStyles[kind]]} />
         {hasConnector ? <View style={styles.connector} /> : null}
       </View>
-      <View style={styles.nodeContent}>
+      <View style={[styles.nodeContent, isLast ? styles.nodeContentLast : null]}>
         <Text style={styles.nodeTitle}>{title}</Text>
         <Text style={styles.address} testID={`route-address-${point.id}`}>
           {point.label}
@@ -68,6 +83,7 @@ export function RouteSpine({ destination, origin, stops }: RouteProps) {
       <RouteNode
         accessibilityLabel={`Điểm giao hàng: ${destination.label}`}
         hasConnector={false}
+        isLast
         kind="destination"
         point={destination}
         title="Điểm giao hàng"
@@ -107,22 +123,23 @@ export function RouteSummary({ destination, origin, stops, tone = 'default' }: R
 
 const markerStyles = StyleSheet.create({
   origin: {
-    backgroundColor: colors.brand.background,
-    borderColor: colors.brand.background,
+    backgroundColor: customerPalette.primary,
+    borderColor: 'rgba(11, 37, 69, 0.25)',
   },
   stop: {
-    backgroundColor: colors.neutral.background,
-    borderColor: colors.info.border,
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.neutral.border,
   },
   destination: {
-    backgroundColor: colors.active.border,
-    borderColor: colors.active.border,
+    backgroundColor: customerPalette.accent,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
   },
 });
 
 const styles = StyleSheet.create({
   spine: {
     alignSelf: 'stretch',
+    paddingVertical: spacing.xxs,
   },
   node: {
     alignItems: 'stretch',
@@ -131,34 +148,44 @@ const styles = StyleSheet.create({
   },
   rail: {
     alignItems: 'center',
-    width: spacing.lg,
+    width: 14,
+    paddingTop: 3,
   },
   marker: {
-    borderRadius: spacing.xs,
+    borderRadius: radius.pill,
     borderWidth: 2,
-    height: spacing.md,
-    width: spacing.md,
+    height: 10,
+    width: 10,
   },
   connector: {
     backgroundColor: colors.neutral.border,
     flex: 1,
-    minHeight: spacing.lg,
-    width: 1,
+    minHeight: spacing.md,
+    width: 1.5,
+    marginVertical: 2,
   },
   nodeContent: {
     flex: 1,
-    gap: spacing.xxs,
-    paddingBottom: spacing.md,
+    gap: 2,
+    paddingBottom: spacing.sm,
+  },
+  nodeContentLast: {
+    paddingBottom: 0,
   },
   nodeTitle: {
-    ...typography.label,
-    color: colors.neutral.text,
+    ...typeScale.caption2,
+    color: colors.neutral.subtleText,
     flexShrink: 1,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   address: {
-    ...typography.body,
+    ...typeScale.footnote,
     color: colors.neutral.text,
     flexShrink: 1,
+    fontWeight: '500',
+    lineHeight: 18,
   },
   summary: {
     alignSelf: 'stretch',

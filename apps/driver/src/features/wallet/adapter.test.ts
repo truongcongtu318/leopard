@@ -66,4 +66,32 @@ describe('createDriverWalletHttpAdapter', () => {
     expect(get).toHaveBeenCalledWith('/driver/wallet/withdrawals?page=2&pageSize=20');
     expect(res.total).toBe(1);
   });
+
+  it('updateBankAccount calls PATCH /driver/wallet/bank with payload', async () => {
+    const patch = jest.fn(async () => ({
+      bankName: 'Techcombank',
+      bankAccountNumber: '19033333333333',
+      bankAccountName: 'NGUYEN VAN B',
+    }));
+    const adapter = createDriverWalletHttpAdapter({
+      get: jest.fn() as any,
+      post: jest.fn() as any,
+      patch: patch as any,
+    });
+
+    const res = await adapter.updateBankAccount({
+      bankName: 'Techcombank',
+      bankAccountNumber: '19033333333333',
+      bankAccountName: 'NGUYEN VAN B',
+    });
+
+    expect(patch).toHaveBeenCalledWith('/driver/wallet/bank', {
+      bankName: 'Techcombank',
+      bankAccountNumber: '19033333333333',
+      bankAccountName: 'NGUYEN VAN B',
+    });
+    expect(res.bankName).toBe('Techcombank');
+    expect(res.bankAccountNumber).toBe('19033333333333');
+    expect(res.bankAccountName).toBe('NGUYEN VAN B');
+  });
 });

@@ -30,6 +30,7 @@ export type DriverOrdersPort = Readonly<{
     orderId: string,
     clientRequestId?: string,
   ) => Promise<{ success: boolean; message?: string }>;
+  declineOrder?: (orderId: string) => Promise<void>;
 }>;
 
 export type DriverTrackingPort = Readonly<{

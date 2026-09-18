@@ -167,4 +167,58 @@ describe('DriverDispatchContext', () => {
     expect(screen.queryByTestId('incoming-dispatch-modal')).toBeNull();
     await screen.unmount();
   });
+
+  it('calls port.declineOrder when declineOffer is invoked', async () => {
+    let capturedOnOffer: ((offer: IncomingDispatchOffer) => void) | null = null;
+    const mockListener = {
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      isConnected: jest.fn(() => true),
+    };
+    const listenerFactory = jest.fn((options: { onOffer: (offer: IncomingDispatchOffer) => void }) => {
+      capturedOnOffer = options.onOffer;
+      return mockListener as any;
+    });
+
+    const mockAdapter = {
+      getOrdersView: jest.fn(),
+      getOrderDetailView: jest.fn(),
+      setAvailability: jest.fn(),
+      acceptOrder: jest.fn(),
+      executeLifecycle: jest.fn(),
+      declineOrder: jest.fn(async () => {}),
+    };
+
+    const screen = await render(
+      <QueryClientProvider client={queryClient}>
+        <DriverDispatchProvider
+          adapter={mockAdapter as any}
+          enabled={true}
+          listenerFactory={listenerFactory}
+        >
+          <TestConsumer />
+        </DriverDispatchProvider>
+      </QueryClientProvider>,
+    );
+
+    await act(async () => {
+      capturedOnOffer!(SAMPLE_OFFER);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('incoming-dispatch-modal')).toBeTruthy();
+    });
+
+    const declineBtn = screen.getByText('Bỏ qua');
+    await act(async () => {
+      fireEvent.press(declineBtn);
+    });
+
+    await waitFor(() => {
+      expect(mockAdapter.declineOrder).toHaveBeenCalledWith(SAMPLE_OFFER.id);
+      expect(screen.queryByTestId('incoming-dispatch-modal')).toBeNull();
+    });
+
+    await screen.unmount();
+  });
 });

@@ -20,6 +20,7 @@ import { AssignedDetailView } from './components/detail/AssignedDetailView';
 import { CompletedOrderDetailView } from './components/detail/CompletedOrderDetailView';
 import { DriverIncidentModal } from './DriverIncidentModal';
 import { ProofCaptureSheet } from './components/detail/ProofCaptureSheet';
+import { ProofSourceSelectModal } from './components/detail/ProofSourceSelectModal';
 import { useProofPhotoCapture } from './use-proof-photo-capture';
 import { useWatermarkLocation } from './use-watermark-location';
 
@@ -126,18 +127,20 @@ const TaskButton = memo(function TaskButton({
   onExecuteTask,
   onRetryProof,
   onStartProofCapture,
+  sliderResetKey,
   task,
 }: Readonly<{
   task: Exclude<DriverPrimaryTaskView, null>;
   onExecuteTask?: (commandId: string) => void;
   onRetryProof?: (commandId: string) => void;
-  /** Opens the camera for the leg whose proof is still missing. */
+  /** Opens the proof source selector modal (camera / library). */
   onStartProofCapture?: () => void;
+  sliderResetKey?: number;
 }>) {
   if (task.kind === 'upload-proof') {
     const disabled = task.command.disabled || task.command.isPending;
     // Retrying a failed upload re-uses the stored file; a fresh capture opens
-    // the camera. Neither path opens the photo library as a side effect.
+    // the source selector (camera or library).
     const isRetry = task.command.id === 'cmd-retry-proof-demo';
     const action = isRetry
       ? onRetryProof
@@ -159,7 +162,7 @@ const TaskButton = memo(function TaskButton({
         </Pressable>
         <SlideToAction
           key={task.command.id}
-          resetKey={task.command.id}
+          resetKey={`${task.command.id}-${sliderResetKey ?? 0}`}
           colorVariant="brand"
           disabled={disabled}
           label={isRetry ? 'Vuốt để thử tải lại ảnh' : 'Vuốt và chụp ảnh xác nhận'}
@@ -193,7 +196,7 @@ const TaskButton = memo(function TaskButton({
         </Pressable>
         <SlideToAction
           key={task.command.id}
-          resetKey={task.command.id}
+          resetKey={`${task.command.id}-${sliderResetKey ?? 0}`}
           colorVariant={slideConfig.colorVariant}
           disabled={disabled}
           label={slideConfig.label}
@@ -214,9 +217,11 @@ const TaskButton = memo(function TaskButton({
 export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const { view: directView, onBack } = props;
   const [localIncidentOpen, setLocalIncidentOpen] = useState(false);
+  const [showProofSourceModal, setShowProofSourceModal] = useState(false);
+  const [sliderResetKey, setSliderResetKey] = useState(0);
 
   /**
-   * The proof flow is a single pass: swipe → camera → review sheet → upload.
+   * The proof flow: swipe -> choose source (camera / library) -> review sheet -> upload.
    * `pendingLeg` records which leg the in-flight capture belongs to so pickup
    * and delivery evidence can never be mixed up.
    */
@@ -245,24 +250,38 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
     setLocalIncidentOpen(false);
   }, []);
 
-  /** Opens the camera straight away and records the GPS/time watermark. */
-  const startProofCapture = useCallback(
-    async (leg: 'pickup' | 'delivery') => {
+  const handleStartProofFlow = useCallback((leg: 'pickup' | 'delivery') => {
+    haptic.selection();
+    setPendingLeg(leg);
+    setShowProofSourceModal(true);
+    // Reset slider immediately so it never freezes on the right edge
+    setSliderResetKey((prev) => prev + 1);
+  }, []);
+
+  const handleCloseProofSourceModal = useCallback(() => {
+    setShowProofSourceModal(false);
+    setPendingLeg(null);
+    setSliderResetKey((prev) => prev + 1);
+  }, []);
+
+  const executeProofCapture = useCallback(
+    async (leg: 'pickup' | 'delivery', source: 'camera' | 'library') => {
       if (capture.isCapturing) return;
       haptic.medium();
       setPendingLeg(leg);
 
-      const outcome = await captureProofPhoto();
+      const outcome = await captureProofPhoto(source);
       if (outcome.kind !== 'captured') {
         setPendingLeg(null);
-        // A silent return here left the driver staring at a button that seemed
-        // dead. Every failure must say what went wrong and what to do next.
+        setSliderResetKey((prev) => prev + 1);
         if (outcome.kind === 'error') {
-          Alert.alert('Không chụp được ảnh', outcome.message);
+          Alert.alert('Không thể lấy ảnh', outcome.message);
         } else if (outcome.kind === 'permission-denied') {
           Alert.alert(
             'Cần quyền truy cập ảnh',
-            'Hãy cấp quyền máy ảnh hoặc thư viện ảnh để chụp ảnh xác nhận.',
+            source === 'camera'
+              ? 'Hãy cấp quyền máy ảnh để chụp ảnh xác nhận.'
+              : 'Hãy cấp quyền truy cập thư viện ảnh để tải ảnh lên.',
           );
         }
         return;
@@ -280,19 +299,20 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
           location.kind === 'ready' ? formatWatermarkCoords(location.coords) : null,
       });
     },
-    [capture, captureProofPhoto, formatWatermarkCoords, getCurrentLocation],
+    [capture.isCapturing, captureProofPhoto, formatWatermarkCoords, getCurrentLocation],
   );
 
   const handleCancelCapture = useCallback(() => {
     setCaptured(null);
     setPendingLeg(null);
+    setSliderResetKey((prev) => prev + 1);
   }, []);
 
   const handleRetakeCapture = useCallback(() => {
     if (!pendingLeg) return;
     setCaptured(null);
-    void startProofCapture(pendingLeg);
-  }, [pendingLeg, startProofCapture]);
+    setShowProofSourceModal(true);
+  }, [pendingLeg]);
 
   /**
    * Uploads the reviewed photo, and only advances the order once the server has
@@ -352,6 +372,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
 
     setCaptured(null);
     setPendingLeg(null);
+    setSliderResetKey((prev) => prev + 1);
     props.onExecuteTask(commandId);
   }, [captured, props, directView]);
 
@@ -450,8 +471,9 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
               onExecuteTask={props.onExecuteTask}
               onRetryProof={props.onRetryProof}
               onStartProofCapture={() =>
-                void startProofCapture(isPickupLeg ? 'pickup' : 'delivery')
+                handleStartProofFlow(isPickupLeg ? 'pickup' : 'delivery')
               }
+              sliderResetKey={sliderResetKey}
               task={view.primaryTask}
             />
           ) : undefined
@@ -464,6 +486,25 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
         onSubmit={handleCloseIncidentModal}
         orderReference={view.order.reference}
         visible={localIncidentOpen}
+      />
+      <ProofSourceSelectModal
+        visible={showProofSourceModal}
+        leg={pendingLeg ?? (isPickupLeg ? 'pickup' : 'delivery')}
+        onSelectCamera={() => {
+          setShowProofSourceModal(false);
+          void executeProofCapture(
+            pendingLeg ?? (isPickupLeg ? 'pickup' : 'delivery'),
+            'camera',
+          );
+        }}
+        onSelectLibrary={() => {
+          setShowProofSourceModal(false);
+          void executeProofCapture(
+            pendingLeg ?? (isPickupLeg ? 'pickup' : 'delivery'),
+            'library',
+          );
+        }}
+        onClose={handleCloseProofSourceModal}
       />
 
       {/* Review step right after the camera closes: confirm or retake, then

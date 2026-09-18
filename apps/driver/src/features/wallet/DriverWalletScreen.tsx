@@ -187,33 +187,41 @@ export function DriverWalletScreen({
             </Card>
 
             {/* ── 2. Linked Bank Account Card (Apple Inset Grouped) ── */}
-            <Card style={styles.bentoCard} testID="driver-linked-bank-card">
-              <HStack style={styles.cardHeaderRow}>
-                <HStack style={styles.cardHeaderLeft}>
-                  <Box style={styles.bankIconChip}>
-                    <IconBank color={driverPrimitives.colors.gray700} size={18} />
-                  </Box>
-                  <VStack>
-                    <Text style={styles.bentoCardTitle}>Tài khoản liên kết</Text>
-                    <Text style={styles.bentoCardSub}>Nhận tiền thanh toán và rút số dư</Text>
-                  </VStack>
+            <Pressable
+              accessibilityHint="Mở trang chỉnh sửa và quản lý tài khoản thụ hưởng"
+              accessibilityLabel="Quản lý tài khoản ngân hàng thụ hưởng"
+              accessibilityRole="button"
+              onPress={() => router.push('/wallet/bank-accounts')}
+            >
+              <Card style={styles.bentoCard} testID="driver-linked-bank-card">
+                <HStack style={styles.cardHeaderRow}>
+                  <HStack style={styles.cardHeaderLeft}>
+                    <Box style={styles.bankIconChip}>
+                      <IconBank color={driverPrimitives.colors.gray700} size={18} />
+                    </Box>
+                    <VStack>
+                      <Text style={styles.bentoCardTitle}>Tài khoản liên kết</Text>
+                      <Text style={styles.bentoCardSub}>Nhận tiền thanh toán và rút số dư</Text>
+                    </VStack>
+                  </HStack>
+                  <IconChevronRight color={driverPrimitives.colors.gray400} size={16} />
                 </HStack>
-              </HStack>
 
-              {summary.bankAccountNumber ? (
-                <HStack style={styles.bankDetailRow}>
-                  <VStack style={styles.bankInfoCol}>
-                    <Text style={styles.bankNameText}>{summary.bankName ?? 'Ngân hàng'}</Text>
-                    <Text style={styles.bankAccountNumText}>{summary.bankAccountNumber}</Text>
-                    {summary.bankAccountName ? (
-                      <Text style={styles.bankHolderText}>{summary.bankAccountName.toUpperCase()}</Text>
-                    ) : null}
-                  </VStack>
-                </HStack>
-              ) : (
-                <Text style={styles.unlinkedText}>Chưa liên kết tài khoản ngân hàng</Text>
-              )}
-            </Card>
+                {summary.bankAccountNumber ? (
+                  <HStack style={styles.bankDetailRow}>
+                    <VStack style={styles.bankInfoCol}>
+                      <Text style={styles.bankNameText}>{summary.bankName ?? 'Ngân hàng'}</Text>
+                      <Text style={styles.bankAccountNumText}>{summary.bankAccountNumber}</Text>
+                      {summary.bankAccountName ? (
+                        <Text style={styles.bankHolderText}>{summary.bankAccountName.toUpperCase()}</Text>
+                      ) : null}
+                    </VStack>
+                  </HStack>
+                ) : (
+                  <Text style={styles.unlinkedText}>Chưa liên kết tài khoản ngân hàng</Text>
+                )}
+              </Card>
+            </Pressable>
 
             {/* ── 3. Transaction History Section ── */}
             <VStack style={styles.historySection}>

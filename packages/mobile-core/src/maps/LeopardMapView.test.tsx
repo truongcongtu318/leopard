@@ -24,7 +24,7 @@ describe('LeopardMapView and VietmapNavigationView', () => {
     await screen.unmount();
   });
 
-  it('renders Web LeopardMapView with Vietmap Vector GL badge', async () => {
+  it('renders Web LeopardMapView with testID', async () => {
     const screen = await render(
       <WebLeopardMapView
         destination={{ label: 'Kho Q7', coords: { lat: 10.7325, lng: 106.7351 } }}
@@ -38,7 +38,6 @@ describe('LeopardMapView and VietmapNavigationView', () => {
     );
 
     expect(screen.getByTestId('test-web-map')).toBeTruthy();
-    expect(screen.getByText('VIETMAP VECTOR GL')).toBeTruthy();
     await screen.unmount();
   });
 
@@ -81,7 +80,6 @@ describe('LeopardMapView and VietmapNavigationView', () => {
       expect(html).toContain('maplibre-gl.js');
       expect(html).toContain('maplibre-gl.css');
       expect(html).toContain('maps.vietmap.vn/api/maps/light/styles.json?apikey=test-api-key');
-      expect(html).toContain('VIETMAP VECTOR GL');
     });
 
     it('renders route layers, truck marker, and nearby drivers in Vietmap Vector GL', () => {
@@ -228,6 +226,19 @@ describe('LeopardMapView and VietmapNavigationView', () => {
       expect(html).toContain('pin-picker-wrap');
       expect(html).toContain('LEOPARD_MAP_PIN_MOVED');
       expect(html).toContain('test-pin-picker');
+    });
+
+    it('enforces minZoom, maxZoom and territorial maxBounds constraints', () => {
+      const html = buildVietmapHtml({
+        resolvedApiKey: 'test-api-key',
+        centerCoords: [106.66, 10.76],
+        mapInstanceId: 'test-bounds',
+        mode: 'tracking',
+      });
+
+      expect(html).toContain('minZoom: 8.5');
+      expect(html).toContain('maxZoom: 19');
+      expect(html).toContain('maxBounds: [[101,7.5],[111.5,24.5]]');
     });
   });
 });

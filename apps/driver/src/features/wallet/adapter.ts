@@ -1,7 +1,7 @@
-// apps/driver/src/features/wallet/adapter.ts
 export interface DriverWalletHttpClient {
   get<T = unknown>(path: string): Promise<T>;
   post<T = unknown>(path: string, body?: unknown): Promise<T>;
+  patch?<T = unknown>(path: string, body?: unknown): Promise<T>;
 }
 
 export interface DriverWalletSummaryResponse {
@@ -60,6 +60,12 @@ export interface WithdrawalRequestInput {
   bankAccountNumber?: string;
   bankAccountName?: string;
   clientRequestId?: string;
+}
+
+export interface UpdateBankAccountInput {
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountName: string;
 }
 
 interface WithdrawalHistoryResponse {
@@ -124,6 +130,33 @@ export function createDriverWalletHttpAdapter(client?: DriverWalletHttpClient) {
         amountVnd: input.amountVnd,
         clientRequestId: input.clientRequestId ?? newClientRequestId(),
       });
+    },
+
+    async updateBankAccount(input: UpdateBankAccountInput): Promise<WalletSummary> {
+      const activeClient = getClient();
+      let data: DriverWalletSummaryResponse | undefined;
+      if (typeof activeClient.patch === 'function') {
+        data = await activeClient.patch<DriverWalletSummaryResponse>('/driver/wallet/bank', {
+          bankName: input.bankName,
+          bankAccountNumber: input.bankAccountNumber,
+          bankAccountName: input.bankAccountName,
+        });
+      } else {
+        data = await activeClient.post<DriverWalletSummaryResponse>('/driver/wallet/bank', {
+          bankName: input.bankName,
+          bankAccountNumber: input.bankAccountNumber,
+          bankAccountName: input.bankAccountName,
+        });
+      }
+      return {
+        availableBalanceVnd: data?.availableBalanceVnd ?? 0,
+        lifetimeDeliveredVnd: data?.lifetimeDeliveredVnd ?? 0,
+        pendingWithdrawalVnd: data?.pendingWithdrawalVnd ?? 0,
+        deliveredOrderCount: data?.deliveredOrderCount ?? 0,
+        bankName: data?.bankName ?? input.bankName,
+        bankAccountNumber: data?.bankAccountNumber ?? input.bankAccountNumber,
+        bankAccountName: data?.bankAccountName ?? input.bankAccountName,
+      };
     },
   };
 }

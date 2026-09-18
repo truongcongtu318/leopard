@@ -4,6 +4,7 @@ import {
   colors,
   customerPalette,
   iosContinuousCurve,
+  layout,
   leopardPalette,
   radius,
   spacing,
@@ -25,6 +26,7 @@ export type RouteMapSchematicProps = Readonly<{
   mapHeight?: number;
   onExpand?: () => void;
   showExpandButton?: boolean;
+  hideLedger?: boolean;
 }>;
 
 export function RouteMapSchematic({
@@ -37,9 +39,10 @@ export function RouteMapSchematic({
   truckLocation,
   truckEtaMinutes,
   interactive = true,
-  mapHeight = 240,
+  mapHeight = layout.mapMinimumHeight,
   onExpand,
   showExpandButton = false,
+  hideLedger = false,
 }: RouteMapSchematicProps) {
   const hasStops = stops && stops.length > 0;
   // A live driver coordinate means the truck pin is on the map, so the header
@@ -47,7 +50,10 @@ export function RouteMapSchematic({
   const isTracking = Boolean(markerLabel) || Boolean(truckLocation);
 
   return (
-    <View style={styles.container} testID="route-map-schematic">
+    <View
+      style={[styles.container, hideLedger ? styles.containerCompact : null]}
+      testID="route-map-schematic"
+    >
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
@@ -100,43 +106,45 @@ export function RouteMapSchematic({
         ) : null}
       </View>
 
-      <View style={styles.routeLedger}>
-        <View style={styles.routeLedgerRow}>
-          <View style={styles.pointDotA}>
-            <Text style={styles.pointDotText}>A</Text>
+      {!hideLedger ? (
+        <View style={styles.routeLedger}>
+          <View style={styles.routeLedgerRow}>
+            <View style={styles.pointDotA}>
+              <Text style={styles.pointDotText}>A</Text>
+            </View>
+            <View style={styles.locationTextWrap}>
+              <Text style={styles.locationLabel}>ĐIỂM LẤY HÀNG (A)</Text>
+              <Text numberOfLines={2} style={styles.locationValue}>{originLabel}</Text>
+            </View>
           </View>
-          <View style={styles.locationTextWrap}>
-            <Text style={styles.locationLabel}>ĐIỂM LẤY HÀNG (A)</Text>
-            <Text numberOfLines={2} style={styles.locationValue}>{originLabel}</Text>
+
+          {hasStops
+            ? stops.map((stop, idx) => (
+                <View key={stop.id} style={styles.routeLedgerRow}>
+                  <View style={styles.pointDotStop}>
+                    <Text style={styles.pointDotText}>{idx + 1}</Text>
+                  </View>
+                  <View style={styles.locationTextWrap}>
+                    <Text style={styles.locationLabel}>ĐIỂM DỪNG ({idx + 1})</Text>
+                    <Text numberOfLines={2} style={styles.locationValue}>{stop.label}</Text>
+                  </View>
+                </View>
+              ))
+            : null}
+
+          <View style={styles.routeLedgerRow}>
+            <View style={styles.pointDotB}>
+              <Text style={styles.pointDotText}>B</Text>
+            </View>
+            <View style={styles.locationTextWrap}>
+              <Text style={styles.locationLabel}>ĐIỂM GIAO HÀNG (B)</Text>
+              <Text numberOfLines={2} style={styles.locationValue}>{destinationLabel}</Text>
+            </View>
           </View>
         </View>
+      ) : null}
 
-        {hasStops
-          ? stops.map((stop, idx) => (
-              <View key={stop.id} style={styles.routeLedgerRow}>
-                <View style={styles.pointDotStop}>
-                  <Text style={styles.pointDotText}>{idx + 1}</Text>
-                </View>
-                <View style={styles.locationTextWrap}>
-                  <Text style={styles.locationLabel}>ĐIỂM DỪNG ({idx + 1})</Text>
-                  <Text numberOfLines={2} style={styles.locationValue}>{stop.label}</Text>
-                </View>
-              </View>
-            ))
-          : null}
-
-        <View style={styles.routeLedgerRow}>
-          <View style={styles.pointDotB}>
-            <Text style={styles.pointDotText}>B</Text>
-          </View>
-          <View style={styles.locationTextWrap}>
-            <Text style={styles.locationLabel}>ĐIỂM GIAO HÀNG (B)</Text>
-            <Text numberOfLines={2} style={styles.locationValue}>{destinationLabel}</Text>
-          </View>
-        </View>
-      </View>
-
-      {markerLabel ? (
+      {!hideLedger && markerLabel ? (
         <View style={styles.markerLedger}>
           <View accessibilityElementsHidden style={styles.liveDot} />
           <Text style={styles.markerLabel}>{markerLabel}</Text>
@@ -153,9 +161,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...iosContinuousCurve,
   },
+  containerCompact: {
+    backgroundColor: 'transparent',
+    borderRadius: radius.cardSm,
+  },
   map: {
     backgroundColor: colors.operational.mapLand,
-    minHeight: 220,
     overflow: 'hidden',
     position: 'relative',
     width: '100%',

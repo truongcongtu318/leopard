@@ -9,15 +9,18 @@ import {
 
 import {
   IconChevronLeft,
+  IconCrosshair,
   IconRoute,
   LeopardMapView,
   customerPalette,
   haptic,
   iosContinuousCurve,
+  postMapMessageToFrames,
   radius,
   resolveLocationCoords,
   spacing,
   typeScale,
+  type NearbyDriver,
 } from '@leopard/mobile-core';
 import { useSafeInsets } from '../safe-insets';
 
@@ -30,6 +33,7 @@ export interface BookingRouteMapHeaderProps {
   dropoffCoords?: { lat: number; lng: number };
   stops?: readonly { id: string; label: string; coords?: { lat: number; lng: number } }[];
   routeCoords?: readonly { lat: number; lng: number }[];
+  nearbyDrivers?: readonly NearbyDriver[];
   mapHeight?: number;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -44,6 +48,7 @@ export function BookingRouteMapHeader({
   dropoffCoords,
   stops = [],
   routeCoords,
+  nearbyDrivers = [],
   mapHeight = 250,
   isExpanded = false,
   onToggleExpand,
@@ -84,20 +89,38 @@ export function BookingRouteMapHeader({
     dropoffCoords ||
     (dropoffAddress ? resolveLocationCoords(dropoffAddress, effectivePickupCoords) : undefined);
 
+  const handleRecenter = () => {
+    haptic.selection();
+    if (effectivePickupCoords) {
+      postMapMessageToFrames({
+        type: 'LEOPARD_MAP_RECENTER',
+        lat: effectivePickupCoords.lat,
+        lng: effectivePickupCoords.lng,
+        zoom: 15.5,
+      });
+    }
+  };
+
   return (
     <View style={[styles.container, { height: mapHeight }]}>
       {/* Dynamic Route Map Background - FULLY INTERACTIVE */}
       <View style={[styles.mapWrap, { height: mapHeight }]}>
         <LeopardMapView
-          destination={{
-            label: dropoffAddress,
-            coords: effectiveDropoffCoords,
-          }}
+          destination={
+            effectiveDropoffCoords
+              ? {
+                  label: dropoffAddress,
+                  coords: effectiveDropoffCoords,
+                }
+              : undefined
+          }
           height="100%"
+          initialPinCoords={effectivePickupCoords}
           interactive={true}
-          mode="route"
+          mode={effectiveDropoffCoords ? 'route' : 'preview'}
+          nearbyDrivers={nearbyDrivers}
           origin={{
-            label: pickupAddress,
+            label: pickupAddress || 'Điểm lấy hàng',
             coords: effectivePickupCoords,
           }}
           routeCoords={routeCoords}
@@ -146,6 +169,26 @@ export function BookingRouteMapHeader({
         ) : (
           <View style={styles.placeholderRight} />
         )}
+      </View>
+
+      {/* Floating Recenter Button (Top right under header or bottom right above sheet) */}
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.bottomRecenterWrap,
+          onToggleExpand ? { bottom: spacing.md + 44 } : null,
+        ]}
+      >
+        <Pressable
+          accessibilityLabel="Về vị trí điểm lấy hàng"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={handleRecenter}
+          style={({ pressed }) => [styles.circleGlassBtn, styles.recenterBtn, pressed && styles.btnPressed]}
+          testID="booking-map-recenter-btn"
+        >
+          <IconCrosshair color={customerPalette.primary} size={20} />
+        </Pressable>
       </View>
 
       {/* Floating Interactive Badge at bottom-right of map */}
@@ -251,5 +294,16 @@ const styles = StyleSheet.create({
     ...typeScale.caption2,
     fontWeight: '700',
     color: customerPalette.primary,
+  },
+  bottomRecenterWrap: {
+    position: 'absolute',
+    bottom: spacing.md,
+    right: spacing.md,
+    zIndex: 18,
+  },
+  recenterBtn: {
+    width: 40,
+    height: 40,
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.16)',
   },
 });

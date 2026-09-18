@@ -25,7 +25,6 @@ export const bookingDraftStore = {
   getDraft: (): BookingDraftState => currentDraft,
   initDraft: (initial: Partial<BookingDraftState>) => {
     currentDraft = { ...DEFAULT_DRAFT, ...initial };
-    listeners.forEach((l) => l());
   },
   updateDraft: (updates: Partial<BookingDraftState>) => {
     currentDraft = { ...currentDraft, ...updates };

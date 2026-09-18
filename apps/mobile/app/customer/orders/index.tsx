@@ -4,6 +4,14 @@ import { useCallback, useState } from 'react';
 
 import { CustomerOrdersListRuntime } from '../../../src/features/customer/orders/CustomerOrdersListRuntime';
 
+const ACTIVE_TRACKING_STATUSES = [
+  'ACCEPTED',
+  'PICKING_UP',
+  'PICKED_UP',
+  'IN_TRANSIT',
+  'RETURNING',
+] as const;
+
 export default function CustomerOrdersPage() {
   const router = useRouter();
   const [focusKey, setFocusKey] = useState(0);
@@ -18,7 +26,13 @@ export default function CustomerOrdersPage() {
     <CustomerOrdersListRuntime
       focusKey={focusKey}
       onCreate={() => router.replace('/customer/home')}
-      onOpenOrder={(orderId) => router.push(`/customer/orders/${orderId}`)}
+      onOpenOrder={(orderId, status) => {
+        if (status && (ACTIVE_TRACKING_STATUSES as readonly string[]).includes(status)) {
+          router.push(`/customer/tracking?orderId=${orderId}`);
+        } else {
+          router.push(`/customer/orders/${orderId}`);
+        }
+      }}
     />
   );
 }

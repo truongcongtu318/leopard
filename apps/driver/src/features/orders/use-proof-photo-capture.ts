@@ -51,55 +51,85 @@ export function useProofPhotoCapture(deps: PodCaptureDeps = {}) {
   const [isCapturing, setIsCapturing] = useState(false);
   const inFlightRef = useRef(false);
 
-  const captureProofPhoto = useCallback(async (): Promise<CaptureOutcome> => {
-    // Guard against a double-tap opening two camera sessions; the second
-    // session's asset would otherwise win and silently discard the first photo.
-    if (inFlightRef.current) return { kind: 'canceled' };
-    inFlightRef.current = true;
-    setIsCapturing(true);
-
-    try {
-      let asset = null;
+  const captureProofPhoto = useCallback(
+    async (source: 'camera' | 'library' | 'auto' = 'auto'): Promise<CaptureOutcome> => {
+      // Guard against a double-tap opening two camera sessions; the second
+      // session's asset would otherwise win and silently discard the first photo.
+      if (inFlightRef.current) return { kind: 'canceled' };
+      inFlightRef.current = true;
+      setIsCapturing(true);
 
       try {
-        asset = await capture();
-      } catch (error) {
-        // Tự động fallback sang thư viện ảnh nếu không mở được máy ảnh
-        // (từ chối quyền camera, máy ảo simulator không có camera, hoặc lỗi phần cứng/web)
-        try {
-          asset = await pick();
-        } catch {
-          asset = null;
-        }
+        let asset = null;
 
-        if (!asset) {
-          if (error instanceof DeviceCameraPermissionError) {
-            return { kind: 'permission-denied' };
+        if (source === 'library') {
+          try {
+            asset = await pick();
+          } catch {
+            asset = null;
           }
-          return { kind: 'canceled' };
+          if (!asset) return { kind: 'canceled' };
+        } else if (source === 'camera') {
+          try {
+            asset = await capture();
+          } catch (error) {
+            if (error instanceof DeviceCameraPermissionError) {
+              return { kind: 'permission-denied' };
+            }
+            return { kind: 'error', message: 'Không thể mở máy ảnh trên thiết bị này.' };
+          }
+          if (!asset) return { kind: 'canceled' };
+        } else {
+          try {
+            asset = await capture();
+          } catch (error) {
+            // Tự động fallback sang thư viện ảnh nếu không mở được máy ảnh
+            // (từ chối quyền camera, máy ảo simulator không có camera, hoặc lỗi phần cứng/web)
+            try {
+              asset = await pick();
+            } catch {
+              asset = null;
+            }
+
+            if (!asset) {
+              if (error instanceof DeviceCameraPermissionError) {
+                return { kind: 'permission-denied' };
+              }
+              return { kind: 'canceled' };
+            }
+          }
+
+          if (!asset) {
+            // Nếu camera bị hủy hoặc không trả về ảnh và là chế độ auto, thử mở thư viện
+            try {
+              asset = await pick();
+            } catch {
+              asset = null;
+            }
+            if (!asset) return { kind: 'canceled' };
+          }
         }
+
+        return {
+          kind: 'captured',
+          photo: {
+            uri: asset.uri,
+            name: asset.name,
+            mimeType: asset.mimeType,
+            size: asset.size,
+            file: asset.file,
+            capturedAt: new Date(),
+          },
+        };
+      } catch {
+        return { kind: 'error', message: 'Không chụp được ảnh. Vui lòng thử lại.' };
+      } finally {
+        inFlightRef.current = false;
+        setIsCapturing(false);
       }
-
-      if (!asset) return { kind: 'canceled' };
-
-      return {
-        kind: 'captured',
-        photo: {
-          uri: asset.uri,
-          name: asset.name,
-          mimeType: asset.mimeType,
-          size: asset.size,
-          file: asset.file,
-          capturedAt: new Date(),
-        },
-      };
-    } catch {
-      return { kind: 'error', message: 'Không chụp được ảnh. Vui lòng thử lại.' };
-    } finally {
-      inFlightRef.current = false;
-      setIsCapturing(false);
-    }
-  }, [capture, pick]);
+    },
+    [capture, pick],
+  );
 
   return { captureProofPhoto, isCapturing };
 }

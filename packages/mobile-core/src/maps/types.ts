@@ -50,6 +50,9 @@ export interface LeopardMapViewProps {
   routeSegments?: readonly RoutePolylineSegment[];
   nearbyDrivers?: readonly NearbyDriver[];
   zoom?: number;
+  minZoom?: number;
+  maxZoom?: number;
+  maxBounds?: [[number, number], [number, number]];
   bearing?: number;
   pitch?: number;
   /**
@@ -57,6 +60,10 @@ export interface LeopardMapViewProps {
    * instead of fitting the whole route into view.
    */
   followTruckLocation?: boolean;
+  /**
+   * True if approaching pickup point, false if in-transit to delivery/stops.
+   */
+  isPickupLeg?: boolean;
 }
 
 export interface VietmapNavigationProps {
@@ -65,12 +72,28 @@ export interface VietmapNavigationProps {
   stops?: readonly MapStop[];
   routeCoords?: readonly MapCoordinate[];
   vietmapApiKey?: string;
-  vehicleType?: 'car' | 'truck' | 'bike';
+  vehicleType?: 'car' | 'truck' | 'bike' | string;
+  truckLocation?: MapCoordinate;
   isSimulating?: boolean;
   speechVoiceLanguage?: 'vi-VN' | 'en-US';
+  speedAlertEnabled?: boolean;
+  apiKeyAlert?: string;
+  apiIDAlert?: string;
+  navigationZoomLevel?: number;
+  navigationTiltAnchor?: number;
   onNavigationFinished?: () => void;
   onReroute?: () => void;
   onLocationUpdate?: (location: MapCoordinate & { heading?: number; speed?: number }) => void;
+  onRouteProgress?: (data: {
+    distanceRemaining?: number;
+    durationRemaining?: number;
+    distanceToNextTurn?: number;
+    currentStepInstruction?: string;
+    currentModifier?: string;
+    currentModifierType?: string;
+  }) => void;
+  onMilestoneEvent?: (event?: any) => void;
+  onWaypointArrival?: (event?: any) => void;
   onMuteToggle?: (muted: boolean) => void;
   onClose?: () => void;
   testID?: string;

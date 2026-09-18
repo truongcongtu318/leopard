@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Platform,
   Pressable,
@@ -25,6 +26,7 @@ import {
   IconChevron,
   IconClock,
   IconClose,
+  IconCrosshair,
   IconHome,
   IconMessage,
   IconPin,
@@ -46,6 +48,7 @@ import {
   leopardPalette,
   pastelTheme,
   pickDeviceImage,
+  postMapMessageToFrames,
   radius,
   resolveLocationCoords,
   sessionStore,
@@ -438,9 +441,13 @@ export function HomeDashboardScreen({
 
         if (isMounted && res && Array.isArray(res.drivers)) {
           setFetchedNearbyDrivers(res.drivers);
+        } else if (isMounted) {
+          setFetchedNearbyDrivers([]);
         }
       } catch {
-        // Silently ignore if unauthenticated or network unavailable
+        if (isMounted) {
+          setFetchedNearbyDrivers([]);
+        }
       }
     }
 
@@ -484,6 +491,13 @@ export function HomeDashboardScreen({
     if (defaultPickupLocation) {
       setPickupText(defaultPickupLocation);
       setPickupLabel(defaultPickupLabel ?? null);
+      const saved = addressStore.getDefaultAddress();
+      if (saved?.latitude && saved?.longitude) {
+        setPickupCoords({ lat: saved.latitude, lng: saved.longitude });
+      } else {
+        const resolved = resolveLocationCoords(defaultPickupLocation);
+        if (resolved) setPickupCoords(resolved);
+      }
     } else {
       const saved = addressStore.getDefaultAddress();
       if (saved?.address) {
@@ -502,34 +516,112 @@ export function HomeDashboardScreen({
     }
   }, [defaultDropoffLocation]);
 
-  useEffect(() => {
-    const saved = addressStore.getDefaultAddress();
-    if (defaultPickupLocation || saved?.address) return;
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleRecenterToCurrentGps = useCallback(async () => {
+    haptic.selection();
+    setIsLocating(true);
+
+    // Immediate tactile recenter to existing pickupCoords or resolved location
+    const effectiveCoords =
+      pickupCoords ||
+      (pickupText ? resolveLocationCoords(pickupText) : null) ||
+      { lat: 14.0999697, lng: 108.9759516 };
+
+    if (effectiveCoords && typeof effectiveCoords.lat === 'number' && typeof effectiveCoords.lng === 'number') {
+      postMapMessageToFrames({
+        type: 'LEOPARD_MAP_RECENTER',
+        lat: effectiveCoords.lat,
+        lng: effectiveCoords.lng,
+        zoom: 15.5,
+      });
+    }
+
     const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
-    (async () => {
-      try {
-        const permission = await Location.requestForegroundPermissionsAsync();
-        if (permission.status !== 'granted') {
-          setLocationNotice('Chưa cấp quyền vị trí — vui lòng nhập điểm lấy hàng thủ công.');
-          return;
-        }
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status === 'granted') {
         const pos = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
+          accuracy: Location.Accuracy.Balanced,
         } as any);
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         setPickupCoords({ lat, lng });
+
+        postMapMessageToFrames({
+          type: 'LEOPARD_MAP_RECENTER',
+          lat,
+          lng,
+          zoom: 15.5,
+        });
+
         const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
         if (resolved && resolved.trim().length > 0) {
           setPickupText(resolved);
           setPickupLabel('Vị trí hiện tại');
           setLocationNotice(null);
         }
+      } else if (!pickupCoords) {
+        Alert.alert('Quyền vị trí', 'Vui lòng cho phép quyền vị trí trong trình duyệt để xác định vị trí của bạn.');
+      }
+    } catch {
+      // If GPS fetch fails but we already have pickupCoords, we already smoothly recentered to it.
+      if (!pickupCoords) {
+        Alert.alert('Định vị', 'Không thể lấy được vị trí GPS hiện tại.');
+      }
+    } finally {
+      setIsLocating(false);
+    }
+  }, [pickupCoords]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
+    (async () => {
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (permission.status === 'granted') {
+          const pos = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          } as any);
+          if (isCancelled) return;
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setPickupCoords({ lat, lng });
+          const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
+          if (resolved && resolved.trim().length > 0 && !isCancelled) {
+            setPickupText(resolved);
+            setPickupLabel('Vị trí hiện tại');
+            setLocationNotice(null);
+            return;
+          }
+        }
       } catch {
-        setLocationNotice('Không lấy được vị trí hiện tại. Vui lòng nhập điểm lấy hàng thủ công.');
+        // keep fallback
+      }
+      if (isCancelled) return;
+      const saved = addressStore.getDefaultAddress();
+      if (defaultPickupLocation) {
+        setPickupText(defaultPickupLocation);
+        setPickupLabel(defaultPickupLabel ?? null);
+        if (saved?.latitude && saved?.longitude) {
+          setPickupCoords({ lat: saved.latitude, lng: saved.longitude });
+        } else {
+          const resolved = resolveLocationCoords(defaultPickupLocation);
+          if (resolved) setPickupCoords(resolved);
+        }
+      } else if (saved?.address) {
+        setPickupText(saved.address);
+        setPickupLabel(saved.label || null);
+        if (saved.latitude && saved.longitude) {
+          setPickupCoords({ lat: saved.latitude, lng: saved.longitude });
+        }
       }
     })();
-  }, [defaultPickupLocation]);
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const addressList = useMemo(() => savedAddresses ?? addressStore.getAddresses(), [savedAddresses, addressStoreVersion]);
 
@@ -837,6 +929,31 @@ export function HomeDashboardScreen({
           <Text style={styles.nearbyDriverPillText}>
             {effectiveNearbyDrivers.length} {selectedFleetId === 'VAN_500KG' ? 'xe van' : selectedFleetId === 'BIKE_3W' ? 'xe ba gác' : 'xe tải'} gần bạn
           </Text>
+        </View>
+      ) : null}
+
+      {/* Floating Recenter Button (Grab/Uber style) */}
+      {!activeShipment ? (
+        <View
+          style={[
+            styles.floatingRecenterContainer,
+            { bottom: !isFullBookingMode ? 280 : 130 },
+          ]}
+        >
+          <Pressable
+            accessibilityLabel="Về vị trí hiện tại của tôi"
+            accessibilityRole="button"
+            accessibilityState={{ busy: isLocating }}
+            onPress={handleRecenterToCurrentGps}
+            style={({ pressed }) => [styles.recenterBtn, pressed && styles.recenterBtnPressed]}
+            testID="customer-map-recenter-btn"
+          >
+            {isLocating ? (
+              <ActivityIndicator color={customerPalette.primary} size="small" />
+            ) : (
+              <IconCrosshair color={customerPalette.primary} size={22} />
+            )}
+          </Pressable>
         </View>
       ) : null}
 
@@ -2602,6 +2719,33 @@ const styles = StyleSheet.create({
   plateText: { fontWeight: '700', color: customerPalette.primary, fontVariant: ['tabular-nums'] },
   activeTrackPill: { backgroundColor: colors.neutral.surfaceMuted, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   trackText: { ...typeScale.caption2, fontWeight: '600', color: customerPalette.primary },
+
+  /* Floating Recenter Button */
+  floatingRecenterContainer: {
+    position: 'absolute',
+    right: spacing.md,
+    zIndex: 45,
+  },
+  recenterBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: customerPalette.surfaceWhite,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...iosContinuousCurve,
+    shadowColor: customerPalette.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.95)',
+  },
+  recenterBtnPressed: {
+    transform: [{ scale: 0.94 }],
+    backgroundColor: '#F8FAFC',
+  },
 
   /* Layer 3: Floating Navigation Dock */
   layer3FloatingNav: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 60 },

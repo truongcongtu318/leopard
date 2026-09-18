@@ -60,7 +60,20 @@ export function useDriverOrderDetail({
       Alert.alert(
         'Đơn đã bị hủy',
         'Khách hàng hoặc quản trị viên đã hủy đơn hàng này. Bạn đã được giải phóng khỏi chuyến.',
-        [{ text: 'Đã hiểu', onPress: () => router.back() }],
+        [
+          {
+            text: 'Đã hiểu',
+            onPress: () => {
+              if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+                router.back();
+              } else if (typeof router.back === 'function') {
+                router.back();
+              } else if (typeof router.replace === 'function') {
+                router.replace('/orders');
+              }
+            },
+          },
+        ],
       );
     }
   }, [rawStatus, router]);
@@ -78,7 +91,20 @@ export function useDriverOrderDetail({
         Alert.alert(
           'Đơn đã bị hủy',
           'Khách hàng hoặc quản trị viên đã hủy đơn hàng này. Bạn đã được giải phóng khỏi chuyến.',
-          [{ text: 'Đã hiểu', onPress: () => router.back() }],
+          [
+            {
+              text: 'Đã hiểu',
+              onPress: () => {
+                if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+                  router.back();
+                } else if (typeof router.back === 'function') {
+                  router.back();
+                } else if (typeof router.replace === 'function') {
+                  router.replace('/orders');
+                }
+              },
+            },
+          ],
         );
       } else {
         void queryClient.invalidateQueries({ queryKey });

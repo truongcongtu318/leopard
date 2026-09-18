@@ -3,6 +3,8 @@ import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@leopard/mobile-core';
+import { DriverMapDirectorProvider } from './DriverMapDirectorContext';
+import { DriverPersistentWorldMap } from './DriverPersistentWorldMap';
 
 export const DRIVER_PHONE_FRAME = {
   compactWebBreakpoint: 480,
@@ -39,35 +41,56 @@ export function DriverViewportShell({ children }: PropsWithChildren): React.JSX.
   const platform = Platform.OS === 'web' ? 'web' : 'native';
   const mode = resolveDriverViewportMode(platform, width);
 
+  let content: React.JSX.Element;
+
   if (mode === 'native') {
-    return (
+    content = (
       <View style={styles.nativeCanvas} testID="driver-viewport-canvas">
         <View style={styles.nativeFrame} testID="driver-viewport-frame">
-          <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea} testID="driver-safe-area">
+          <DriverPersistentWorldMap />
+          <SafeAreaView edges={['top', 'right', 'bottom', 'left']} pointerEvents="box-none" style={styles.safeArea} testID="driver-safe-area">
             {children}
           </SafeAreaView>
         </View>
       </View>
     );
-  }
-
-  if (mode === 'edge-to-edge-web') {
-    return (
+  } else if (mode === 'edge-to-edge-web') {
+    content = (
       <View style={styles.edgeToEdgeCanvas} testID="driver-viewport-canvas">
         <View style={styles.edgeToEdgeFrame} testID="driver-viewport-frame">
-          <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea} testID="driver-safe-area">
+          <DriverPersistentWorldMap />
+          <SafeAreaView edges={['top', 'right', 'bottom', 'left']} pointerEvents="box-none" style={styles.safeArea} testID="driver-safe-area">
             {children}
           </SafeAreaView>
         </View>
       </View>
     );
-  }
-
-  if (mode === 'centered-web') {
-    return (
+  } else if (mode === 'centered-web') {
+    content = (
       <View style={styles.centeredCanvas} testID="driver-viewport-canvas">
         <View style={styles.centeredFrame} testID="driver-viewport-frame">
-          <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea} testID="driver-safe-area">
+          <DriverPersistentWorldMap />
+          <SafeAreaView edges={['top', 'right', 'bottom', 'left']} pointerEvents="box-none" style={styles.safeArea} testID="driver-safe-area">
+            {children}
+          </SafeAreaView>
+        </View>
+      </View>
+    );
+  } else {
+    // framed-web
+    const framedHeight = Math.min(
+      DRIVER_PHONE_FRAME.maxHeight,
+      Math.max(0, height - DRIVER_PHONE_FRAME.outerInset * 2),
+    );
+
+    content = (
+      <View style={styles.framedCanvas} testID="driver-viewport-canvas">
+        <View
+          style={[styles.framedFrame, { height: framedHeight }]}
+          testID="driver-viewport-frame"
+        >
+          <DriverPersistentWorldMap />
+          <SafeAreaView edges={['top', 'right', 'bottom', 'left']} pointerEvents="box-none" style={styles.safeArea} testID="driver-safe-area">
             {children}
           </SafeAreaView>
         </View>
@@ -75,23 +98,10 @@ export function DriverViewportShell({ children }: PropsWithChildren): React.JSX.
     );
   }
 
-  // framed-web
-  const framedHeight = Math.min(
-    DRIVER_PHONE_FRAME.maxHeight,
-    Math.max(0, height - DRIVER_PHONE_FRAME.outerInset * 2),
-  );
-
   return (
-    <View style={styles.framedCanvas} testID="driver-viewport-canvas">
-      <View
-        style={[styles.framedFrame, { height: framedHeight }]}
-        testID="driver-viewport-frame"
-      >
-        <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea} testID="driver-safe-area">
-          {children}
-        </SafeAreaView>
-      </View>
-    </View>
+    <DriverMapDirectorProvider>
+      {content}
+    </DriverMapDirectorProvider>
   );
 }
 

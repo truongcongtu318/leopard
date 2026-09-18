@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
   mapContent: {
     flex: 1,
     minHeight: layout.mapMinimumHeight,
+    overflow: 'hidden',
   },
   messageContent: {
     flex: 1,

@@ -339,11 +339,18 @@ export default function CustomerHomePage() {
       onOpenProfile={() => router.push('/customer/profile')}
       onOpenQrScan={() => router.push('/customer/wallet')}
       onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
-      onPressSearchAddress={(fleetVehicleId) => {
+      onPressSearchAddress={(fleetVehicleId, pickup, pickupCoords) => {
         router.push({
           pathname: '/customer/booking',
           params: {
             ...(fleetVehicleId ? { vehicleId: fleetVehicleId } : {}),
+            ...(pickup ? { pickup } : {}),
+            ...(pickupCoords
+              ? {
+                  pickupLat: String(pickupCoords.lat),
+                  pickupLng: String(pickupCoords.lng),
+                }
+              : {}),
           },
         });
       }}

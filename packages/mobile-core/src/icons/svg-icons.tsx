@@ -190,3 +190,21 @@ export function IconAlertTriangle({
     </Svg>
   );
 }
+
+export function IconCrosshair({
+  size = iconDefaults.size,
+  color = DEFAULT_COLOR,
+  strokeWidth = iconStroke.medium,
+  testID = 'icon-crosshair',
+  style,
+}: IconProps) {
+  const s = resolveIconSize(size);
+  const sw = resolveIconStroke(strokeWidth);
+  return (
+    <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" testID={testID} style={style}>
+      <Circle cx={12} cy={12} r={7} stroke={color} strokeWidth={sw} />
+      <Circle cx={12} cy={12} r={2.5} fill={color} />
+      <Path d="M12 2v3.5M12 18.5v3.5M2 12h3.5M18.5 12h3.5" stroke={color} strokeWidth={sw} strokeLinecap="round" />
+    </Svg>
+  );
+}
