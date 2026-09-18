@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { createSocketFactory, ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 import { createCustomerHttpAdapter } from './adapter';
 import { createCustomerMediaPickerAdapter } from './media-picker-adapter';
@@ -6,6 +6,14 @@ import { CustomerOrderDetailScreen } from './CustomerOrderDetailScreen';
 import type { CustomerDetailView, CustomerOrderIntent } from './model';
 import { createCustomerTrackingSocket } from './tracking-socket';
 import { useCustomerOrderDetail } from './hooks/useCustomerOrderDetail';
+
+const ACTIVE_TRACKING_STATUSES = [
+  'ACCEPTED',
+  'PICKING_UP',
+  'PICKED_UP',
+  'IN_TRANSIT',
+  'RETURNING',
+] as const;
 
 export type CustomerOrderDetailRuntimeProps = Readonly<{
   orderId: string;
@@ -26,6 +34,18 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
     query,
     liveTracking,
   } = useCustomerOrderDetail({ orderId, port, socketManager });
+
+  useEffect(() => {
+    if (query.data?.kind === 'content') {
+      const order = query.data.order;
+      if (
+        (ACTIVE_TRACKING_STATUSES as readonly string[]).includes(order.status) &&
+        order.tracking.kind !== 'no-driver'
+      ) {
+        router.replace({ pathname: '/customer/tracking', params: { orderId: order.id } });
+      }
+    }
+  }, [query.data, router]);
 
   if (query.isPending) {
     return (
@@ -84,7 +104,22 @@ export function CustomerOrderDetailRuntime({ orderId }: CustomerOrderDetailRunti
       }
       onPaymentAction={(actionId) => void runIntent({ actionId, orderId })}
       onPickCargoImage={() => void handlePickCargoImage()}
-      onPrimaryAction={(actionId) => void runIntent({ actionId, orderId })}
+      onPrimaryAction={(actionId) => {
+        if (actionId === 'rate-order') {
+          const assignedDriver = view.kind === 'content' ? view.order.assignedDriver : undefined;
+          router.push({
+            pathname: '/customer/review/[id]',
+            params: {
+              id: orderId,
+              driverName: assignedDriver?.name ?? undefined,
+              licensePlate: assignedDriver?.licensePlate ?? undefined,
+              vehicleType: assignedDriver?.vehicleType ?? undefined,
+            },
+          });
+          return;
+        }
+        void runIntent({ actionId, orderId });
+      }}
       onRefresh={async () => {
         await query.refetch();
       }}

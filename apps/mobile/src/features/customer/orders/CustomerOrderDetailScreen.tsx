@@ -31,6 +31,7 @@ import {
   IconMessage,
   IconPhone,
   IconShieldAlert,
+  IconStar,
   iosContinuousCurve,
   layout,
   leopardPalette,
@@ -479,20 +480,6 @@ function DriverCard({
               </Text>
             </VStack>
           </HStack>
-          {onOpenTracking && orderId ? (
-            <Pressable
-              accessibilityLabel="Xem GPS"
-              accessibilityRole="button"
-              onPress={() => {
-                haptic.light();
-                onOpenTracking(orderId);
-              }}
-              style={({ pressed }) => [styles.driverGpsLink, pressed ? styles.cardPressed : null]}
-            >
-              <Text style={styles.driverGpsLinkText}>Xem GPS</Text>
-              <IconExternalLink color={customerPalette.primary} size={12} />
-            </Pressable>
-          ) : null}
         </HStack>
       ) : null}
     </Card>
@@ -584,6 +571,7 @@ function TrackingPanel({
           <RouteMapSchematic
             destinationCoords={destinationCoords}
             destinationLabel={destinationLabel}
+            hideLedger
             originCoords={originCoords}
             originLabel={originLabel}
             stops={stops}
@@ -612,6 +600,7 @@ function TrackingPanel({
           <RouteMapSchematic
             destinationCoords={destinationCoords}
             destinationLabel={destinationLabel}
+            hideLedger
             originCoords={originCoords}
             originLabel={originLabel}
             stops={stops}
@@ -624,6 +613,7 @@ function TrackingPanel({
     <RouteMapSchematic
       destinationCoords={destinationCoords}
       destinationLabel={destinationLabel}
+      hideLedger
       markerLabel={`${tracking.driverLabel} (${stageLabel})`}
       originCoords={originCoords}
       originLabel={originLabel}
@@ -681,6 +671,100 @@ function TrackingPanel({
         {mapContent}
       </MapPanel>
     </View>
+  );
+}
+
+function getRatingEmotion(rating: number): string {
+  switch (Math.round(rating)) {
+    case 5:
+      return 'Tuyệt vời!';
+    case 4:
+      return 'Rất tốt';
+    case 3:
+      return 'Bình thường';
+    case 2:
+      return 'Chưa hài lòng';
+    case 1:
+      return 'Rất tệ';
+    default:
+      return rating >= 4 ? 'Rất tốt' : 'Bình thường';
+  }
+}
+
+function YourReviewCard({
+  review,
+}: Readonly<{
+  review: NonNullable<CustomerDetailContentView['order']['review']>;
+}>) {
+  const ratingText = `${review.rating.toFixed(1)} ★`;
+  const emotionText = getRatingEmotion(review.rating);
+
+  return (
+    <Card style={styles.yourReviewCard}>
+      <HStack style={styles.yourReviewHeaderRow}>
+        <Text style={styles.yourReviewTitle}>Đánh giá của bạn</Text>
+        <Badge action="warning" size="sm" style={styles.yourReviewRatingBadge}>
+          <Badge.Text style={styles.yourReviewRatingText}>{ratingText}</Badge.Text>
+        </Badge>
+      </HStack>
+
+      <HStack style={styles.yourReviewStarsRow}>
+        <HStack style={styles.yourReviewStarsGroup}>
+          {[0, 1, 2, 3, 4].map((index) => {
+            const isFilled = index < review.rating;
+            return (
+              <IconStar
+                color={isFilled ? leopardPalette.accentYellow : colors.neutral.subtleBorder}
+                fill={isFilled ? leopardPalette.accentYellow : 'none'}
+                filled={isFilled}
+                key={index}
+                size={22}
+              />
+            );
+          })}
+        </HStack>
+        <Text style={styles.yourReviewEmotionText}>{emotionText}</Text>
+      </HStack>
+
+      {typeof review.tipVnd === 'number' && review.tipVnd > 0 ? (
+        <HStack style={styles.yourReviewTipBadge}>
+          <Text style={styles.yourReviewTipText}>
+            +{review.tipVnd.toLocaleString('vi-VN')} đ Tip cho tài xế
+          </Text>
+        </HStack>
+      ) : null}
+
+      {review.comment ? (
+        <Box style={styles.yourReviewQuoteBox}>
+          <Text style={styles.yourReviewQuoteText}>{review.comment}</Text>
+        </Box>
+      ) : null}
+    </Card>
+  );
+}
+
+function DeliveryRatingPromptCard() {
+  return (
+    <Card style={styles.deliveryRatingPromptCard}>
+      <HStack style={styles.deliveryRatingPromptRow}>
+        <Box style={styles.deliveryRatingPromptIconBox}>
+          <IconStar
+            color={leopardPalette.accentYellow}
+            fill={leopardPalette.accentYellow}
+            filled
+            size={20}
+          />
+        </Box>
+        <VStack style={styles.deliveryRatingPromptTextWrap}>
+          <Text style={styles.deliveryRatingPromptTitle}>
+            Đơn hàng đã được giao thành công! Bạn có hài lòng với chuyến đi không?
+          </Text>
+          <Text style={styles.deliveryRatingPromptSubtitle}>
+            Đánh giá giúp tài xế và cải thiện chất lượng phục vụ
+          </Text>
+        </VStack>
+      </HStack>
+    </Card>
   );
 }
 
@@ -764,6 +848,11 @@ function CustomerDetailContent({
     && !Number.isNaN(order.etaDurationSeconds)
     && order.status !== 'CANCELLED'
     && order.status !== 'DELIVERED';
+  const isOrderActive =
+    order.status === 'ACCEPTED' ||
+    order.status === 'PICKING_UP' ||
+    order.status === 'IN_TRANSIT' ||
+    order.status === 'RETURNING';
 
   return (
     <ScreenScaffold
@@ -930,13 +1019,13 @@ function CustomerDetailContent({
           </Box>
         ) : null}
 
-        {/* 4. Visual Tracking Preview & Map Panel */}
+        {/* 4. Section: Route & Interactive Map */}
         <Card style={styles.modernCard}>
           <VStack style={styles.cardHeader}>
             <Text accessibilityRole="header" style={styles.cardTitle}>
-              Bản đồ hành trình
+              Lộ trình vận chuyển
             </Text>
-            <Text style={styles.cardSubtitle}>Vị trí xe và lộ trình theo thời gian thực</Text>
+            <Text style={styles.cardSubtitle}>Bản đồ tuyến đường và chi tiết điểm đón/trả</Text>
           </VStack>
 
           <TrackingPanel
@@ -956,8 +1045,16 @@ function CustomerDetailContent({
             vehicleLabel={order.requestedVehicleLabel}
           />
 
-          {/* Nút liên kết chuyển tiếp sang trang Tracking toàn màn hình */}
-          {order.status !== 'REQUESTED' && order.tracking.kind !== 'no-driver' ? (
+          <Divider style={styles.routeDivider} />
+
+          <RouteSpine
+            destination={order.route.destination}
+            origin={order.route.origin}
+            stops={order.route.stops}
+          />
+
+          {/* Nút liên kết chuyển tiếp sang trang Tracking toàn màn hình (chỉ hiển thị khi đơn đang thực hiện) */}
+          {isOrderActive && order.tracking.kind !== 'no-driver' ? (
             <Pressable
               accessibilityHint="Mở bản đồ theo dõi GPS toàn màn hình"
               accessibilityLabel="Xem bản đồ theo dõi trực tiếp"
@@ -972,7 +1069,7 @@ function CustomerDetailContent({
               ]}
             >
               <Box style={styles.trackingLinkIconBox}>
-                <IconLocationPin color={customerPalette.primary} size={18} />
+                <IconLocationPin color={customerPalette.surfaceWhite} size={18} />
               </Box>
               <VStack style={styles.trackingLinkTextWrap}>
                 <Text style={styles.trackingLinkTitle}>Xem bản đồ theo dõi trực tiếp ➔</Text>
@@ -984,76 +1081,89 @@ function CustomerDetailContent({
           ) : null}
         </Card>
 
-        {/* 5. Section: Route */}
+        {/* 5. Section: Cargo Specs & Media */}
         <Card style={styles.modernCard}>
           <VStack style={styles.cardHeader}>
             <Text accessibilityRole="header" style={styles.cardTitle}>
-              Lộ trình vận chuyển
+              Thông tin kiện hàng
             </Text>
-            <Text style={styles.cardSubtitle}>Điểm lấy, các điểm dừng và điểm giao hàng</Text>
-          </VStack>
-          <RouteSpine
-            destination={order.route.destination}
-            origin={order.route.origin}
-            stops={order.route.stops}
-          />
-        </Card>
-
-        {/* 6. Section: Cargo Specs & Media */}
-        <Card style={styles.modernCard}>
-          <VStack style={styles.cardHeader}>
-            <Text accessibilityRole="header" style={styles.cardTitle}>
-              Minh chứng hàng hóa
-            </Text>
-            <Text style={styles.cardSubtitle}>Quy cách hàng hóa và hình ảnh đính kèm</Text>
+            <Text style={styles.cardSubtitle}>Quy cách hàng hóa và xác nhận bàn giao</Text>
           </VStack>
 
-          <Box style={styles.cargoSpecsGrid}>
-            <VStack style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>Mặt hàng</Text>
-              <Text style={styles.cargoGridValue}>{order.cargo.note || 'Hàng tổng hợp'}</Text>
-            </VStack>
-            <VStack style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>Khối lượng</Text>
-              <Text style={styles.cargoGridValue}>
-                {order.cargo.weightKg ? `${order.cargo.weightKg} kg` : '—'}
+          <VStack space="xs" style={styles.cargoSpecsList}>
+            <HStack style={styles.cargoSpecRow}>
+              <Text style={styles.cargoSpecLabel}>Mặt hàng</Text>
+              <Text numberOfLines={2} style={styles.cargoSpecValue}>
+                {order.cargo.note || 'Hàng hóa thông thường'}
               </Text>
-            </VStack>
-            <VStack style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>Dịch vụ đi kèm</Text>
-              <Text style={[styles.cargoGridValue, { color: customerPalette.primary }]}>
+            </HStack>
+
+            <Divider style={styles.cargoDivider} />
+
+            <HStack style={styles.cargoSpecRow}>
+              <Text style={styles.cargoSpecLabel}>Khối lượng</Text>
+              <Text style={styles.cargoSpecValue}>
+                {order.cargo.weightKg ? `${order.cargo.weightKg} kg` : 'Theo tải trọng xe'}
+              </Text>
+            </HStack>
+
+            <Divider style={styles.cargoDivider} />
+
+            <HStack style={styles.cargoSpecRow}>
+              <Text style={styles.cargoSpecLabel}>Bốc xếp</Text>
+              <Text style={[styles.cargoSpecValue, { color: customerPalette.primary }]}>
                 {order.hasLoadingSupport ? 'Có bốc xếp 2 đầu' : 'Tự bốc xếp'}
               </Text>
-            </VStack>
-            <VStack style={styles.cargoGridItem}>
-              <Text style={styles.cargoGridLabel}>Người nhận</Text>
-              <Text numberOfLines={1} style={styles.cargoGridValue}>
-                {order.route.destination.label.split(',')[0]}
-              </Text>
-            </VStack>
-          </Box>
+            </HStack>
+          </VStack>
 
-          <HStack style={styles.mediaGrid}>
-            <Card style={styles.mediaTile}>
-              <Text style={styles.mediaIndex}>01</Text>
-              <Text style={styles.mediaLabel}>Ảnh hàng hóa</Text>
-              {order.media.mediaId ? (
-                <MediaImage mediaId={order.media.mediaId} />
-              ) : onPickCargoImage ? (
-                <Button
-                  label="Tải ảnh lên"
-                  onPress={() => {
-                    haptic.light();
-                    onPickCargoImage();
-                  }}
-                  variant="secondary"
-                />
-              ) : (
-                <Text style={styles.helper}>Chưa có ảnh</Text>
+          {/* Media / POD Section */}
+          <VStack space="xs" style={styles.cargoMediaSection}>
+            <HStack style={styles.cargoMediaHeader}>
+              <Text style={styles.cargoMediaTitle}>Ảnh hàng hóa</Text>
+              {order.status === 'DELIVERED' && (
+                <HStack style={styles.podInlineBadge}>
+                  <IconCheck color={colors.success.text} size={12} strokeWidth={2.5} />
+                  <Text style={styles.podInlineBadgeText}>Đã giao thành công</Text>
+                </HStack>
               )}
-            </Card>
-          </HStack>
+            </HStack>
+
+            {order.media.mediaId ? (
+              <Box style={styles.mediaPreviewWrap}>
+                <MediaImage mediaId={order.media.mediaId} />
+              </Box>
+            ) : order.status === 'DELIVERED' ? (
+              <HStack style={styles.podDeliveredBanner}>
+                <Box style={styles.podCheckCircle}>
+                  <IconCheck color={colors.success.text} size={14} strokeWidth={2.5} />
+                </Box>
+                <VStack style={styles.podTextWrap}>
+                  <Text style={styles.podTitle}>Biên bản giao nhận POD</Text>
+                  <Text style={styles.podSub}>Tài xế đã bàn giao nguyên vẹn</Text>
+                </VStack>
+              </HStack>
+            ) : onPickCargoImage ? (
+              <Button
+                label="Tải ảnh lên"
+                onPress={() => {
+                  haptic.light();
+                  onPickCargoImage();
+                }}
+                variant="secondary"
+              />
+            ) : (
+              <Text style={styles.helper}>Chưa có ảnh</Text>
+            )}
+          </VStack>
         </Card>
+
+        {/* 6. Section: Đánh giá chuyến đi (Rating & Review) */}
+        {order.review ? (
+          <YourReviewCard review={order.review} />
+        ) : order.status === 'DELIVERED' ? (
+          <DeliveryRatingPromptCard />
+        ) : null}
 
         {/* 6b. Section: Chi tiết cước phí (Price Breakdown) */}
         <Card style={styles.modernCard}>
@@ -1396,36 +1506,36 @@ const styles = StyleSheet.create({
   trackingLinkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: radius.control,
+    backgroundColor: customerPalette.primaryBg,
+    borderColor: customerPalette.primaryBorder,
+    borderWidth: 1,
+    borderRadius: radius.card,
     ...iosContinuousCurve,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    gap: spacing.xs,
-    marginTop: spacing.xxs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+    minHeight: 52,
   },
   trackingLinkIconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.cardSm,
-    ...iosContinuousCurve,
-    backgroundColor: colors.neutral.surfaceMuted,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: customerPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   trackingLinkTextWrap: {
     flex: 1,
-    gap: spacing.hairline,
+    gap: 2,
   },
   trackingLinkTitle: {
     color: customerPalette.primary,
-    ...typeScale.footnote,
-    fontWeight: '600',
+    ...typeScale.subheadline,
+    fontWeight: '700',
   },
   trackingLinkSubtitle: {
-    color: colors.neutral.subtleText,
+    color: colors.neutral.mutedText,
     ...typeScale.caption2,
   },
 
@@ -1556,37 +1666,42 @@ const styles = StyleSheet.create({
   },
 
   // ─── Cargo Specs ──────────────────────────────────────────────
-  cargoSpecsGrid: {
+  cargoSpecsList: {
     backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.control,
-    ...iosContinuousCurve,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: spacing.xs,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  cargoGridItem: {
-    width: '48%',
-    backgroundColor: colors.neutral.surface,
     borderColor: colors.neutral.border,
     borderRadius: radius.cardSm,
     ...iosContinuousCurve,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: spacing.xs,
-    gap: spacing.hairline,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  cargoGridLabel: {
+  cargoSpecRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xxs,
+    gap: spacing.sm,
+  },
+  cargoSpecLabel: {
     color: colors.neutral.subtleText,
-    ...typeScale.caption2,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    ...typeScale.caption1,
+    minWidth: 80,
   },
-  cargoGridValue: {
+  cargoSpecValue: {
+    flex: 1,
+    textAlign: 'right',
     color: colors.neutral.text,
     ...typeScale.footnote,
     fontWeight: '600',
+  },
+  cargoDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.neutral.border,
+  },
+  routeDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.neutral.border,
+    marginVertical: spacing.sm,
   },
 
   // ─── Driver Card ──────────────────────────────────────────────
@@ -1625,22 +1740,22 @@ const styles = StyleSheet.create({
     ...typeScale.caption1,
   },
   driverCallBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.success.background,
     borderColor: colors.success.border,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   driverMessageBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.neutral.surfaceMuted,
     borderColor: colors.neutral.border,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1672,24 +1787,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
-  driverGpsLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xxs,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxs,
-    backgroundColor: colors.neutral.surfaceMuted,
-    borderRadius: radius.pill,
-  },
-  driverGpsLinkText: {
-    color: customerPalette.primary,
-    ...typeScale.caption1,
-    fontWeight: '600',
-  },
   driverAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: customerPalette.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1781,30 +1882,76 @@ const styles = StyleSheet.create({
     color: colors.warning.text,
     flexShrink: 1,
   },
-  mediaGrid: {
+  cargoMediaSection: {
+    marginTop: spacing.xxs,
+    gap: spacing.xs,
+  },
+  cargoMediaHeader: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  mediaTile: {
-    backgroundColor: colors.neutral.canvas,
-    borderColor: colors.neutral.border,
-    borderRadius: radius.control,
+  cargoMediaTitle: {
+    color: colors.neutral.text,
+    ...typeScale.caption1,
+    fontWeight: '600',
+  },
+  mediaPreviewWrap: {
+    borderRadius: radius.cardSm,
     ...iosContinuousCurve,
-    borderWidth: StyleSheet.hairlineWidth,
-    flex: 1,
-    gap: spacing.sm,
+    overflow: 'hidden',
     minHeight: 100,
-    padding: spacing.sm,
   },
-  mediaIndex: {
-    color: customerPalette.primary,
+  podInlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+  },
+  podInlineBadgeText: {
+    color: colors.success.text,
     ...typeScale.caption2,
     fontWeight: '600',
   },
-  mediaLabel: {
-    color: colors.neutral.subtleText,
-    ...typeScale.caption1,
+  podDeliveredBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.success.background,
+    borderColor: colors.success.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.cardSm,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  podCheckCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.neutral.surface,
+    borderColor: colors.success.border,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  podTextWrap: {
+    flex: 1,
+    gap: 1,
+  },
+  podTitle: {
+    color: colors.success.text,
+    ...typeScale.footnote,
     fontWeight: '600',
+  },
+  podSub: {
+    color: colors.neutral.mutedText,
+    ...typeScale.caption2,
   },
   paymentCardContent: {
     gap: spacing.sm,
@@ -2036,6 +2183,126 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     gap: spacing.sm,
     paddingTop: spacing.md,
+  },
+
+  // ─── Your Review Card (Inset Grouped) ────────────────────────
+  yourReviewCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    padding: spacing.md,
+    gap: spacing.sm,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)',
+    elevation: 1,
+  },
+  yourReviewHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  yourReviewTitle: {
+    color: customerPalette.textSlateDark,
+    ...typeScale.headline,
+    fontWeight: '600',
+  },
+  yourReviewRatingBadge: {
+    backgroundColor: '#FEF3C7',
+    borderColor: leopardPalette.accentYellow,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.hairline,
+  },
+  yourReviewRatingText: {
+    color: customerPalette.textSlateDark,
+    ...typeScale.caption1,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  yourReviewStarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  yourReviewStarsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  yourReviewEmotionText: {
+    color: customerPalette.textSlateDark,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  yourReviewTipBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+  },
+  yourReviewTipText: {
+    color: '#92400E',
+    ...typeScale.footnote,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  yourReviewQuoteBox: {
+    backgroundColor: customerPalette.canvas,
+    borderColor: customerPalette.cardBorder,
+    borderWidth: 1,
+    borderRadius: 10,
+    ...iosContinuousCurve,
+    padding: spacing.sm,
+  },
+  yourReviewQuoteText: {
+    color: customerPalette.textSlateDark,
+    ...typeScale.callout,
+    fontStyle: 'italic',
+  },
+
+  // ─── Delivery Rating Prompt Card ──────────────────────────────
+  deliveryRatingPromptCard: {
+    backgroundColor: customerPalette.surfaceWhite,
+    borderColor: 'rgba(11, 30, 66, 0.08)',
+    borderRadius: radius.cardLg,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.md,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.03)',
+    elevation: 1,
+  },
+  deliveryRatingPromptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  deliveryRatingPromptIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deliveryRatingPromptTextWrap: {
+    flex: 1,
+    gap: spacing.hairline,
+  },
+  deliveryRatingPromptTitle: {
+    color: customerPalette.textSlateDark,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  deliveryRatingPromptSubtitle: {
+    color: customerPalette.textSubtle,
+    ...typeScale.caption1,
   },
 
   // ─── Emil Kowalski Active State ───────────────────────────────

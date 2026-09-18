@@ -409,4 +409,69 @@ describe('CustomerOrderDetailScreen', () => {
       describeDriverPosition({ lat: 10.7, lng: 106.7 }, [{ id: 'a', name: 'A', label: 'A' }]),
     ).toBeNull();
   });
+
+  it("renders 'Đánh giá chuyến đi' action button when order is DELIVERED and unreviewed", async () => {
+    const onPrimaryAction = jest.fn();
+    const base = createCustomerDetailFixture('C-DETAIL-SUCCESS') as any;
+    const view = {
+      ...base,
+      order: {
+        ...base.order,
+        status: 'DELIVERED' as const,
+        review: null,
+      },
+      actions: [
+        {
+          id: 'rate-order',
+          label: 'Đánh giá chuyến đi',
+          emphasis: 'primary',
+        },
+      ],
+    };
+
+    const screen = await render(
+      <CustomerOrderDetailScreen onPrimaryAction={onPrimaryAction} view={view} />,
+    );
+
+    expect(
+      screen.getByText(
+        'Đơn hàng đã được giao thành công! Bạn có hài lòng với chuyến đi không?',
+      ),
+    ).toBeTruthy();
+    const rateBtn = screen.getByRole('button', { name: 'Đánh giá chuyến đi' });
+    expect(rateBtn).toBeTruthy();
+    await fireEvent.press(rateBtn);
+    expect(onPrimaryAction).toHaveBeenCalledWith('rate-order');
+    await screen.unmount();
+  });
+
+  it("renders 'Đánh giá của bạn' card with stars and comment when order.review is present", async () => {
+    const base = createCustomerDetailFixture('C-DETAIL-SUCCESS') as any;
+    const view = {
+      ...base,
+      order: {
+        ...base.order,
+        status: 'DELIVERED' as const,
+        review: {
+          id: 'review-1',
+          orderId: base.order.id,
+          rating: 5,
+          comment: 'Tài xế rất chu đáo',
+          tipVnd: 20000,
+          createdAt: '2026-09-18T10:00:00.000Z',
+        },
+      },
+      actions: [],
+    };
+
+    const screen = await render(<CustomerOrderDetailScreen view={view} />);
+
+    expect(screen.getByText('Đánh giá của bạn')).toBeTruthy();
+    expect(screen.getByText('5.0 ★')).toBeTruthy();
+    expect(screen.getByText('Tuyệt vời!')).toBeTruthy();
+    expect(screen.getByText('Tài xế rất chu đáo')).toBeTruthy();
+    expect(screen.getByText(/\+20\.000\s*đ/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Đánh giá chuyến đi' })).toBeNull();
+    await screen.unmount();
+  });
 });
