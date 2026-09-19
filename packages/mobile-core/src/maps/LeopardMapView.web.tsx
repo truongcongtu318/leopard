@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { LeopardMapMode, LeopardMapViewProps, MapCoordinate, MapStop, NearbyDriver } from './types';
 import { anchorRouteToTruck } from './map-geospatial';
 import { colors, customerPalette } from '../theme/tokens';
+import { RealInteractiveMap } from '../ui/RealInteractiveMap';
 
 const VIETMAP_DEFAULT_STYLE = 'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=';
 
@@ -501,27 +502,8 @@ export function buildVietmapHtml({
         }
       });
 
-      // 2. Upgrade to Vietmap vector style seamlessly in background if endpoint returns 200 OK
-      if (hasValidVietmapKey) {
-        fetch(vietmapStyleUrl)
-          .then(function(res) {
-            if (!res.ok) throw new Error('Vietmap style HTTP ' + res.status);
-            return res.json();
-          })
-          .then(function(styleJson) {
-            if (map && styleJson && styleJson.version) {
-              map.setStyle(styleJson);
-              map.once('style.load', function() {
-                if (lastRenderedRouteGeo) {
-                  renderRouteLine(lastRenderedRouteGeo);
-                }
-              });
-            }
-          })
-          .catch(function(err) {
-            console.warn('[LeopardMapView] Vietmap vector style unavailable, running on resilient basemap:', err.message);
-          });
-      }
+      // 2. High-availability reliable basemap is already loaded as defaultStyle with zero external dependency.
+      // (No remote styles.json fetch required, completely eliminating CORS 401 warnings on web).
 
       function updateMarkerZoomScale() {
         if (!map) return;
@@ -1235,7 +1217,9 @@ export function LeopardMapView({
   testID = 'leopard-map-view',
   style,
   interactive = true,
+  title,
   vietmapApiKey,
+  routeResolutionPolicy,
   routeCoords = [],
   routeSegments = [],
   nearbyDrivers = [],
@@ -1636,35 +1620,28 @@ export function LeopardMapView({
     );
   }
 
-  const isFullBleed = height === '100%';
-  const iframeKey = `leopard-map-${mode}-${origin?.coords?.lat ?? ''}-${origin?.coords?.lng ?? ''}-${destination?.coords?.lat ?? ''}-${destination?.coords?.lng ?? ''}-${routeCoords.length}-${routeSegments.length}-${Boolean(isPickupLeg)}`;
-
   return (
-    <View
-      accessibilityLabel="Bản đồ Vietmap Vector GL"
-      style={[
-        styles.container,
-        { height: height as any, borderRadius: isFullBleed ? 0 : 14 },
-        style,
-      ]}
+    <RealInteractiveMap
+      destination={destination}
+      height={height}
+      initialPinCoords={initialPinCoords}
+      interactive={interactive}
+      mode={mode as any}
+      nearbyDrivers={nearbyDrivers}
+      onLocationChange={onLocationChange}
+      origin={origin}
+      routeCoords={routeCoords as any}
+      routeResolutionPolicy={routeResolutionPolicy}
+      routeSegments={routeSegments}
+      stops={stops}
+      style={style}
       testID={testID}
-      {...({ 'data-testid': testID } as any)}
-    >
-      {React.createElement('iframe', {
-        key: iframeKey,
-        ref: iframeRef,
-        srcDoc: vietmapHtml,
-        'data-testid': `${testID}-iframe`,
-        style: {
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          borderRadius: isFullBleed ? 0 : 14,
-          display: 'block',
-        },
-        title: 'Bản đồ Vietmap Vector GL',
-      })}
-    </View>
+      title={title}
+      truckEtaLabel={truckEtaLabel}
+      truckEtaMinutes={truckEtaMinutes}
+      truckLocation={truckLocation}
+      vietmapApiKey={vietmapApiKey}
+    />
   );
 }
 

@@ -375,14 +375,17 @@ export function buildLeafletHtml({
     html, body, #map { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F1F5F9; }
     .leaflet-control-attribution { display: none !important; }
     
-    /* Pin Marker Styles */
+    /* Pin Marker Styles: Elegant A, B, C Destination Badges */
     .pin-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
-    .pin-pulse { position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(2, 132, 199, 0.28); animation: pinPulse 1.8s ease-out infinite; }
-    .pin-core { position: relative; width: 28px; height: 28px; border-radius: 50%; background: #0B1E42; border: 3px solid #FFFFFF; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.45); display: flex; align-items: center; justify-content: center; z-index: 2; }
-    .pin-core.origin { background: #16A34A; }
-    .pin-core.dest { background: #0B1E42; }
-    .pin-core.stop { background: #D97706; }
-    .pin-core.stop-pending { background: #D97706; }
+    .pin-pulse { position: absolute; width: 42px; height: 42px; border-radius: 50%; background: rgba(2, 132, 199, 0.28); animation: pinPulse 1.8s ease-out infinite; }
+    .pin-pulse.origin { background: rgba(16, 185, 129, 0.35); }
+    .pin-pulse.dest { background: rgba(239, 68, 68, 0.35); }
+    .pin-pulse.stop { background: rgba(245, 158, 11, 0.35); }
+    .pin-core { position: relative; width: 28px; height: 28px; border-radius: 50%; background: #0B1E42; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(11, 37, 69, 0.35); display: flex; align-items: center; justify-content: center; z-index: 2; font-weight: 800; font-size: 13px; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: -0.2px; }
+    .pin-core.origin { background: #10B981; }
+    .pin-core.dest { background: #EF4444; }
+    .pin-core.stop { background: #F59E0B; }
+    .pin-core.stop-pending { background: #F59E0B; }
     .pin-core.stop-arrived { background: #2563EB; }
     .pin-core.stop-in_service { background: #059669; }
     .pin-core.stop-completed { background: #64748B; opacity: 0.85; }
@@ -400,11 +403,6 @@ export function buildLeafletHtml({
     .nearby-driver-badge { position: relative; width: 32px; height: 32px; border-radius: 50%; background: #0B2545; border: 2.5px solid #F59E0B; box-shadow: 0 4px 10px rgba(11, 37, 69, 0.4); display: flex; align-items: center; justify-content: center; z-index: 2; font-size: 15px; }
     .nearby-driver-tag { margin-top: 3px; background: #0B2545; color: #F59E0B; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 8px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
 
-    /* Map Controls */
-    .map-action-bar { position: absolute; right: 12px; bottom: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
-    .map-btn { width: 34px; height: 34px; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: pointer; font-size: 16px; color: #0F172A; font-weight: bold; user-select: none; }
-    .map-btn:active { background: #F1F5F9; transform: scale(0.95); }
-
     @keyframes pinPulse {
       0% { transform: scale(0.4); opacity: 0.95; }
       100% { transform: scale(1.6); opacity: 0; }
@@ -413,11 +411,6 @@ export function buildLeafletHtml({
 </head>
 <body>
   <div id="map"></div>
-  <div class="map-action-bar">
-    <button class="map-btn" id="btn-zoom-in" title="Phóng to">+</button>
-    <button class="map-btn" id="btn-zoom-out" title="Thu nhỏ">−</button>
-    <button class="map-btn" id="btn-fit" title="Căn chỉnh lộ trình">⛶</button>
-  </div>
   <script>
     var config = ${pointsJson};
     var map = L.map('map', {
@@ -559,22 +552,24 @@ export function buildLeafletHtml({
       latlngs.push([o.lat, o.lng]);
       bounds.push([o.lat, o.lng]);
 
-      // Origin Marker
+      // Origin Marker (Điểm A)
       var origMarker = L.marker([o.lat, o.lng], {
-        icon: createPulseIcon('origin')
+        icon: createPulseIcon('origin', 'A')
       }).addTo(map);
-      if (config.origin.label) origMarker.bindPopup('<b>Điểm lấy:</b> ' + config.origin.label);
+      if (config.origin.label) origMarker.bindPopup('<b>Điểm lấy hàng (A):</b> ' + config.origin.label);
 
-      // Intermediate stops
+      // Intermediate stops (Điểm B1, B2...)
+      var stopCount = 0;
       if (config.stops && config.stops.length > 0) {
         config.stops.forEach(function(s, idx) {
           if (s.coords && !isNaN(s.coords.lat) && !isNaN(s.coords.lng)) {
+            stopCount++;
             latlngs.push([s.coords.lat, s.coords.lng]);
             bounds.push([s.coords.lat, s.coords.lng]);
             var seq = s.sequence != null ? s.sequence : (idx + 1);
             var progClass = s.progress ? 'stop-' + s.progress.toLowerCase() : '';
             var iconType = 'stop ' + progClass;
-            var numText = s.progress === 'COMPLETED' ? '✓' : seq.toString();
+            var numText = s.progress === 'COMPLETED' ? '✓' : (config.stops.length === 1 ? 'B' : 'B' + seq);
             var sm = L.marker([s.coords.lat, s.coords.lng], {
               icon: createPulseIcon(iconType, numText),
               title: 'Điểm dừng ' + seq + (s.progress ? ' (' + s.progress + ')' : '') + ': ' + (s.label || '')
@@ -590,11 +585,12 @@ export function buildLeafletHtml({
       latlngs.push([d.lat, d.lng]);
       bounds.push([d.lat, d.lng]);
 
-      // Destination Marker
+      // Destination Marker (Điểm B nếu không có stops trung gian, hoặc Điểm C nếu có stops)
+      var destLetter = stopCount > 0 ? 'C' : 'B';
       var destMarker = L.marker([d.lat, d.lng], {
-        icon: createPulseIcon('dest')
+        icon: createPulseIcon('dest', destLetter)
       }).addTo(map);
-      if (config.destination.label) destMarker.bindPopup('<b>Điểm giao:</b> ' + config.destination.label);
+      if (config.destination.label) destMarker.bindPopup('<b>Điểm giao hàng (' + destLetter + '):</b> ' + config.destination.label);
 
       var hasProvidedSegments = ${hasSegments ? 'true' : 'false'};
       var routeLayerGlow = null;
@@ -602,16 +598,16 @@ export function buildLeafletHtml({
 
       if (!hasProvidedSegments && config.routeResolutionPolicy !== 'PROVIDED_ONLY') {
         routeLayerGlow = L.polyline(latlngs, {
-          color: '#0B1E42',
-          weight: 8,
-          opacity: 0.28,
+          color: '#0B2545',
+          weight: 9,
+          opacity: 0.25,
           lineJoin: 'round',
           lineCap: 'round'
         }).addTo(map);
 
         routeLayer = L.polyline(latlngs, {
-          color: '#0B1E42',
-          weight: 4.5,
+          color: '#2563EB',
+          weight: 5,
           opacity: 0.95,
           lineJoin: 'round',
           lineCap: 'round'
@@ -621,15 +617,15 @@ export function buildLeafletHtml({
       function applyRouteCoords(coords) {
         if (!routeLayer) {
           routeLayerGlow = L.polyline(coords, {
-            color: '#0B1E42',
-            weight: 8,
-            opacity: 0.28,
+            color: '#0B2545',
+            weight: 9,
+            opacity: 0.25,
             lineJoin: 'round',
             lineCap: 'round'
           }).addTo(map);
           routeLayer = L.polyline(coords, {
-            color: '#0B1E42',
-            weight: 4.5,
+            color: '#2563EB',
+            weight: 5,
             opacity: 0.95,
             lineJoin: 'round',
             lineCap: 'round'
@@ -739,6 +735,18 @@ export function buildLeafletHtml({
           if (bounds.length > 0) {
             map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
           }
+        } else if (event.data.type === 'LEOPARD_MAP_RECENTER') {
+          if (typeof event.data.lat === 'number' && typeof event.data.lng === 'number') {
+            map.setView([event.data.lat, event.data.lng], event.data.zoom || 16, { animate: true });
+          } else if (truckMarker) {
+            map.setView(truckMarker.getLatLng(), 16, { animate: true });
+          } else if (bounds.length > 0) {
+            map.setView(bounds[0], 16, { animate: true });
+          }
+        } else if (event.data.type === 'LEOPARD_UPDATE_ORIGIN') {
+          if (typeof event.data.lat === 'number' && typeof event.data.lng === 'number') {
+            map.setView([event.data.lat, event.data.lng], 16, { animate: true });
+          }
         } else if (event.data.type === 'LEOPARD_MAP_SET_VIEW_MODE') {
           if (event.data.mode === 'overview') {
             if (bounds.length > 0) {
@@ -785,30 +793,6 @@ export function buildLeafletHtml({
       }
     }
 
-    var btnZoomIn = document.getElementById('btn-zoom-in');
-    if (btnZoomIn) {
-      btnZoomIn.addEventListener('click', function() {
-        map.zoomIn();
-      });
-    }
-
-    var btnZoomOut = document.getElementById('btn-zoom-out');
-    if (btnZoomOut) {
-      btnZoomOut.addEventListener('click', function() {
-        map.zoomOut();
-      });
-    }
-
-    var btnFit = document.getElementById('btn-fit');
-    if (btnFit) {
-      btnFit.addEventListener('click', function() {
-        if (bounds.length > 0) {
-          map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16 });
-        } else if (config.mode === 'pin') {
-          map.setView([config.pin.lat, config.pin.lng], 16);
-        }
-      });
-    }
   </script>
 </body>
 </html>`;

@@ -331,8 +331,8 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
 
     const screen = await render(<DriverOrderDetailScreen view={view} />);
 
-    // Should show the title for receipt
-    expect(screen.getByText('Biên bản đơn ORD-TERM-123')).toBeTruthy();
+    expect(screen.getByTestId('completed-order-detail-view')).toBeTruthy();
+    expect(screen.getAllByText('ORD-TERM-123').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('420.000 ₫')).toBeTruthy();
 
     // Should NOT render driver active bottom controls
@@ -390,6 +390,31 @@ describe('DriverOrderDetailScreen 4-stage Cockpit and e-POD', () => {
 
     await fireEvent.press(screen.getByTestId('btn-close-source-modal'));
     await waitFor(() => expect(screen.queryByTestId('proof-source-modal')).toBeNull());
+
+    await screen.unmount();
+  });
+
+  it('renders CompletedOrderDetailView when viewing DELIVERED cash order from history', async () => {
+    const base = createDriverDetailFixture('D-DETAIL-TERMINAL-DELIVERED') as DriverAssignedDetailView;
+    const view: DriverAssignedDetailView = {
+      ...base,
+      order: {
+        ...base.order,
+        status: 'DELIVERED',
+        reference: 'ORD-HIST-CASH',
+        paymentMethod: 'CASH',
+        paymentStatus: 'PENDING',
+        isCashConfirmed: false,
+      },
+      primaryTask: null,
+    };
+
+    const screen = await render(<DriverOrderDetailScreen fromHistory view={view} />);
+
+    // Should show CompletedOrderDetailView directly instead of CashCollectionReceiptView
+    expect(screen.getByTestId('completed-order-detail-view')).toBeTruthy();
+    expect(screen.getAllByText('ORD-HIST-CASH').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByTestId('cash-collection-container')).toBeNull();
 
     await screen.unmount();
   });

@@ -3,10 +3,13 @@ import { fireEvent, render } from '@testing-library/react-native';
 
 import { DriverHistoryScreen, type HistoryTripItem } from './DriverHistoryScreen';
 
+const mockPush = jest.fn();
+const mockBack = jest.fn();
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    back: jest.fn(),
+    push: mockPush,
+    back: mockBack,
   }),
 }));
 
@@ -156,6 +159,23 @@ describe('DriverHistoryScreen', () => {
 
     expect(screen.queryByText(/Người ký nhận/)).toBeNull();
     expect(screen.queryByText(/Thủ kho nhận hàng/)).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('navigates to order details with fromHistory param when trip card is pressed', async () => {
+    mockPush.mockClear();
+
+    const screen = await render(<DriverHistoryScreen items={fixtureItems} total={128} />);
+
+    const tripCard = screen.getByRole('button', { name: 'Chuyến xe LP-D-260815-001' });
+    expect(tripCard).toBeTruthy();
+    await fireEvent.press(tripCard);
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/orders/ord-001',
+      params: { fromHistory: '1' },
+    });
 
     await screen.unmount();
   });

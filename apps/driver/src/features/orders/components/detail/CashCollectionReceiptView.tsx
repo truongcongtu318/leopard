@@ -89,8 +89,8 @@ export function CashCollectionReceiptView({
         disabled={isConfirmingCash}
         label={
           isConfirmingCash
-            ? 'Đang ghi nhận thanh toán...'
-            : `Trượt xác nhận đã thu ${priceLabel}`
+            ? 'Đang ghi nhận...'
+            : 'Trượt để xác nhận'
         }
         onActionComplete={handleConfirmAction}
         testID="cash-collection-slider"
@@ -391,7 +391,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   scrollContent: {
-    paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xl * 2,
     gap: spacing.sm,

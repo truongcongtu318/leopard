@@ -6,8 +6,9 @@ import { ScreenScaffold, ScreenState } from '@leopard/mobile-core';
 
 export default function DriverOrderDetailPage() {
   const router = typeof useRouter === 'function' ? useRouter() : undefined;
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const params = useLocalSearchParams<{ id?: string | string[]; fromHistory?: string }>();
   const orderId = parseDriverOrderId(params?.id);
+  const fromHistory = params?.fromHistory === '1';
 
   if (!orderId) {
     return (
@@ -27,5 +28,10 @@ export default function DriverOrderDetailPage() {
     );
   }
 
-  return <DriverOrderDetailRuntime orderId={orderId} />;
+  return (
+    <DriverOrderDetailRuntime
+      {...(fromHistory ? { fromHistory: true } : {})}
+      orderId={orderId}
+    />
+  );
 }

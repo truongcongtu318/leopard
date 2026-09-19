@@ -209,7 +209,10 @@ export function DriverHistoryScreen({
                   accessibilityRole="button"
                   onPress={() => {
                     haptic.selection();
-                    router.push(`/orders/${item.id}`);
+                    router.push({
+                      pathname: `/orders/${item.id}`,
+                      params: { fromHistory: '1' },
+                    });
                   }}
                   style={({ pressed }) => (pressed ? styles.pressed : null)}
                 >

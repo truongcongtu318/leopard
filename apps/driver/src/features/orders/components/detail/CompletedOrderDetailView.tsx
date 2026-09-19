@@ -1,7 +1,9 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
+  IconCameraProof,
   IconCheck,
+  IconClose,
   IconOrders,
   IconRoute,
   IconSecurityShield,
@@ -20,10 +22,13 @@ import type { DriverAssignedDetailView } from '../../model';
 export type CompletedOrderDetailViewProps = Readonly<{
   view: DriverAssignedDetailView;
   onBack?: () => void;
+  fromHistory?: boolean;
 }>;
 
-export function CompletedOrderDetailView({ onBack, view }: CompletedOrderDetailViewProps) {
+export function CompletedOrderDetailView({ fromHistory, onBack, view }: CompletedOrderDetailViewProps) {
   const { order, proof } = view;
+  const [showEpodModal, setShowEpodModal] = useState(false);
+
   const hasProof = Boolean(
     proof && (proof.kind === 'persisted' || proof.fileLabel || proof.mediaId),
   );
@@ -33,17 +38,20 @@ export function CompletedOrderDetailView({ onBack, view }: CompletedOrderDetailV
     if (onBack) onBack();
   };
 
+  const footerBtnText = fromHistory ? 'Quay lại' : 'Về trang chủ';
+
   const stickyFooterNode = (
     <Pressable
-      accessibilityLabel="Về trang chủ, sẵn sàng nhận đơn"
+      accessibilityLabel={footerBtnText}
       accessibilityRole="button"
       onPress={handleGoHome}
       style={({ pressed }) => [
         styles.primaryBtn,
         pressed ? styles.btnPressed : null,
       ]}
+      testID="btn-completed-order-action"
     >
-      <Text style={styles.primaryBtnText}>Về trang chủ, sẵn sàng nhận đơn</Text>
+      <Text style={styles.primaryBtnText}>{footerBtnText}</Text>
     </Pressable>
   );
 
@@ -52,7 +60,7 @@ export function CompletedOrderDetailView({ onBack, view }: CompletedOrderDetailV
       headerTone="plain"
       onBack={onBack}
       stickyFooter={stickyFooterNode}
-      title={`Biên bản đơn ${order.reference}`}
+      title={order.reference}
     >
       <View style={styles.container} testID="completed-order-detail-view">
         <ScrollView
@@ -170,20 +178,34 @@ export function CompletedOrderDetailView({ onBack, view }: CompletedOrderDetailV
                 </View>
               </View>
 
-              <View
-                accessibilityLabel="Ảnh chụp bàn giao kiện hàng"
-                style={styles.proofVerifiedRow}
+              <Pressable
+                accessibilityLabel="Xem ảnh chứng từ bàn giao"
+                accessibilityRole="button"
+                onPress={() => {
+                  driverHapticMatrix.selectionChanged();
+                  setShowEpodModal(true);
+                }}
+                style={({ pressed }) => [
+                  styles.proofVerifiedRow,
+                  pressed ? styles.pressedProofRow : null,
+                ]}
+                testID="btn-view-epod-proof"
               >
                 <View style={styles.checkIconSmall}>
-                  <IconCheck color="#15803D" size={13} strokeWidth={2.5} />
+                  <IconCameraProof color="#15803D" size={14} />
                 </View>
                 <View style={styles.proofTextCol}>
                   <Text style={styles.proofItemLabel}>Ảnh chứng từ bàn giao</Text>
                   <Text numberOfLines={1} style={styles.proofVerifiedText}>
-                    {proof.fileLabel || 'Đã lưu ảnh chứng từ giao hàng xác thực'}
+                    {proof.fileLabel && !proof.fileLabel.includes('-')
+                      ? proof.fileLabel
+                      : 'Chứng từ điện tử đã đối soát'}
                   </Text>
                 </View>
-              </View>
+                <View style={styles.viewBadgeBtn}>
+                  <Text style={styles.viewBadgeBtnText}>Xem ảnh</Text>
+                </View>
+              </Pressable>
 
               <View
                 accessibilityLabel="Chữ ký người nhận hàng"
@@ -202,6 +224,58 @@ export function CompletedOrderDetailView({ onBack, view }: CompletedOrderDetailV
             </View>
           ) : null}
         </ScrollView>
+
+        {/* Modal xem chi tiết e-POD */}
+        <Modal
+          animationType="fade"
+          onRequestClose={() => setShowEpodModal(false)}
+          transparent
+          visible={showEpodModal}
+        >
+          <Pressable
+            onPress={() => setShowEpodModal(false)}
+            style={styles.modalBackdrop}
+          >
+            <Pressable
+              onPress={(e) => e.stopPropagation()}
+              style={styles.modalSheet}
+              testID="epod-detail-modal"
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Chứng từ điện tử e-POD</Text>
+                <Pressable
+                  accessibilityLabel="Đóng"
+                  accessibilityRole="button"
+                  hitSlop={12}
+                  onPress={() => setShowEpodModal(false)}
+                >
+                  <IconClose color="#64748B" size={20} />
+                </Pressable>
+              </View>
+
+              <View style={styles.modalBody}>
+                <View style={styles.proofImageBox}>
+                  <Text style={styles.proofImageLabel}>Ảnh hạ tải tại điểm giao</Text>
+                  <View style={styles.proofPlaceholderImage}>
+                    <IconCameraProof color="#94A3B8" size={36} />
+                    <Text style={styles.proofWatermarkText}>
+                      LEOPARD e-POD · {order.reference}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.signatureBox}>
+                  <Text style={styles.proofImageLabel}>Chữ ký xác nhận nhận hàng</Text>
+                  <View style={styles.signatureCanvasPreview}>
+                    <Text style={styles.signaturePathPreview}>
+                      Đã ký điện tử xác thực
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </View>
     </ScreenScaffold>
   );
@@ -213,7 +287,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   scrollContent: {
-    paddingTop: spacing.xs,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.lg,
     gap: spacing.md,
   },
@@ -588,6 +662,99 @@ const styles = StyleSheet.create({
   btnPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.985 }],
+  },
+  pressedProofRow: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
+  },
+  viewBadgeBtn: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#86EFAC',
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    ...iosContinuousCurve,
+  },
+  viewBadgeBtnText: {
+    ...typeScale.caption2,
+    fontWeight: '700',
+    color: '#15803D',
+  },
+  modalBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  modalSheet: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.cardXl,
+    ...iosContinuousCurve,
+    gap: spacing.sm + 2,
+    maxWidth: 380,
+    padding: spacing.md + 4,
+    width: '100%',
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalTitle: {
+    color: '#0F172A',
+    ...typeScale.headline,
+    fontWeight: '700',
+  },
+  modalBody: {
+    gap: spacing.sm,
+  },
+  proofImageBox: {
+    gap: spacing.xxs + 2,
+  },
+  proofImageLabel: {
+    color: '#334155',
+    ...typeScale.caption1,
+    fontWeight: '600',
+  },
+  proofPlaceholderImage: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    gap: spacing.xxs + 2,
+    height: 120,
+    justifyContent: 'center',
+  },
+  proofWatermarkText: {
+    color: '#64748B',
+    ...typeScale.caption2,
+  },
+  signatureBox: {
+    gap: spacing.xxs + 2,
+  },
+  signatureCanvasPreview: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    borderWidth: 1,
+    height: 60,
+    justifyContent: 'center',
+  },
+  signaturePathPreview: {
+    color: '#64748B',
+    ...typeScale.caption1,
+    fontStyle: 'italic',
   },
 });
 

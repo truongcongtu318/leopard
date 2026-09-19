@@ -71,6 +71,7 @@ export type DriverOrderDetailScreenProps = Readonly<{
   ) => void | Promise<void>;
   inFlightStopCommand?: { stopId: string; step: string } | null;
   onBack?: () => void;
+  fromHistory?: boolean;
 }>;
 
 const CommandButton = memo(function CommandButton({
@@ -256,7 +257,7 @@ const TaskButton = memo(function TaskButton({
 });
 
 export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
-  const { view: directView, onBack } = props;
+  const { view: directView, onBack, fromHistory } = props;
   const [localIncidentOpen, setLocalIncidentOpen] = useState(false);
   const [showProofSourceModal, setShowProofSourceModal] = useState(false);
   const [sliderResetKey, setSliderResetKey] = useState(0);
@@ -508,20 +509,22 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
 
   // Terminal statuses without pending primary task (completed, returned, cancelled) show read-only receipt.
   // If there is still a pending action (e.g. advance to RETURNED), keep active view so driver can finish.
-  // For CASH orders at DELIVERED, driver must confirm cash collection before viewing the terminal completion receipt.
+  // For CASH orders at DELIVERED:
+  // - When opened from history (fromHistory === true), always display read-only completion receipt (CompletedOrderDetailView).
+  // - In live dispatch mode, driver must confirm cash collection before viewing the terminal completion receipt.
   const isTerminal =
     (view.order.status === 'DELIVERED' ||
       view.order.status === 'RETURNED' ||
       view.order.status === 'CANCELLED' ||
       view.order.status === 'INCIDENT_CANCELLED') &&
     !view.primaryTask &&
-    (!isCashOrder || isCashConfirmed || view.order.status !== 'DELIVERED');
+    (!isCashOrder || isCashConfirmed || Boolean(fromHistory) || view.order.status !== 'DELIVERED');
 
   if (isTerminal) {
-    return <CompletedOrderDetailView onBack={onBack} view={view} />;
+    return <CompletedOrderDetailView fromHistory={fromHistory} onBack={onBack} view={view} />;
   }
 
-  // Luồng chuẩn Grab Driver: Khi đơn hàng tiền mặt đã giao (DELIVERED) nhưng chưa xác nhận thu tiền mặt,
+  // Luồng chuẩn Grab Driver: Khi đơn hàng tiền mặt đã giao (DELIVERED) trong ca làm việc trực tiếp nhưng chưa xác nhận thu tiền mặt,
   // đơn hàng CHƯA XONG. Hiển thị trang thu tiền mặt chuyên biệt CashCollectionReceiptView.
   // Khi tài xế vuốt xác nhận thu tiền thành công, isCashConfirmed = true và hệ thống tự động
   // chuyển tiếp mượt mà sang CompletedOrderDetailView (Giao hàng thành công & Tổng thu nhập).
@@ -529,6 +532,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
     view.order.status === 'DELIVERED' &&
     isCashOrder &&
     !isCashConfirmed &&
+    !fromHistory &&
     !view.primaryTask
   ) {
     return (

@@ -236,7 +236,7 @@ describe('RealInteractiveMap — PROVIDED_ONLY route policy', () => {
     expect(html).toContain('.pin-core.stop-completed');
     expect(html).toContain('"progress":"IN_SERVICE"');
     expect(html).toContain('"progress":"COMPLETED"');
-    expect(html).toContain("s.progress === 'COMPLETED' ? '✓' : seq.toString()");
+    expect(html).toContain("s.progress === 'COMPLETED' ? '✓' :");
   });
 
   it('renders nearby driver markers in fallback view', async () => {

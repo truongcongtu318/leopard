@@ -18,9 +18,10 @@ import { useDriverOrderTracking } from './hooks/useDriverOrderTracking';
 
 export type DriverOrderDetailRuntimeProps = Readonly<{
   orderId: string;
+  fromHistory?: boolean;
 }>;
 
-export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimeProps) {
+export function DriverOrderDetailRuntime({ fromHistory, orderId }: DriverOrderDetailRuntimeProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const queryKey = driverQueryKeys.orderDetail(orderId);
@@ -125,6 +126,7 @@ export function DriverOrderDetailRuntime({ orderId }: DriverOrderDetailRuntimePr
   return (
     <>
       <DriverOrderDetailScreen
+        fromHistory={fromHistory}
         inFlightStopCommand={inFlightStopCommand}
         isConfirmingCash={isConfirmingCash}
         onBack={handleBack}

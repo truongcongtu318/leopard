@@ -54,9 +54,31 @@ describe('CompletedOrderDetailView', () => {
     const screen = await render(<CompletedOrderDetailView view={view} />);
 
     expect(screen.getByTestId('epod-saved-receipt')).toBeTruthy();
-    expect(screen.getByLabelText('Ảnh chụp bàn giao kiện hàng')).toBeTruthy();
+    expect(screen.getByLabelText('Xem ảnh chứng từ bàn giao')).toBeTruthy();
     expect(screen.getByLabelText('Chữ ký người nhận hàng')).toBeTruthy();
 
     await screen.unmount();
+  });
+
+  it('renders "Về trang chủ" for normal completion and "Quay lại" when fromHistory is true', async () => {
+    const base = createDriverDetailFixture('D-DETAIL-ACCEPTED') as DriverAssignedDetailView;
+    const view: DriverAssignedDetailView = {
+      ...base,
+      order: {
+        ...base.order,
+        status: 'DELIVERED',
+        reference: 'ORD-HISTORY-TEST',
+      },
+    };
+
+    // Default: Về trang chủ
+    const screenDefault = await render(<CompletedOrderDetailView view={view} />);
+    expect(screenDefault.getByText('Về trang chủ')).toBeTruthy();
+    await screenDefault.unmount();
+
+    // From history: Quay lại
+    const screenHistory = await render(<CompletedOrderDetailView fromHistory view={view} />);
+    expect(screenHistory.getByText('Quay lại')).toBeTruthy();
+    await screenHistory.unmount();
   });
 });

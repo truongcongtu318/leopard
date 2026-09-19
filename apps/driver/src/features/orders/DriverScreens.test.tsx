@@ -505,7 +505,7 @@ describe('DriverOrderDetailScreen', () => {
     expect(screen.getByTestId('completed-order-detail-view')).toBeTruthy();
     expect(screen.getByText('Giao hàng thành công!')).toBeTruthy();
     expect(screen.getByText('TỔNG THU NHẬP CỦA BẠN')).toBeTruthy();
-    expect(screen.getByText('Về trang chủ, sẵn sàng nhận đơn')).toBeTruthy();
+    expect(screen.getByText('Về trang chủ')).toBeTruthy();
 
     await screen.unmount();
   });
