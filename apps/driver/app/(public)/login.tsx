@@ -72,10 +72,11 @@ export default function DriverLoginRoute() {
   // unconditionally, as this route used to, would have kept production on the
   // demo OTP screen even with Firebase configured.
   const allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true';
+  const showCards = allowDemo && process.env.EXPO_PUBLIC_SHOW_DEMO_CARDS !== 'false';
 
   return (
     <DriverLoginScreen
-      allowDemo={allowDemo}
+      allowDemo={showCards}
       onLoginSuccess={handleLoginSuccess}
       {...(allowDemo
         ? {

@@ -20,6 +20,7 @@ ENV EXPO_PUBLIC_API_URL=/api/v1
 # the phone + demo-OTP flow. Inlined at build time, so a server-side env file
 # cannot override it.
 ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=true
+ENV EXPO_PUBLIC_SHOW_DEMO_CARDS=false
 ARG EXPO_PUBLIC_VIETMAP_API_KEY=""
 ENV EXPO_PUBLIC_VIETMAP_API_KEY=${EXPO_PUBLIC_VIETMAP_API_KEY}
 

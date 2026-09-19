@@ -25,6 +25,7 @@ ENV EXPO_PUBLIC_API_URL=/api/v1
 # demo OTP, which the gateway portal lists. Note this is inlined into the bundle
 # at build time by Expo — it cannot be changed by an env file on the server.
 ENV EXPO_PUBLIC_ALLOW_DEMO_AUTH=true
+ENV EXPO_PUBLIC_SHOW_DEMO_CARDS=false
 ARG EXPO_PUBLIC_VIETMAP_API_KEY=""
 ENV EXPO_PUBLIC_VIETMAP_API_KEY=${EXPO_PUBLIC_VIETMAP_API_KEY}
 
