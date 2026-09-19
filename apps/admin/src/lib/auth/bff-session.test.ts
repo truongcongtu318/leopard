@@ -63,6 +63,25 @@ describe("isSameOriginRequest behind a reverse proxy", () => {
     expect(isSameOriginRequest(request)).toBe(false);
   });
 
+  it("accepts HTTPS origin when edge proxy forwarded x-forwarded-proto as http", () => {
+    const request = proxiedRequest({
+      origin: "https://demo.example.com",
+      "x-forwarded-host": "demo.example.com",
+      "x-forwarded-proto": "http",
+    });
+
+    expect(isSameOriginRequest(request)).toBe(true);
+  });
+
+  it("accepts trycloudflare.com tunnel origins", () => {
+    const request = proxiedRequest({
+      origin: "https://letter-accurately-paragraphs-patches.trycloudflare.com",
+      host: "localhost:8888",
+    });
+
+    expect(isSameOriginRequest(request)).toBe(true);
+  });
+
   it("keeps a request whose origin matches the internal url", () => {
     const request = proxiedRequest({ origin: "http://admin:3002" });
 

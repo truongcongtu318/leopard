@@ -167,7 +167,19 @@ function requestOrigins(request: Request): string[] {
     request.headers.get("host")?.trim() ??
     null;
   if (forwardedHost) {
-    add(scheme ? `${scheme}://${forwardedHost}` : `https://${forwardedHost}`);
+    if (scheme) {
+      add(`${scheme}://${forwardedHost}`);
+    }
+    // Behind edge proxies and quick tunnels, SSL termination may mean the
+    // internal upstream sees http while the browser sees https (or vice-versa).
+    add(`https://${forwardedHost}`);
+    add(`http://${forwardedHost}`);
+
+    const hostWithoutPort = forwardedHost.split(":")[0];
+    if (hostWithoutPort !== forwardedHost) {
+      add(`https://${hostWithoutPort}`);
+      add(`http://${hostWithoutPort}`);
+    }
   }
 
   return origins;
@@ -177,12 +189,49 @@ export function isSameOriginRequest(request: Request): boolean {
   const allowedOrigins = requestOrigins(request);
 
   const origin = request.headers.get("origin");
-  if (origin) return allowedOrigins.includes(origin);
+  if (origin) {
+    if (allowedOrigins.includes(origin)) return true;
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.hostname.endsWith(".trycloudflare.com")) {
+        return true;
+      }
+      for (const allowed of allowedOrigins) {
+        try {
+          const allowedUrl = new URL(allowed);
+          if (originUrl.hostname === allowedUrl.hostname) {
+            return true;
+          }
+        } catch {
+          // ignore malformed allowed entry
+        }
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }
 
   const referer = request.headers.get("referer");
   if (referer) {
     try {
-      return allowedOrigins.includes(new URL(referer).origin);
+      const refererOrigin = new URL(referer).origin;
+      if (allowedOrigins.includes(refererOrigin)) return true;
+      const refererUrl = new URL(referer);
+      if (refererUrl.hostname.endsWith(".trycloudflare.com")) {
+        return true;
+      }
+      for (const allowed of allowedOrigins) {
+        try {
+          const allowedUrl = new URL(allowed);
+          if (refererUrl.hostname === allowedUrl.hostname) {
+            return true;
+          }
+        } catch {
+          // ignore malformed allowed entry
+        }
+      }
+      return false;
     } catch {
       return false;
     }
