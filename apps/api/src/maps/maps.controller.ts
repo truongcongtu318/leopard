@@ -94,7 +94,7 @@ const ROUTE_RATE_LIMITS: ReadonlyArray<{
   { method: 'GET', pathPrefix: '/maps/search', maxRequests: isProd ? 30 : 200 },
   { method: 'GET', pathPrefix: '/maps/geocode/', maxRequests: isProd ? 30 : 200 },
   { method: 'GET', pathPrefix: '/maps/nearby-drivers', maxRequests: isProd ? 60 : 200 },
-  { method: 'POST', pathPrefix: '/orders/estimate', maxRequests: isProd ? 10 : 200 },
+  { method: 'POST', pathPrefix: '/orders/estimate', maxRequests: isProd ? 60 : 200 },
 ];
 
 @Injectable()
