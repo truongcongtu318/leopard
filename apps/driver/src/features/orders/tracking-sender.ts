@@ -161,7 +161,11 @@ export class DriverTrackingSender {
     this.socketFactory = options.socketFactory;
     const rawServerUrl =
       options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
-    this.serverUrl = rawServerUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+    const stripped = rawServerUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+    this.serverUrl =
+      stripped === '' && typeof window !== 'undefined'
+        ? window.location.origin
+        : stripped;
     this.namespace = options.namespace ?? '/tracking';
     this.minIntervalMs = options.minIntervalMs ?? 5000;
     this.maxQueueSize = options.maxQueueSize ?? 50;

@@ -49,7 +49,11 @@ export class DispatchOfferListener {
     this.socketFactory = options.socketFactory ?? createSocketFactory;
     const rawServerUrl =
       options.serverUrl ?? process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
-    this.serverUrl = rawServerUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+    const stripped = rawServerUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+    this.serverUrl =
+      stripped === '' && typeof window !== 'undefined'
+        ? window.location.origin
+        : stripped;
     this.tokenProvider = options.tokenProvider ?? (() => sessionStore.getAccessToken());
     this.onOffer = options.onOffer;
   }
