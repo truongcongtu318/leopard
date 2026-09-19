@@ -202,12 +202,14 @@ export class PaymentsService {
           orderId,
           amountVnd: order.priceVnd ?? 0,
           status: 'UNPAID',
+          provider: 'LOCAL',
           clientRequestId,
         }, tx);
       }
 
       const updatedIntent = await this.paymentsRepo.updateStatus(intent.id, {
         status: 'PAID_MANUAL',
+        provider: 'LOCAL',
         confirmedById: actor.userId,
         confirmedAt: new Date(),
         confirmationNote: `Tài xế đã thu tiền mặt ${(order.priceVnd ?? 0).toLocaleString('vi-VN')} ₫ từ khách`,

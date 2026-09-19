@@ -293,6 +293,7 @@ describe('PaymentsService', () => {
           orderId: 'order1',
           amountVnd: 50000,
           status: 'UNPAID',
+          provider: 'LOCAL',
           clientRequestId: 'req1',
         },
         prisma,
