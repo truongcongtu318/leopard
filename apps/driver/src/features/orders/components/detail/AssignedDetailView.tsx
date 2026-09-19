@@ -299,27 +299,19 @@ export function AssignedDetailView({
               address already lives on the map HUD and cargo moved to the map
               header, so the sheet no longer repeats it. */}
 
-          {/* Thu tiền mặt (Cash on Delivery) khi đơn thanh toán CASH chuẩn Apple HIG */}
-          {isCashOrder && (view.order.status === 'IN_TRANSIT' || isTerminal) && (
+          {/* Thu tiền mặt (Cash on Delivery) khi đơn thanh toán CASH chuẩn Apple HIG: chỉ hiện khi đã tới điểm giao và chưa xác nhận thu tiền */}
+          {isCashOrder && !isCashConfirmed && (view.order.status === 'DELIVERED' || view.primaryTask?.command.targetStatus === 'DELIVERED') && (
             <View style={styles.appleActionSurfaceCard} testID="cash-collection-container">
               <View style={styles.appleCardHeaderRow}>
-                <View style={[styles.appleIconBadgeAmber, isCashConfirmed ? styles.appleIconBadgeSuccess : null]}>
-                  {isCashConfirmed ? (
-                    <IconCheck color="#15803D" size={20} strokeWidth={2.5} />
-                  ) : (
-                    <IconTxPayment color="#D97706" size={20} />
-                  )}
+                <View style={styles.appleIconBadgeAmber}>
+                  <IconTxPayment color="#D97706" size={20} />
                 </View>
                 <View style={styles.appleCardHeaderTextCol}>
                   <Text style={styles.appleCardTitle}>Thu tiền mặt (COD)</Text>
-                  <Text style={styles.appleCardSubtitle}>
-                    {isCashConfirmed ? 'Đã thu đủ tiền mặt' : 'Thu tiền mặt khi bàn giao'}
-                  </Text>
+                  <Text style={styles.appleCardSubtitle}>Thu tiền mặt khi bàn giao</Text>
                 </View>
-                <View style={[styles.appleBadgePending, isCashConfirmed ? styles.appleBadgeSuccess : null]}>
-                  <Text style={[styles.appleBadgePendingText, isCashConfirmed ? styles.appleBadgeSuccessText : null]}>
-                    {isCashConfirmed ? 'Đã thu COD' : 'Chưa thu COD'}
-                  </Text>
+                <View style={styles.appleBadgePending}>
+                  <Text style={styles.appleBadgePendingText}>Chưa thu COD</Text>
                 </View>
               </View>
 
@@ -330,14 +322,7 @@ export function AssignedDetailView({
                 </Text>
               </View>
 
-              {isCashConfirmed ? (
-                <View style={styles.appleSuccessBanner} testID="cash-confirmed-notice">
-                  <IconCheck color="#15803D" size={16} strokeWidth={2.5} />
-                  <Text style={styles.appleSuccessBannerText}>
-                    Đã xác nhận thu đủ tiền mặt từ người nhận.
-                  </Text>
-                </View>
-              ) : onConfirmCashPayment ? (
+              {onConfirmCashPayment ? (
                 <Pressable
                   accessibilityRole="button"
                   disabled={isConfirmingCash}

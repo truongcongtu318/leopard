@@ -149,17 +149,102 @@ export class WithdrawalsRepository {
     driverId: string,
     page = 1,
     pageSize = 20,
-  ): Promise<{ items: WithdrawalRequest[]; total: number; page: number; pageSize: number; totalPages: number }> {
-    const skip = (page - 1) * pageSize;
-    const [items, total] = await Promise.all([
+  ): Promise<{ items: any[]; total: number; page: number; pageSize: number; totalPages: number }> {
+    const [withdrawals, deliveredOrders, deposits] = await Promise.all([
       this.prisma.withdrawalRequest.findMany({
         where: { driverId },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: pageSize,
       }),
-      this.prisma.withdrawalRequest.count({ where: { driverId } }),
+      this.prisma.order.findMany({
+        where: { driverId, status: 'DELIVERED' },
+        select: {
+          id: true,
+          priceVnd: true,
+          deliveredAt: true,
+          updatedAt: true,
+          paymentIntents: {
+            select: {
+              status: true,
+              confirmationNote: true,
+            },
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      }),
+      this.prisma.driverDeposit.findMany({
+        where: { driverId, status: 'COMPLETED' },
+      }),
     ]);
+
+    const txs: any[] = [];
+
+    for (const w of withdrawals) {
+      txs.push({
+        id: w.id,
+        type: 'WITHDRAWAL',
+        status: w.status,
+        amountVnd: w.amountVnd,
+        bankName: w.bankName,
+        bankAccountNumber: w.bankAccountNumber,
+        bankAccountName: w.bankAccountName,
+        createdAt: w.createdAt,
+        title: `Rút tiền về ${w.bankName ?? 'ngân hàng'}`,
+      });
+    }
+
+    for (const order of deliveredOrders) {
+      const price = order.priceVnd ?? 0;
+      const latestPayment = (order as any).paymentIntents?.[0];
+      const isCash = latestPayment?.confirmationNote?.includes('tiền mặt') || latestPayment?.status === 'PAID_MANUAL';
+      const shortId = order.id.slice(-6).toUpperCase();
+      const orderDate = order.deliveredAt ?? order.updatedAt;
+
+      if (isCash) {
+        txs.push({
+          id: `fee-${order.id}`,
+          type: 'PLATFORM_FEE',
+          status: 'APPROVED',
+          amountVnd: Math.round(price * 0.2),
+          bankName: null,
+          bankAccountNumber: null,
+          bankAccountName: null,
+          createdAt: orderDate,
+          title: `Phí hoa hồng đơn #${shortId} (thu tiền mặt)`,
+        });
+      } else {
+        txs.push({
+          id: `payout-${order.id}`,
+          type: 'ORDER_PAYOUT',
+          status: 'APPROVED',
+          amountVnd: Math.round(price * 0.8),
+          bankName: null,
+          bankAccountNumber: null,
+          bankAccountName: null,
+          createdAt: orderDate,
+          title: `Cước cuốc xe #${shortId}`,
+        });
+      }
+    }
+
+    for (const d of deposits) {
+      txs.push({
+        id: `dep-${d.id}`,
+        type: 'ORDER_PAYOUT',
+        status: 'APPROVED',
+        amountVnd: d.amountVnd,
+        bankName: null,
+        bankAccountNumber: null,
+        bankAccountName: null,
+        createdAt: d.completedAt ?? d.createdAt,
+        title: 'Nạp tiền vào ví tài xế',
+      });
+    }
+
+    txs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const total = txs.length;
+    const skip = (page - 1) * pageSize;
+    const items = txs.slice(skip, skip + pageSize);
 
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) || 0 };
   }

@@ -391,7 +391,7 @@ describe('DriverOrderDetailScreen', () => {
     await screen.unmount();
   });
 
-  it('shows confirmed status pill and hides action button when cash is already confirmed', async () => {
+  it('hides cash collection card when cash is already confirmed', async () => {
     const baseFixture = createDriverDetailFixture('D-DETAIL-READY-DELIVER') as any;
     const cashConfirmedView = {
       ...baseFixture,
@@ -408,9 +408,33 @@ describe('DriverOrderDetailScreen', () => {
       <DriverOrderDetailScreen view={cashConfirmedView} />,
     );
 
-    expect(screen.getByTestId('cash-collection-container')).toBeTruthy();
-    expect(screen.getAllByText('Đã thu COD').length).toBeGreaterThanOrEqual(1);
-    expect(screen.queryByTestId('btn-confirm-cash')).toBeNull();
+    expect(screen.queryByTestId('cash-collection-container')).toBeNull();
+
+    await screen.unmount();
+  });
+
+  it('does not render cash collection card prematurely while in transit before reaching dropoff', async () => {
+    const baseFixture = createDriverDetailFixture('D-DETAIL-IN-TRANSIT') as any;
+    const inTransitView = {
+      ...baseFixture,
+      primaryTask: {
+        kind: 'upload-proof',
+        command: { id: 'cmd-proof', label: 'Upload' },
+      },
+      order: {
+        ...baseFixture.order,
+        status: 'IN_TRANSIT',
+        paymentMethod: 'CASH',
+        paymentStatus: 'PENDING',
+        isCashConfirmed: false,
+      },
+    };
+
+    const screen = await render(
+      <DriverOrderDetailScreen view={inTransitView} />,
+    );
+
+    expect(screen.queryByTestId('cash-collection-container')).toBeNull();
 
     await screen.unmount();
   });

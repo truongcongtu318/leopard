@@ -118,6 +118,38 @@ describe('WithdrawalsRepository', () => {
     expect(page.items[0].amountVnd).toBe(2000); // most recently created first
   });
 
+  it('includes platform fee deduction item in transaction history for delivered CASH orders', async () => {
+    const { prisma, repo, driverId } = await setup();
+    const order = await prisma.order.create({
+      data: {
+        customerId: 'c-cash',
+        driverId,
+        status: 'DELIVERED',
+        priceVnd: 500000,
+      },
+    });
+    await prisma.paymentIntent.create({
+      data: {
+        orderId: order.id,
+        amountVnd: 500000,
+        status: 'PAID_MANUAL',
+        confirmationNote: 'Tài xế đã thu tiền mặt 500.000 ₫ từ khách',
+      },
+    });
+
+    const res = await repo.findDriverWithdrawalHistory(driverId, 1, 20);
+
+    expect(res.total).toBe(1);
+    expect(res.items[0]).toMatchObject({
+      id: `fee-${order.id}`,
+      type: 'PLATFORM_FEE',
+      status: 'APPROVED',
+      amountVnd: 100000, // 20% of 500,000
+    });
+    expect(res.items[0].title).toContain('Phí hoa hồng đơn');
+    expect(res.items[0].title).toContain('(thu tiền mặt)');
+  });
+
   it('includes the linked bank account from DriverProfile in the wallet summary', async () => {
     const { prisma, repo, driverId } = await setup();
     await prisma.order.create({ data: { customerId: 'c1', driverId, status: 'DELIVERED', priceVnd: 100000 } });

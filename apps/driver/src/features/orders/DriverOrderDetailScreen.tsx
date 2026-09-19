@@ -436,14 +436,21 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
     );
   }
 
+  const isCashOrder = view.order.paymentMethod === 'CASH';
+  const isCashConfirmed = Boolean(
+    view.order.isCashConfirmed || view.order.paymentStatus === 'PAID_MANUAL',
+  );
+
   // Terminal statuses without pending primary task (completed, returned, cancelled) show read-only receipt.
   // If there is still a pending action (e.g. advance to RETURNED), keep active view so driver can finish.
+  // For CASH orders at DELIVERED, driver must confirm cash collection before viewing the terminal completion receipt.
   const isTerminal =
     (view.order.status === 'DELIVERED' ||
       view.order.status === 'RETURNED' ||
       view.order.status === 'CANCELLED' ||
       view.order.status === 'INCIDENT_CANCELLED') &&
-    !view.primaryTask;
+    !view.primaryTask &&
+    (!isCashOrder || isCashConfirmed || view.order.status !== 'DELIVERED');
 
   if (isTerminal) {
     return <CompletedOrderDetailView onBack={onBack} view={view} />;
