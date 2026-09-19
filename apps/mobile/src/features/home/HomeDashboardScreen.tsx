@@ -963,7 +963,7 @@ export function HomeDashboardScreen({
         handleStyle={!isFullBookingMode ? styles.hiddenHandleArea : undefined}
         initialSnapIndex={hasSelectedDropoff ? 2 : 0}
         ref={bottomSheetRef}
-        snapPoints={[0.32, 0.65, 0.92]}
+        snapPoints={[0.40, 0.65, 0.92]}
         style={[
           styles.layer2BottomSheet,
           !isFullBookingMode && styles.layer2BottomSheetTransparent,

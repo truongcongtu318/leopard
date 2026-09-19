@@ -477,7 +477,7 @@ describe('HomeDashboardScreen', () => {
     await screen.unmount();
   });
 
-  it('implements 4-layer map-first architecture with GestureBottomSheet snap points [0.32, 0.65, 0.92]', async () => {
+  it('implements 4-layer map-first architecture with GestureBottomSheet snap points [0.40, 0.65, 0.92]', async () => {
     const screen = await render(
       <HomeDashboardScreen showFloatingNavBar />
     );
