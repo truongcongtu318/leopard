@@ -10,6 +10,7 @@ export interface MappedOrderStopResponse {
   contactName?: string | null;
   contactPhone?: string | null;
   note?: string | null;
+  progress?: string;
 }
 
 export interface MappedOrderStatusHistoryResponse {
@@ -75,6 +76,9 @@ export interface MappedOrderResponse {
   currentContact?: CurrentContactSummary;
   statusHistory?: MappedOrderStatusHistoryResponse[];
   media?: Array<{ id: string; type: string; createdAt: string }>;
+  paymentMethod?: string;
+  paymentStatus?: string | null;
+  isCashConfirmed?: boolean;
 }
 
 function maskPhone(phone: string | null | undefined): string | null {
@@ -192,6 +196,7 @@ export function mapOrderResponse(
       contactName: projectedName,
       contactPhone: projectedPhone,
       note: stop.note ?? null,
+      progress: (stop as any).progress ?? 'PENDING',
     };
   });
 
@@ -221,6 +226,16 @@ export function mapOrderResponse(
     cancelledAt: order.cancelledAt ? order.cancelledAt.toISOString() : null,
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
+    paymentMethod:
+      (order as any).paymentIntents?.[0]?.provider === 'LOCAL' ||
+      (order as any).paymentIntents?.[0]?.provider === 'CASH'
+        ? 'CASH'
+        : ((order.routeSnapshot as any)?.paymentMethod ?? 'CASH'),
+    paymentStatus: (order as any).paymentIntents?.[0]?.status ?? null,
+    isCashConfirmed: Boolean(
+      (order as any).paymentIntents?.[0]?.status === 'PAID_MANUAL' ||
+      (order as any).paymentIntents?.[0]?.status === 'SUCCEEDED',
+    ),
     ...(order.stops ? { stops: mappedStops } : {}),
     ...(order.stops && order.stops.length > 0 ? { currentContact } : {}),
     ...(order.statusHistory

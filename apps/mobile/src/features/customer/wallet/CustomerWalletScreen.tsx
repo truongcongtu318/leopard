@@ -3,11 +3,13 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
@@ -72,9 +74,37 @@ const filterTabs: readonly Readonly<{ id: EscrowFilterType; label: string }>[] =
   { id: 'REFUNDED', label: 'Hoàn cọc' },
 ];
 
+export interface CustomerWithdrawalItem {
+  id: string;
+  amountVnd: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  bankAccountName: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export interface CustomerWalletApiSummary {
+  refundableBalanceVnd: number;
+  totalHeldEscrowVnd: number;
+  cancelledPaidAmount: number;
+  pendingWithdrawalsVnd: number;
+  approvedWithdrawalsVnd: number;
+  withdrawalRequests: CustomerWithdrawalItem[];
+}
+
 export interface CustomerWalletScreenProps {
   ordersPort?: CustomerOrdersPort;
   fetchPaymentsForOrder?: (orderId: string) => Promise<PaymentIntentApiItem[]>;
+  fetchWalletSummary?: () => Promise<CustomerWalletApiSummary>;
+  requestWithdrawal?: (input: {
+    amountVnd: number;
+    bankName: string;
+    bankAccountNumber: string;
+    bankAccountName: string;
+  }) => Promise<any>;
 }
 
 export interface PaymentIntentApiItem {
@@ -89,13 +119,41 @@ export interface PaymentIntentApiItem {
 
 export function CustomerWalletScreen({
   fetchPaymentsForOrder,
+  fetchWalletSummary,
   ordersPort,
+  requestWithdrawal,
 }: CustomerWalletScreenProps = {}) {
   const router = useRouter();
   const port = useMemo(() => ordersPort ?? createCustomerHttpAdapter(), [ordersPort]);
   const [showBalance, setShowBalance] = useState(true);
   const [activeFilter, setActiveFilter] = useState<EscrowFilterType>('ALL');
-  const [activeActionModal, setActiveActionModal] = useState<'topup' | 'withdraw' | null>(null);
+  const [activeActionModal, setActiveActionModal] = useState<'withdraw' | 'policy' | null>(null);
+
+  // Withdrawal form state
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+
+  const {
+    data: walletSummary,
+    refetch: refetchWallet,
+  } = useQuery({
+    queryKey: ['customer', 'wallet', 'summary', fetchWalletSummary],
+    queryFn: async () => {
+      if (fetchWalletSummary) {
+        return fetchWalletSummary();
+      }
+      try {
+        const res = await httpClient.get<CustomerWalletApiSummary>('/customer/wallet');
+        return res;
+      } catch {
+        return null;
+      }
+    },
+  });
 
   const {
     data: escrowItems = [],
@@ -205,6 +263,87 @@ export function CustomerWalletScreen({
       .reduce((sum, item) => sum + item.amount, 0);
   }, [escrowItems]);
 
+  const refundableBalance = useMemo(() => {
+    if (walletSummary && typeof walletSummary.refundableBalanceVnd === 'number') {
+      return walletSummary.refundableBalanceVnd;
+    }
+    const cancelledPaid = escrowItems
+      .filter((item) => item.status === 'REFUNDED')
+      .reduce((sum, item) => sum + item.amount, 0);
+    return cancelledPaid;
+  }, [walletSummary, escrowItems]);
+
+  const totalHeldEscrow = useMemo(() => {
+    if (walletSummary && typeof walletSummary.totalHeldEscrowVnd === 'number') {
+      return walletSummary.totalHeldEscrowVnd;
+    }
+    return escrowItems
+      .filter((item) => item.status === 'HELD')
+      .reduce((sum, item) => sum + item.amount, 0);
+  }, [walletSummary, escrowItems]);
+
+  const withdrawalRequests = walletSummary?.withdrawalRequests ?? [];
+
+  const handleWithdrawSubmit = async () => {
+    const amount = parseInt(withdrawAmount.replace(/\D/g, ''), 10);
+    if (Number.isNaN(amount) || amount < 10000) {
+      setWithdrawError('Số tiền rút tối thiểu là 10.000 ₫');
+      return;
+    }
+    if (amount > refundableBalance) {
+      setWithdrawError(`Số tiền rút vượt quá số dư khả dụng (${formatVndPrice(refundableBalance)})`);
+      return;
+    }
+    if (!bankName.trim()) {
+      setWithdrawError('Vui lòng nhập tên ngân hàng');
+      return;
+    }
+    if (!bankAccountNumber.trim()) {
+      setWithdrawError('Vui lòng nhập số tài khoản ngân hàng');
+      return;
+    }
+    if (!bankAccountName.trim()) {
+      setWithdrawError('Vui lòng nhập tên chủ tài khoản');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setWithdrawError(null);
+      if (requestWithdrawal) {
+        await requestWithdrawal({
+          amountVnd: amount,
+          bankName: bankName.trim(),
+          bankAccountNumber: bankAccountNumber.trim(),
+          bankAccountName: bankAccountName.trim().toUpperCase(),
+        });
+      } else {
+        await httpClient.post('/customer/wallet/withdrawals', {
+          amountVnd: amount,
+          bankName: bankName.trim(),
+          bankAccountNumber: bankAccountNumber.trim(),
+          bankAccountName: bankAccountName.trim().toUpperCase(),
+        });
+      }
+      haptic.success();
+      Alert.alert(
+        'Đã gửi yêu cầu',
+        'Yêu cầu rút tiền hoàn cọc của bạn đã được gửi tới Admin để đối soát và chuyển khoản.',
+      );
+      setActiveActionModal(null);
+      setWithdrawAmount('');
+      setBankName('');
+      setBankAccountNumber('');
+      setBankAccountName('');
+      void refetchWallet();
+      void refetch();
+    } catch (err: any) {
+      setWithdrawError(err?.message || 'Không thể gửi yêu cầu rút tiền');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filteredItems = useMemo(() => {
     if (activeFilter === 'ALL') return escrowItems;
     return escrowItems.filter((item) => item.status === activeFilter);
@@ -251,7 +390,7 @@ export function CustomerWalletScreen({
         showsVerticalScrollIndicator={false}
         style={styles.scrollWrap}
       >
-        {/* 1. Thẻ Bento Số Dư Ví Chuẩn Apple Wallet (Midnight Navy #0B2545) */}
+        {/* 1. Thẻ Bento Ký Quỹ Hoàn Cọc Chuẩn Apple Wallet (Midnight Navy #0B2545) */}
         <Card style={styles.balanceCard}>
           {/* Header thẻ: Thương hiệu & Bảo chứng an toàn */}
           <View style={styles.cardTopRow}>
@@ -267,12 +406,12 @@ export function CustomerWalletScreen({
             </Badge>
           </View>
 
-          {/* Thân thẻ: Số dư lớn typeScale.largeTitle màu trắng font tabular-nums */}
+          {/* Thân thẻ: Số dư ký quỹ có thể rút lớn */}
           <View style={styles.balanceBody}>
-            <Text style={styles.balanceEyebrow}>Tổng tiền ký quỹ theo đơn</Text>
+            <Text style={styles.balanceEyebrow}>Ký quỹ chờ hoàn (Có thể rút)</Text>
             <View style={styles.amountRow}>
               <Text style={styles.balanceAmount}>
-                {showBalance ? formatVndPrice(totalEscrowed) : '•••••••• ₫'}
+                {showBalance ? formatVndPrice(refundableBalance) : '•••••••• ₫'}
               </Text>
               <Pressable
                 accessibilityLabel={showBalance ? 'Ẩn số tiền' : 'Hiện số tiền'}
@@ -294,34 +433,39 @@ export function CustomerWalletScreen({
                 )}
               </Pressable>
             </View>
+            <Text style={styles.subBalanceNote}>
+              Đang ký quỹ chuyến chạy: {formatVndPrice(totalHeldEscrow)}
+            </Text>
           </View>
 
-          {/* Các nút hành động Capsule nổi bật (Nạp tiền / Rút tiền) */}
+          {/* Các nút hành động Capsule (Chỉ Rút tiền & Quy chế - 2 chữ mỗi nút) */}
           <View style={styles.capsuleActionsRow}>
-            <Pressable
-              accessibilityLabel="Nạp tiền"
-              accessibilityRole="button"
-              onPress={() => {
-                haptic.light();
-                setActiveActionModal('topup');
-              }}
-              style={({ pressed }) => [
-                styles.topupCapsuleBtn,
-                pressed && styles.capsuleBtnPressed,
-              ]}
-            >
-              <View style={styles.capsuleIconBoxPrimary}>
-                <IconPlus color={customerPalette.primary} size={15} strokeWidth={2.5} />
-              </View>
-              <Text style={styles.topupCapsuleText}>Nạp tiền</Text>
-            </Pressable>
-
             <Pressable
               accessibilityLabel="Rút tiền"
               accessibilityRole="button"
               onPress={() => {
                 haptic.light();
+                setWithdrawError(null);
+                setWithdrawAmount(refundableBalance > 0 ? String(refundableBalance) : '');
                 setActiveActionModal('withdraw');
+              }}
+              style={({ pressed }) => [
+                styles.withdrawCapsuleBtnPrimary,
+                pressed && styles.capsuleBtnPressed,
+              ]}
+            >
+              <View style={styles.capsuleIconBoxPrimary}>
+                <IconTxRefund color={customerPalette.primary} size={15} />
+              </View>
+              <Text style={styles.withdrawCapsuleTextPrimary}>Rút tiền</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel="Quy chế"
+              accessibilityRole="button"
+              onPress={() => {
+                haptic.light();
+                setActiveActionModal('policy');
               }}
               style={({ pressed }) => [
                 styles.withdrawCapsuleBtn,
@@ -329,18 +473,18 @@ export function CustomerWalletScreen({
               ]}
             >
               <View style={styles.capsuleIconBoxGlass}>
-                <IconTxRefund color={customerPalette.surfaceWhite} size={15} />
+                <IconSecurityShield color={customerPalette.surfaceWhite} size={15} />
               </View>
-              <Text style={styles.withdrawCapsuleText}>Rút tiền</Text>
+              <Text style={styles.withdrawCapsuleText}>Quy chế</Text>
             </Pressable>
           </View>
 
-          {/* Footer thẻ: Thông tin đối soát VietQR & Số lượng đơn */}
+          {/* Footer thẻ: Chuyển khoản thủ công qua Admin */}
           <View style={styles.cardFooter}>
             <View style={styles.cardFooterLeft}>
               <IconQrPayment color="rgba(255, 255, 255, 0.85)" size={15} />
               <Text numberOfLines={1} style={styles.cardFooterNapas}>
-                Thanh toán an toàn qua VietQR
+                Chuyển khoản thủ công qua Admin
               </Text>
             </View>
             <View style={styles.cardFooterBadge}>
@@ -350,6 +494,89 @@ export function CustomerWalletScreen({
             </View>
           </View>
         </Card>
+
+        {/* 2. Mục: Yêu cầu rút tiền hoàn cọc (nếu có) */}
+        {withdrawalRequests.length > 0 && (
+          <View style={styles.historySection}>
+            <View style={styles.historyHeaderRow}>
+              <Text style={styles.sectionLabel}>
+                Yêu cầu rút tiền hoàn cọc ({withdrawalRequests.length})
+              </Text>
+            </View>
+            <View style={styles.insetGroupedCard}>
+              {withdrawalRequests.map((wr, idx) => {
+                const isLast = idx === withdrawalRequests.length - 1;
+                const isApproved = wr.status === 'APPROVED';
+                const isRejected = wr.status === 'REJECTED';
+                const isPending = wr.status === 'PENDING';
+
+                const statusLabel = isApproved
+                  ? 'ĐÃ HOÀN TIỀN'
+                  : isRejected
+                    ? 'BỊ TỪ CHỐI'
+                    : 'CHỜ CHUYỂN KHOẢN';
+
+                const badgeBg = isApproved
+                  ? colors.success.background
+                  : isRejected
+                    ? colors.danger.background
+                    : colors.warning.background;
+                const badgeColor = isApproved
+                  ? colors.success.text
+                  : isRejected
+                    ? colors.danger.text
+                    : colors.warning.text;
+                const badgeBorder = isApproved
+                  ? colors.success.border
+                  : isRejected
+                    ? colors.danger.border
+                    : colors.warning.border;
+
+                return (
+                  <View key={wr.id}>
+                    <View style={styles.insetRowItem}>
+                      <View style={styles.itemMainRow}>
+                        <View style={styles.leftCol}>
+                          <View style={[styles.txIconBox, { backgroundColor: customerPalette.accentBg }]}>
+                            <IconTxRefund color={customerPalette.accentText} size={18} />
+                          </View>
+                          <View style={styles.txMeta}>
+                            <Text numberOfLines={1} style={styles.txTitle}>
+                              Rút về {wr.bankName ?? 'Ngân hàng'}
+                            </Text>
+                            <Text style={styles.txDate}>
+                              STK: {wr.bankAccountNumber ?? '—'} · {wr.bankAccountName ?? '—'}
+                            </Text>
+                            {wr.reviewNote ? (
+                              <Text style={styles.reviewNoteText}>Ghi chú: {wr.reviewNote}</Text>
+                            ) : null}
+                          </View>
+                        </View>
+
+                        <View style={styles.rightCol}>
+                          <AppText style={[styles.txAmount, { color: colors.danger.text }]}>
+                            - {formatVndPrice(wr.amountVnd)}
+                          </AppText>
+                          <View
+                            style={[
+                              styles.statusBadge,
+                              { backgroundColor: badgeBg, borderColor: badgeBorder },
+                            ]}
+                          >
+                            <Text style={[styles.statusBadgeText, { color: badgeColor }]}>
+                              {statusLabel}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                    {!isLast && <View style={styles.insetSeparator} />}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* 2. Lịch Sử Biến Động Số Dư: Inset Grouped List chuẩn iOS Settings */}
         <View style={styles.historySection}>
@@ -469,42 +696,42 @@ export function CustomerWalletScreen({
                         pressed && styles.insetRowItemPressed,
                       ]}
                     >
-                      {/* Cột trái (flex: 1): Icon 36x36pt + Tiêu đề + Ngày/Mã đơn */}
-                      <View style={styles.leftCol}>
-                        <View
-                          style={[
-                            styles.txIconBox,
-                            isRefund ? styles.txIconBoxRefund : styles.txIconBoxPayment,
-                          ]}
-                        >
-                          {isRefund ? (
-                            <IconTxRefund color={colors.success.text} size={18} />
-                          ) : (
-                            <IconTxPayment color={customerPalette.primary} size={18} />
-                          )}
-                        </View>
+                      <View style={styles.itemMainRow}>
+                        {/* Cột trái (flex: 1): Icon 36x36pt + Tiêu đề + Ngày/Mã đơn */}
+                        <View style={styles.leftCol}>
+                          <View
+                            style={[
+                              styles.txIconBox,
+                              isRefund ? styles.txIconBoxRefund : styles.txIconBoxPayment,
+                            ]}
+                          >
+                            {isRefund ? (
+                              <IconTxRefund color={colors.success.text} size={18} />
+                            ) : (
+                              <IconTxPayment color={customerPalette.primary} size={18} />
+                            )}
+                          </View>
 
-                        <View style={styles.txMeta}>
-                          <Text numberOfLines={1} style={styles.txTitle}>
-                            {item.title}
-                          </Text>
-                          <View style={styles.txSubRow}>
-                            <Text style={styles.txDate}>{item.createdAtLabel}</Text>
-                            <View style={styles.orderRefBadge}>
-                              <Text style={styles.orderRefBadgeText}>
-                                {item.orderReference}
-                              </Text>
+                          <View style={styles.txMeta}>
+                            <Text numberOfLines={1} style={styles.txTitle}>
+                              {item.title}
+                            </Text>
+                            <View style={styles.txSubRow}>
+                              <Text style={styles.txDate}>{item.createdAtLabel}</Text>
+                              <View style={styles.orderRefBadge}>
+                                <Text style={styles.orderRefBadgeText}>
+                                  {item.orderReference}
+                                </Text>
+                              </View>
                             </View>
                           </View>
                         </View>
-                      </View>
 
-                      {/* Cột phải (alignItems: 'flex-end'): Số tiền cước + Status / Action Pill */}
-                      <View style={styles.rightCol}>
-                        <AppText style={styles.txAmount}>
-                          {formatVndPrice(item.amount)}
-                        </AppText>
-                        <View style={styles.statusActionRow}>
+                        {/* Cột phải (alignItems: 'flex-end'): Số tiền cước + Status Badge */}
+                        <View style={styles.rightCol}>
+                          <AppText style={styles.txAmount}>
+                            {formatVndPrice(item.amount)}
+                          </AppText>
                           <View
                             style={[
                               styles.statusBadge,
@@ -523,27 +750,33 @@ export function CustomerWalletScreen({
                               {item.statusLabel}
                             </Text>
                           </View>
-
-                          {canPayNow ? (
-                            <Pressable
-                              accessibilityLabel={`Thanh toán ngay cho đơn ${item.orderReference}`}
-                              accessibilityRole="button"
-                              hitSlop={hitSlop(28, 44)}
-                              onPress={(e) => {
-                                haptic.light();
-                                router.push(`/customer/orders/checkout/${item.orderId}`);
-                              }}
-                              style={({ pressed }) => [
-                                styles.payNowPill,
-                                pressed && styles.payNowPillPressed,
-                              ]}
-                            >
-                              <IconQrPayment color={customerPalette.surfaceWhite} size={12} />
-                              <Text style={styles.payNowPillText}>Thanh toán ngay</Text>
-                            </Pressable>
-                          ) : null}
                         </View>
                       </View>
+
+                      {/* Hàng hành động riêng biệt bên dưới cho đơn chờ thanh toán */}
+                      {canPayNow ? (
+                        <View style={styles.actionRowBottom}>
+                          <View style={styles.actionPromptBox}>
+                            <Text style={styles.actionPromptText}>Ký quỹ để tìm tài xế</Text>
+                          </View>
+                          <Pressable
+                            accessibilityLabel={`Thanh toán ngay cho đơn ${item.orderReference}`}
+                            accessibilityRole="button"
+                            hitSlop={hitSlop(28, 44)}
+                            onPress={() => {
+                              haptic.light();
+                              router.push(`/customer/orders/checkout/${item.orderId}`);
+                            }}
+                            style={({ pressed }) => [
+                              styles.payNowPill,
+                              pressed && styles.payNowPillPressed,
+                            ]}
+                          >
+                            <IconQrPayment color={customerPalette.surfaceWhite} size={13} />
+                            <Text style={styles.payNowPillText}>Thanh toán ngay</Text>
+                          </Pressable>
+                        </View>
+                      ) : null}
                     </Pressable>
 
                     {/* Hairline Inset Divider (thụt lề 56pt chuẩn iOS Settings) */}
@@ -556,7 +789,7 @@ export function CustomerWalletScreen({
         </View>
       </ScrollView>
 
-      {/* Modal hướng dẫn Nạp tiền / Rút tiền */}
+      {/* Modal Rút tiền & Quy chế hoàn cọc */}
       <Modal
         animationType="fade"
         onRequestClose={() => setActiveActionModal(null)}
@@ -567,7 +800,7 @@ export function CustomerWalletScreen({
           <View style={styles.actionModalCard}>
             <View style={styles.modalHeaderRow}>
               <Text style={styles.modalHeaderTitle}>
-                {activeActionModal === 'topup' ? 'Nạp tiền ký quỹ' : 'Rút tiền ký quỹ'}
+                {activeActionModal === 'withdraw' ? 'Rút tiền hoàn cọc' : 'Quy chế hoàn cọc'}
               </Text>
               <Pressable
                 accessibilityLabel="Đóng"
@@ -580,34 +813,118 @@ export function CustomerWalletScreen({
             </View>
 
             <View style={styles.modalContentBody}>
-              {activeActionModal === 'topup' ? (
-                <>
-                  <View style={styles.modalIconWrap}>
-                    <IconQrPayment color={customerPalette.primary} size={36} />
+              {activeActionModal === 'withdraw' ? (
+                refundableBalance <= 0 ? (
+                  <>
+                    <View style={[styles.modalIconWrap, styles.modalIconWrapGreen]}>
+                      <IconSecurityShield color={colors.success.text} size={36} />
+                    </View>
+                    <Text style={styles.modalBodyTitle}>Chưa có số dư chờ hoàn</Text>
+                    <Text style={styles.modalBodyDesc}>
+                      Hiện tại bạn không có khoản tiền ký quỹ nào chờ hoàn. Khi đơn hàng có ký quỹ bị hủy hoặc không tìm được xe, tiền cước sẽ tự động chuyển vào số dư này để bạn rút về tài khoản ngân hàng.
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setActiveActionModal(null)}
+                      style={styles.modalPrimaryBtn}
+                    >
+                      <Text style={styles.modalPrimaryBtnText}>Đã hiểu</Text>
+                    </Pressable>
+                  </>
+                ) : (
+                  <View style={styles.formWrap}>
+                    <View style={styles.availableBalanceBox}>
+                      <Text style={styles.availableBalanceLabel}>Số dư có thể rút:</Text>
+                      <Text style={styles.availableBalanceValue}>{formatVndPrice(refundableBalance)}</Text>
+                    </View>
+
+                    <View style={styles.formGroup}>
+                      <View style={styles.formLabelRow}>
+                        <Text style={styles.formLabel}>Số tiền rút (₫)</Text>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => setWithdrawAmount(String(refundableBalance))}
+                        >
+                          <Text style={styles.maxAmountText}>Rút hết</Text>
+                        </Pressable>
+                      </View>
+                      <TextInput
+                        keyboardType="numeric"
+                        onChangeText={setWithdrawAmount}
+                        placeholder="Tối thiểu 10.000 ₫"
+                        placeholderTextColor={customerPalette.textSubtle}
+                        style={styles.formInput}
+                        value={withdrawAmount}
+                      />
+                    </View>
+
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Ngân hàng thụ hưởng</Text>
+                      <TextInput
+                        onChangeText={setBankName}
+                        placeholder="VD: Vietcombank, MB Bank, v.v."
+                        placeholderTextColor={customerPalette.textSubtle}
+                        style={styles.formInput}
+                        value={bankName}
+                      />
+                    </View>
+
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Số tài khoản ngân hàng</Text>
+                      <TextInput
+                        keyboardType="numeric"
+                        onChangeText={setBankAccountNumber}
+                        placeholder="Nhập số tài khoản"
+                        placeholderTextColor={customerPalette.textSubtle}
+                        style={styles.formInput}
+                        value={bankAccountNumber}
+                      />
+                    </View>
+
+                    <View style={styles.formGroup}>
+                      <Text style={styles.formLabel}>Tên chủ tài khoản</Text>
+                      <TextInput
+                        autoCapitalize="characters"
+                        onChangeText={setBankAccountName}
+                        placeholder="TÊN CHỦ TÀI KHOẢN (IN HOA)"
+                        placeholderTextColor={customerPalette.textSubtle}
+                        style={styles.formInput}
+                        value={bankAccountName}
+                      />
+                    </View>
+
+                    {withdrawError ? (
+                      <Text style={styles.errorBannerText}>{withdrawError}</Text>
+                    ) : null}
+
+                    <Text style={styles.withdrawNoteText}>
+                      Admin sẽ kiểm tra đối soát và chuyển khoản thủ công cho bạn trong vòng 24 giờ làm việc.
+                    </Text>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={isSubmitting}
+                      onPress={handleWithdrawSubmit}
+                      style={[styles.modalPrimaryBtn, isSubmitting && styles.btnDisabled]}
+                    >
+                      {isSubmitting ? (
+                        <ActivityIndicator color={customerPalette.surfaceWhite} size="small" />
+                      ) : (
+                        <Text style={styles.modalPrimaryBtnText}>Gửi yêu cầu rút tiền</Text>
+                      )}
+                    </Pressable>
                   </View>
-                  <Text style={styles.modalBodyTitle}>Nạp tiền tự động qua VietQR</Text>
-                  <Text style={styles.modalBodyDesc}>
-                    Hệ thống ký quỹ LEOPARD Escrow tự động gạch nợ tức thì khi bạn thanh toán cước chuyến đi qua VietQR Napas 24/7.
-                  </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setActiveActionModal(null);
-                      router.push('/customer/orders/new');
-                    }}
-                    style={styles.modalPrimaryBtn}
-                  >
-                    <Text style={styles.modalPrimaryBtnText}>Tạo đơn & Ký quỹ</Text>
-                  </Pressable>
-                </>
+                )
               ) : (
                 <>
                   <View style={[styles.modalIconWrap, styles.modalIconWrapGreen]}>
                     <IconSecurityShield color={colors.success.text} size={36} />
                   </View>
-                  <Text style={styles.modalBodyTitle}>Hoàn cọc bảo đảm 100%</Text>
+                  <Text style={styles.modalBodyTitle}>Bảo đảm ký quỹ 100%</Text>
                   <Text style={styles.modalBodyDesc}>
-                    Khoản tiền ký quỹ sẽ được tự động hoàn về tài khoản ngân hàng của bạn trong vòng 2 phút khi đơn hàng bị hủy hoặc không tìm được xe phù hợp.
+                    1. Khách hàng thanh toán ký quỹ qua VietQR khi đặt xe để bảo đảm cước an toàn 100%.
+                    {'\n'}2. Khi đơn hàng bị hủy hoặc không tìm được tài xế, toàn bộ tiền cước sẽ được hoàn trả vào 'Số dư ký quỹ chờ hoàn'.
+                    {'\n'}3. Bạn bấm 'Rút tiền hoàn cọc', nhập STK để gửi yêu cầu. Admin sẽ đối soát và chuyển khoản thủ công về tài khoản của bạn.
                   </Text>
                   <Pressable
                     accessibilityRole="button"
@@ -964,17 +1281,20 @@ const styles = StyleSheet.create({
     backgroundColor: customerPalette.surfaceWhite,
   },
   insetRowItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    gap: spacing.sm,
   },
   insetRowItemPressed: {
     backgroundColor: 'rgba(11, 37, 69, 0.04)',
     transform: [{ scale: 0.99 }],
     opacity: 0.96,
+  },
+  itemMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    width: '100%',
   },
   leftCol: {
     flex: 1,
@@ -1043,11 +1363,6 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.2,
   },
-  statusActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -1058,14 +1373,32 @@ const styles = StyleSheet.create({
     ...typeScale.caption2,
     fontWeight: '700',
   },
+  actionRowBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: customerPalette.cardBorder,
+  },
+  actionPromptBox: {
+    flex: 1,
+    paddingRight: spacing.sm,
+  },
+  actionPromptText: {
+    ...typeScale.caption2,
+    color: colors.warning.text,
+    fontWeight: '600',
+  },
   payNowPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 6,
     backgroundColor: customerPalette.primary,
-    height: 28,
-    paddingHorizontal: 10,
+    height: 30,
+    paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
     ...iosContinuousCurve,
     shadowColor: customerPalette.primary,
@@ -1174,5 +1507,109 @@ const styles = StyleSheet.create({
     color: customerPalette.surfaceWhite,
     ...typeScale.subheadline,
     fontWeight: '700',
+  },
+  withdrawCapsuleBtnPrimary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: customerPalette.surfaceWhite,
+    borderRadius: radius.pill,
+    height: 44,
+    paddingHorizontal: spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  withdrawCapsuleTextPrimary: {
+    color: customerPalette.primary,
+    ...typeScale.subheadline,
+    fontWeight: '700',
+  },
+  subBalanceNote: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    ...typeScale.caption2,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  formWrap: {
+    gap: spacing.sm,
+    width: '100%',
+  },
+  availableBalanceBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: customerPalette.accentBg,
+    borderColor: customerPalette.accentBorder,
+    borderWidth: 1,
+    borderRadius: radius.cardSm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  availableBalanceLabel: {
+    ...typeScale.footnote,
+    color: customerPalette.textSlateDark,
+    fontWeight: '600',
+  },
+  availableBalanceValue: {
+    ...typeScale.subheadline,
+    color: customerPalette.accentText,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  formGroup: {
+    gap: spacing.xxs,
+  },
+  formLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  formLabel: {
+    ...typeScale.caption1,
+    color: customerPalette.textSlateDark,
+    fontWeight: '600',
+  },
+  maxAmountText: {
+    ...typeScale.caption1,
+    color: customerPalette.primary,
+    fontWeight: '700',
+  },
+  formInput: {
+    height: 44,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: customerPalette.cardBorder,
+    backgroundColor: customerPalette.canvas,
+    paddingHorizontal: spacing.sm,
+    ...typeScale.subheadline,
+    color: customerPalette.textSlateDark,
+    ...iosContinuousCurve,
+  },
+  errorBannerText: {
+    ...typeScale.caption1,
+    color: colors.danger.text,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  withdrawNoteText: {
+    ...typeScale.caption2,
+    color: customerPalette.textSubtle,
+    lineHeight: 16,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  btnDisabled: {
+    opacity: 0.6,
+  },
+  reviewNoteText: {
+    ...typeScale.caption2,
+    color: colors.info.text,
+    marginTop: 2,
   },
 });

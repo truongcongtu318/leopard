@@ -47,6 +47,11 @@ type StatusPresentationCatalog = Readonly<{
 
 const statusPresentations: StatusPresentationCatalog = {
   order: {
+    PENDING_PAYMENT: {
+      accessibilityPrefix: 'Trạng thái đơn',
+      colorRole: 'neutral',
+      label: 'Chờ thanh toán',
+    },
     REQUESTED: {
       accessibilityPrefix: 'Trạng thái đơn',
       colorRole: 'info',
@@ -169,6 +174,7 @@ const statusPresentations: StatusPresentationCatalog = {
 };
 
 const legacyStatusDomains: Readonly<Record<LegacyStatus, StatusDomain>> = {
+  PENDING_PAYMENT: 'order',
   REQUESTED: 'order',
   ACCEPTED: 'order',
   PICKING_UP: 'order',

@@ -65,4 +65,31 @@ describe('WithdrawalsScreen', () => {
     expect(postSpy).not.toHaveBeenCalled();
     expect(screen.getByText('Lý do phải từ 5 ký tự trở lên')).toBeTruthy();
   });
+
+  it('opens VietQR modal with transfer details and allows fast-forward to approve', async () => {
+    render(<WithdrawalsScreen />);
+    await waitFor(() => expect(screen.getByText('500.000 ₫')).toBeTruthy());
+
+    // Click "Mã VietQR" button
+    fireEvent.click(screen.getByRole('button', { name: /Mã VietQR/i }));
+
+    expect(screen.getByText('Mã VietQR chuyển khoản')).toBeTruthy();
+    expect(screen.getByAltText('Mã VietQR chuyển khoản')).toBeTruthy();
+
+    // Click "Đã chuyển, duyệt ngay"
+    fireEvent.click(screen.getByRole('button', { name: 'Đã chuyển, duyệt ngay' }));
+
+    // Review dialog should open with prefilled note
+    await waitFor(() => expect(screen.getByText('Xác nhận duyệt rút tiền')).toBeTruthy());
+    expect(screen.getByDisplayValue('Đã quét VietQR chuyển khoản')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
+
+    await waitFor(() =>
+      expect(postSpy).toHaveBeenCalledWith(
+        '/admin/withdrawals/wr-1/approve',
+        expect.objectContaining({ note: 'Đã quét VietQR chuyển khoản' }),
+      ),
+    );
+  });
 });

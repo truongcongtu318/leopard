@@ -20,6 +20,7 @@ import { useLiveTruckLocation } from '../../use-live-truck-location';
 import { postMapMessageToFrames } from '@leopard/mobile-core';
 import { MissionMapCanvas } from './MissionMapCanvas';
 import { VerticalRouteStepper } from './VerticalRouteStepper';
+import { MultiStopProgressHeader } from './MultiStopProgressHeader';
 import { CompletionSummaryCard } from './CompletionSummaryCard';
 import { DriverMissionBackButton } from './DriverMissionBackButton';
 import { DriverMissionActionBar } from './DriverMissionActionBar';
@@ -63,9 +64,15 @@ export function AssignedDetailView({
   const [isMapOffCenter, setIsMapOffCenter] = useState(false);
   const [navMode, setNavMode] = useState<'overview' | 'turn-by-turn'>('overview');
 
+  const isCashOrder = view.order.paymentMethod === 'CASH';
+  const isCashConfirmed = Boolean(
+    view.order.isCashConfirmed || view.order.paymentStatus === 'PAID_MANUAL',
+  );
   const isPickupLeg = view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
   const isReturning = view.order.status === 'RETURNING';
-  const isTerminal = view.order.status === 'DELIVERED' || view.order.status === 'RETURNED';
+  const isTerminal =
+    (view.order.status === 'DELIVERED' || view.order.status === 'RETURNED') &&
+    (!isCashOrder || isCashConfirmed || view.order.status !== 'DELIVERED');
 
   // Live GPS feed. The marker is only drawn when a real fix exists — a missing
   // fix must never be replaced by an invented coordinate, or the map would show
@@ -145,19 +152,29 @@ export function AssignedDetailView({
   const mapOrigin = pickupPoint;
   const mapDestination = deliveryPoint;
 
-  const activeNavigationTarget = React.useMemo(
-    () => (isReturning || isPickupLeg ? pickupPoint : deliveryPoint),
-    [deliveryPoint, isPickupLeg, isReturning, pickupPoint],
-  );
+  const nextUnfinishedStop = React.useMemo(() => {
+    if (isPickupLeg || isReturning) return null;
+    return view.order.route.stops.find((s) => s.progress !== 'COMPLETED');
+  }, [isPickupLeg, isReturning, view.order.route.stops]);
+
+  const activeNavigationTarget = React.useMemo(() => {
+    if (isReturning || isPickupLeg) return pickupPoint;
+    if (nextUnfinishedStop && nextUnfinishedStop.lat != null && nextUnfinishedStop.lng != null) {
+      return {
+        id: nextUnfinishedStop.id,
+        label: nextUnfinishedStop.label || nextUnfinishedStop.address,
+        lat: nextUnfinishedStop.lat,
+        lng: nextUnfinishedStop.lng,
+        coords: { lat: nextUnfinishedStop.lat, lng: nextUnfinishedStop.lng },
+      };
+    }
+    return deliveryPoint;
+  }, [deliveryPoint, isPickupLeg, isReturning, nextUnfinishedStop, pickupPoint]);
 
   const isMissionActive =
     !isTerminal &&
     view.order.status !== 'CANCELLED' &&
     view.order.status !== 'INCIDENT_CANCELLED';
-  const isCashOrder = view.order.paymentMethod === 'CASH';
-  const isCashConfirmed = Boolean(
-    view.order.isCashConfirmed || view.order.paymentStatus === 'PAID_MANUAL',
-  );
 
   // ── Arrival geofence: switch from the driving cockpit to the on-site form
   // automatically once the truck reaches the active stop. ──
@@ -165,11 +182,13 @@ export function AssignedDetailView({
     ? 'HOÀN TẤT'
     : view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP'
       ? 'ĐẾN ĐIỂM LẤY HÀNG'
-      : view.order.status === 'IN_TRANSIT'
-        ? 'ĐẾN ĐIỂM GIAO HÀNG'
-        : view.order.status === 'RETURNING'
-          ? 'HOÀN HÀNG VỀ ĐIỂM GỬI'
-          : 'TIẾN ĐỘ CHUYẾN ĐI';
+      : nextUnfinishedStop
+        ? `ĐIỂM DỪNG: ${nextUnfinishedStop.label || nextUnfinishedStop.address}`
+        : view.order.status === 'IN_TRANSIT'
+          ? 'ĐẾN ĐIỂM GIAO HÀNG'
+          : view.order.status === 'RETURNING'
+            ? 'HOÀN HÀNG VỀ ĐIỂM GỬI'
+            : 'TIẾN ĐỘ CHUYẾN ĐI';
 
   return (
     <View pointerEvents="box-none" style={styles.root} testID="assigned-detail-view">
@@ -295,9 +314,7 @@ export function AssignedDetailView({
               />
             </>
           ) : null}
-          {/* The active-leg card (address, cargo, loading fee) is gone: the
-              address already lives on the map HUD and cargo moved to the map
-              header, so the sheet no longer repeats it. */}
+
 
           {/* Thu tiền mặt (Cash on Delivery) khi đơn thanh toán CASH chuẩn Apple HIG: chỉ hiện khi đã tới điểm giao và chưa xác nhận thu tiền */}
           {isCashOrder && !isCashConfirmed && (view.order.status === 'DELIVERED' || view.primaryTask?.command.targetStatus === 'DELIVERED') && (
@@ -365,6 +382,23 @@ export function AssignedDetailView({
             </View>
           ) : null}
         </ScrollView>
+
+        {!isTerminal && !isPickupLeg && view.order.route.stops.length > 0 ? (
+          <View style={styles.multiStopHeaderWrap}>
+            <MultiStopProgressHeader
+              stops={view.order.route.stops.map((s) => ({
+                id: s.id,
+                title: `Điểm ${s.sequence}: ${s.label || s.address}`,
+                status:
+                  s.progress === 'COMPLETED'
+                    ? 'completed'
+                    : s.id === nextUnfinishedStop?.id
+                      ? 'active'
+                      : 'pending',
+              }))}
+            />
+          </View>
+        ) : null}
 
         <DriverMissionActionBar
           customerContact={view.order.customerContact}
@@ -608,5 +642,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 1,
     overflow: 'hidden',
+  },
+  multiStopHeaderWrap: {
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
 });

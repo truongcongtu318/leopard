@@ -863,4 +863,58 @@ describe('HomeDashboardScreen', () => {
       await screen.unmount();
     });
   });
+
+  describe('delegated navigation routing for booking and address book', () => {
+    it('delegates quick hub chip press to onQuickBook without opening inline sheet', async () => {
+      addressStore.saveAddress({
+        id: 'addr-kho-td',
+        label: 'Kho Thủ Đức',
+        address: 'Đường Song Hành, Thủ Đức',
+        isDefault: false,
+        latitude: 10.85,
+        longitude: 106.77,
+        category: 'WAREHOUSE',
+      });
+
+      const onQuickBook = jest.fn();
+      const screen = await render(
+        <HomeDashboardScreen
+          activeShipment={null}
+          onQuickBook={onQuickBook}
+        />,
+      );
+
+      const hubChip = screen.getByTestId('hub-chip-Kho Thủ Đức');
+      await fireEvent.press(hubChip);
+
+      expect(onQuickBook).toHaveBeenCalledTimes(1);
+      expect(onQuickBook).toHaveBeenCalledWith(
+        expect.any(String),
+        'Đường Song Hành, Thủ Đức',
+        { lat: 10.85, lng: 106.77 },
+        expect.anything(),
+        expect.any(String),
+      );
+      expect(screen.queryByTestId('home-full-booking')).toBeNull();
+
+      await screen.unmount();
+    });
+
+    it('delegates Sổ địa chỉ button press to onOpenSavedAddresses', async () => {
+      const onOpenSavedAddresses = jest.fn();
+      const screen = await render(
+        <HomeDashboardScreen
+          activeShipment={null}
+          onOpenSavedAddresses={onOpenSavedAddresses}
+        />,
+      );
+
+      const manageBtn = screen.getByLabelText('Mở sổ địa chỉ');
+      await fireEvent.press(manageBtn);
+
+      expect(onOpenSavedAddresses).toHaveBeenCalledTimes(1);
+
+      await screen.unmount();
+    });
+  });
 });

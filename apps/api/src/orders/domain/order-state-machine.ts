@@ -27,13 +27,17 @@ export function assertOrderTransition(input: AssertOrderTransitionInput): void {
   }
 
   if (to === OrderStatus.CANCELLED) {
-    if (actorRole === Role.CUSTOMER && from === OrderStatus.REQUESTED) {
+    if (
+      actorRole === Role.CUSTOMER &&
+      (from === OrderStatus.PENDING_PAYMENT || from === OrderStatus.REQUESTED)
+    ) {
       return;
     }
 
     if (
       actorRole === Role.ADMIN &&
-      (from === OrderStatus.REQUESTED ||
+      (from === OrderStatus.PENDING_PAYMENT ||
+        from === OrderStatus.REQUESTED ||
         from === OrderStatus.ACCEPTED ||
         from === OrderStatus.PICKING_UP ||
         from === OrderStatus.IN_TRANSIT) &&

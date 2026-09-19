@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
@@ -330,11 +331,26 @@ export function HomeDashboardScreen({
   unreadMessages = 0, unreadNotifications = 3, userName = 'Anh Hoàng', userPhone,
 }: HomeDashboardScreenProps) {
   const insets = React.useContext(SafeAreaInsetsContext);
+  const { height: windowHeight } = useWindowDimensions();
   const topInset = insets?.top ?? 0;
   const bottomInset = insets?.bottom ?? 0;
   const bottomNavPadding = hasFloatingNavBar || showFloatingNavBar
     ? layout.bottomNavClearance + bottomInset
     : 24;
+  const compactSnapFraction = useMemo(() => {
+    const h = windowHeight || 850;
+    // Calculate required resting sheet height to maintain a consistent 18-22pt gap above FloatingNavBar:
+    // navBarBottomOffset + navBarHeight (62) + idealGap (18) + compactContent (217: GPS button 52 + search card 165)
+    const isIos = Platform.OS === 'ios';
+    const navBottomOffset = (isIos ? 24 : 16) + Math.max(bottomInset, 0);
+    const requiredSheetHeight = navBottomOffset + 62 + 18 + 217;
+    const computedFraction = Math.round((requiredSheetHeight / h) * 100) / 100;
+    return Math.min(0.52, Math.max(0.35, computedFraction));
+  }, [windowHeight, bottomInset]);
+
+  const bottomSheetSnapPoints = useMemo(() => {
+    return [compactSnapFraction, 0.68, 0.92];
+  }, [compactSnapFraction]);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
 
   const initialSaved = addressStore.getDefaultAddress();
@@ -494,9 +510,6 @@ export function HomeDashboardScreen({
       const saved = addressStore.getDefaultAddress();
       if (saved?.latitude && saved?.longitude) {
         setPickupCoords({ lat: saved.latitude, lng: saved.longitude });
-      } else {
-        const resolved = resolveLocationCoords(defaultPickupLocation);
-        if (resolved) setPickupCoords(resolved);
       }
     } else {
       const saved = addressStore.getDefaultAddress();
@@ -606,9 +619,6 @@ export function HomeDashboardScreen({
         setPickupLabel(defaultPickupLabel ?? null);
         if (saved?.latitude && saved?.longitude) {
           setPickupCoords({ lat: saved.latitude, lng: saved.longitude });
-        } else {
-          const resolved = resolveLocationCoords(defaultPickupLocation);
-          if (resolved) setPickupCoords(resolved);
         }
       } else if (saved?.address) {
         setPickupText(saved.address);
@@ -895,7 +905,7 @@ export function HomeDashboardScreen({
           {onOpenNotifications ? (
             <Pressable
               accessibilityLabel={`Thông báo (${unreadNotifications} chưa đọc)`} accessibilityRole="button"
-              onPress={onOpenNotifications} style={styles.iconBtn}
+              onPress={onOpenNotifications} style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
             >
               <IconBell color={customerPalette.primary} size={18} />
               {unreadNotifications > 0 ? (
@@ -907,7 +917,7 @@ export function HomeDashboardScreen({
           {onOpenChat ? (
             <Pressable
               accessibilityLabel={unreadMessages > 0 ? `Tin nhắn (${unreadMessages} chưa đọc)` : 'Tin nhắn'} accessibilityRole="button"
-              onPress={onOpenChat} style={styles.iconBtn}
+              onPress={onOpenChat} style={({ pressed }) => [styles.iconBtn, pressed && styles.iconBtnPressed]}
             >
               <IconMessage color={customerPalette.primary} size={18} />
               {unreadMessages > 0 ? (
@@ -932,30 +942,6 @@ export function HomeDashboardScreen({
         </View>
       ) : null}
 
-      {/* Floating Recenter Button (Grab/Uber style) */}
-      {!activeShipment ? (
-        <View
-          style={[
-            styles.floatingRecenterContainer,
-            { bottom: !isFullBookingMode ? 280 : 130 },
-          ]}
-        >
-          <Pressable
-            accessibilityLabel="Về vị trí hiện tại của tôi"
-            accessibilityRole="button"
-            accessibilityState={{ busy: isLocating }}
-            onPress={handleRecenterToCurrentGps}
-            style={({ pressed }) => [styles.recenterBtn, pressed && styles.recenterBtnPressed]}
-            testID="customer-map-recenter-btn"
-          >
-            {isLocating ? (
-              <ActivityIndicator color={customerPalette.primary} size="small" />
-            ) : (
-              <IconCrosshair color={customerPalette.primary} size={22} />
-            )}
-          </Pressable>
-        </View>
-      ) : null}
 
       {/* ================= LAYER 2 (z-index 40): 3-SNAP GESTURE BOTTOM SHEET ================= */}
       <GestureBottomSheet
@@ -963,7 +949,7 @@ export function HomeDashboardScreen({
         handleStyle={!isFullBookingMode ? styles.hiddenHandleArea : undefined}
         initialSnapIndex={hasSelectedDropoff ? 2 : 0}
         ref={bottomSheetRef}
-        snapPoints={[0.40, 0.65, 0.92]}
+        snapPoints={bottomSheetSnapPoints}
         style={[
           styles.layer2BottomSheet,
           !isFullBookingMode && styles.layer2BottomSheetTransparent,
@@ -982,38 +968,78 @@ export function HomeDashboardScreen({
           <View style={styles.bookingWrapper} testID="home-booking">
             {!isFullBookingMode ? (
               /* ================= COMPACT STATE: CLEAN SEARCH PILL & QUICK HUBS ================= */
-              <View style={styles.compactSearchCard} testID="home-compact-search">
+              <>
+                {/* Floating Map Recenter Tool (Apple Maps / Grab standard) */}
+                {!activeShipment ? (
+                  <View style={styles.floatingRecenterRow}>
+                    <Pressable
+                      accessibilityLabel="Về vị trí hiện tại của tôi"
+                      accessibilityRole="button"
+                      accessibilityState={{ busy: isLocating }}
+                      hitSlop={spacing.xs}
+                      onPress={handleRecenterToCurrentGps}
+                      style={({ pressed }) => [styles.recenterBtn, pressed && styles.recenterBtnPressed]}
+                      testID="customer-map-recenter-btn"
+                    >
+                      {isLocating ? (
+                        <ActivityIndicator color={customerPalette.primary} size="small" />
+                      ) : (
+                        <IconCrosshair color={customerPalette.primary} size={20} />
+                      )}
+                    </Pressable>
+                  </View>
+                ) : null}
+
+                <View style={styles.compactSearchCard} testID="home-compact-search">
                 <Pressable
                   accessibilityLabel="Tìm kiếm địa chỉ giao hàng"
                   onPress={() => {
                     haptic.light();
                     if (onPressSearchAddress) {
                       onPressSearchAddress(selectedFleetId, pickupText, pickupCoords);
+                    } else if (onQuickBook) {
+                      onQuickBook(pickupText, '', undefined, pickupCoords || undefined, selectedFleetId);
                     } else {
                       setIsBookingSheetOpen(true);
                       setFocusedField('dropoff');
                     }
                   }}
-                  style={styles.heroSearchPill}
+                  style={({ pressed }) => [styles.heroSearchPill, pressed && styles.heroSearchPillPressed]}
                   testID="hero-search-pill"
                 >
                   <View style={styles.searchPillIconBox}>
                     <IconSearch color={customerPalette.primary} size={20} />
                   </View>
-                  <View style={styles.searchPillInputWrap}>
+                  <View
+                    pointerEvents={onPressSearchAddress ? 'none' : 'auto'}
+                    style={styles.searchPillInputWrap}
+                  >
                     <TextInput
                       accessibilityLabel="Địa điểm giao hàng"
                       autoCapitalize="none"
                       autoCorrect={false}
-                      onChangeText={handleDropoffChangeText}
+                      editable={!onPressSearchAddress}
+                      onChangeText={(t) => {
+                        if (onPressSearchAddress) {
+                          onPressSearchAddress(selectedFleetId, pickupText, pickupCoords);
+                          return;
+                        }
+                        handleDropoffChangeText(t);
+                      }}
                       onFocus={() => {
                         if (onPressSearchAddress) {
                           onPressSearchAddress(selectedFleetId, pickupText, pickupCoords);
+                        } else if (onQuickBook) {
+                          onQuickBook(pickupText, '', undefined, pickupCoords || undefined, selectedFleetId);
                         } else {
                           setFocusedField('dropoff');
                         }
                       }}
                       onSubmitEditing={() => {
+                        if (onPressSearchAddress) {
+                          onPressSearchAddress(selectedFleetId, pickupText, pickupCoords);
+                          return;
+                        }
                         if (pickupText.trim().length >= 3 && dropoffText.trim().length >= 3) {
                           triggerNavigation(pickupText, dropoffText);
                         }
@@ -1040,6 +1066,10 @@ export function HomeDashboardScreen({
                     accessibilityRole="button"
                     hitSlop={8}
                     onPress={() => {
+                      if (onOpenSavedAddresses) {
+                        onOpenSavedAddresses();
+                        return;
+                      }
                       setSavedAddressModalTarget('dropoff');
                       setShowSavedAddressModal(true);
                     }}
@@ -1067,6 +1097,16 @@ export function HomeDashboardScreen({
                         key={addr.id}
                         onPress={() => {
                           haptic.selection();
+                          if (onQuickBook) {
+                            onQuickBook(
+                              pickupText,
+                              addr.address,
+                              addr.latitude && addr.longitude ? { lat: addr.latitude, lng: addr.longitude } : undefined,
+                              pickupCoords || undefined,
+                              selectedFleetId,
+                            );
+                            return;
+                          }
                           setDropoffText(addr.address);
                           if (addr.latitude && addr.longitude) {
                             setDropoffCoords({ lat: addr.latitude, lng: addr.longitude });
@@ -1137,6 +1177,7 @@ export function HomeDashboardScreen({
                   />
                 </View>
               </View>
+              </>
             ) : (
               /* ================= FULL BOOKING STATE: UNIFIED BOTTOM SHEET ================= */
               <View style={styles.fullBookingWrapper} testID="home-full-booking">
@@ -1770,6 +1811,17 @@ export function HomeDashboardScreen({
             }
             addressStore.setDefaultAddress(addr.id);
           } else if (savedAddressModalTarget === 'dropoff') {
+            if (onQuickBook) {
+              onQuickBook(
+                pickupText,
+                addr.address,
+                addr.latitude && addr.longitude ? { lat: addr.latitude, lng: addr.longitude } : undefined,
+                pickupCoords || undefined,
+                selectedFleetId,
+              );
+              setShowSavedAddressModal(false);
+              return;
+            }
             setDropoffText(addr.address);
             if (addr.latitude && addr.longitude) {
               setDropoffCoords({ lat: addr.latitude, lng: addr.longitude });
@@ -1851,6 +1903,7 @@ const styles = StyleSheet.create({
   roleSwitchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 44, backgroundColor: colors.neutral.surfaceMuted, borderRadius: radius.card, paddingHorizontal: spacing.sm, paddingVertical: 6, gap: spacing.xxs },
   roleSwitchText: { ...typeScale.caption1, fontWeight: '600', color: customerPalette.primary },
   iconBtn: { width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: radius.pill, backgroundColor: colors.neutral.surfaceMuted, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  iconBtnPressed: { transform: [{ scale: 0.94 }], backgroundColor: 'rgba(11, 37, 69, 0.08)' },
   badgePill: { position: 'absolute', top: -2, right: -2, backgroundColor: colors.danger.text, minWidth: 16, height: 16, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xxs },
   badgePillText: { color: customerPalette.surfaceWhite, ...typeScale.caption2, fontWeight: '700' },
 
@@ -1927,6 +1980,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
+  },
+  heroSearchPillPressed: {
+    transform: [{ scale: 0.985 }],
+    backgroundColor: '#F8FAFC',
   },
   searchPillIconBox: {
     width: 32,
@@ -2148,7 +2205,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: spacing.xxs,
   },
-  manageAddressesBtnPressed: { opacity: 0.6 },
+  manageAddressesBtnPressed: { opacity: 0.7, transform: [{ scale: 0.965 }] },
   manageAddressesBtnText: {
     ...typeScale.footnote,
     fontWeight: '600',
@@ -2720,11 +2777,11 @@ const styles = StyleSheet.create({
   activeTrackPill: { backgroundColor: colors.neutral.surfaceMuted, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   trackText: { ...typeScale.caption2, fontWeight: '600', color: customerPalette.primary },
 
-  /* Floating Recenter Button */
-  floatingRecenterContainer: {
-    position: 'absolute',
-    right: spacing.md,
-    zIndex: 45,
+  /* Floating Recenter Button (Apple HIG & Emil Design Eng standard) */
+  floatingRecenterRow: {
+    alignItems: 'flex-end',
+    marginBottom: spacing.xs,
+    paddingRight: spacing.xxs,
   },
   recenterBtn: {
     width: 44,
@@ -2736,14 +2793,14 @@ const styles = StyleSheet.create({
     ...iosContinuousCurve,
     shadowColor: customerPalette.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.95)',
+    borderColor: 'rgba(226, 232, 240, 0.9)',
   },
   recenterBtnPressed: {
-    transform: [{ scale: 0.94 }],
+    transform: [{ scale: 0.965 }],
     backgroundColor: '#F8FAFC',
   },
 

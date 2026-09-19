@@ -193,12 +193,24 @@ export async function reverseGeocodeCoords(
         }>;
         if (Array.isArray(data) && data.length > 0) {
           const item = data[0];
-          const formatted =
-            item.display ||
-            (item.name && item.address ? `${item.name}, ${item.address}` : item.name) ||
-            item.address;
-          if (formatted && formatted.trim().length > 0) {
-            return formatted.trim();
+          let formatted = '';
+          if (item.name && item.address) {
+            const cleanName = item.name.trim();
+            const cleanAddr = item.address.trim();
+            formatted = cleanAddr.startsWith(cleanName)
+              ? cleanAddr
+              : `${cleanName}, ${cleanAddr}`;
+          } else if (item.display) {
+            formatted = item.display.trim();
+          } else if (item.address) {
+            formatted = item.address.trim();
+          } else if (item.name) {
+            formatted = item.name.trim();
+          }
+
+          if (formatted && formatted.length > 0) {
+            const normalized = formatted.replace(/,(\S)/g, ', $1');
+            return normalized;
           }
         }
       }

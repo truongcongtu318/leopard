@@ -74,7 +74,7 @@ export function formatVietnamPhone(input: string): string {
 }
 
 export interface DriverLoginScreenProps {
-  onLoginSuccess?: (role: Role, profileComplete: boolean) => void;
+  onLoginSuccess?: (role: Role, profileComplete: boolean, status?: string) => void;
   onNavigateRegister?: () => void;
   onNavigateOtp?: (phone: string) => void;
   allowDemo?: boolean;
@@ -133,11 +133,12 @@ export function DriverLoginScreen({
     const refreshToken = res.session?.refreshToken ?? '';
     await sessionStore.setSession(accessToken, refreshToken, res.user.role);
     if (res.user?.profileComplete !== undefined) {
-      onLoginSuccess?.(res.user?.role ?? 'DRIVER', res.user.profileComplete);
+      onLoginSuccess?.(res.user?.role ?? 'DRIVER', res.user.profileComplete, res.user?.status);
     } else {
       (onLoginSuccess as any)?.(res.user?.role ?? 'DRIVER');
     }
   };
+
 
   const describeAuthError = (err: unknown): string => {
     const code = (err as { code?: string })?.code;
@@ -283,7 +284,7 @@ export function DriverLoginScreen({
       await sessionStore.setSession(accessToken, refreshToken, res.user.role);
       const role = res.user?.role ?? defaultRole;
       if (res.user?.profileComplete !== undefined) {
-        onLoginSuccess?.(role, res.user.profileComplete);
+        onLoginSuccess?.(role, res.user.profileComplete, res.user?.status);
       } else {
         (onLoginSuccess as any)?.(role);
       }

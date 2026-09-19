@@ -91,6 +91,14 @@ export class PayOsPaymentProvider extends PaymentProvider {
     this.expiresInMs = config.expiresInMs ?? PAYOS_DEFAULT_EXPIRY_MS;
   }
 
+  async checkPaymentStatus(orderCode: number | bigint): Promise<any> {
+    try {
+      return await (this.client as any).paymentRequests.get(Number(orderCode));
+    } catch {
+      return null;
+    }
+  }
+
   async createQr(input: PaymentRequest): Promise<PaymentQr> {
     const orderCode = generatePayosOrderCode();
     const expiresAt = new Date(Date.now() + this.expiresInMs);

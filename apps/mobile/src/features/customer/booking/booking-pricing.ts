@@ -78,10 +78,24 @@ export interface BookingPricingBreakdown {
   totalFare: number;
 }
 
-export function getVehicleFare(vehicleId: VehicleTypeId, distanceKm: number): number {
-  const rate = VEHICLE_RATES[vehicleId] ?? VEHICLE_RATES.TRUCK_125T;
-  const distanceFare = Math.round(distanceKm * rate.perKmVnd);
-  return Math.max(rate.baseFareVnd, distanceFare);
+export interface VehicleFareOptions {
+  stopCount?: number;
+  hasLoadingSupport?: boolean;
+  hasVatInvoice?: boolean;
+}
+
+export function getVehicleFare(
+  vehicleId: VehicleTypeId,
+  distanceKm: number,
+  options?: VehicleFareOptions,
+): number {
+  return calculateBookingFare({
+    vehicleId,
+    distanceKm,
+    stopCount: options?.stopCount ?? 0,
+    hasLoadingSupport: options?.hasLoadingSupport ?? false,
+    hasVatInvoice: options?.hasVatInvoice ?? false,
+  }).totalFare;
 }
 
 export function calculateBookingFare(input: BookingPricingInput): BookingPricingBreakdown {
@@ -89,7 +103,9 @@ export function calculateBookingFare(input: BookingPricingInput): BookingPricing
   const stopCount = Math.max(0, input.stopCount ?? 0);
   const distanceFare = Math.round(input.distanceKm * rate.perKmVnd);
   const stopFare = stopCount * STOP_SURCHARGE_VND;
-  const transportFare = Math.max(rate.baseFareVnd, distanceFare) + stopFare;
+  // Backend formula: baseFare + distanceFare + stopFare (additive, not max)
+  // baseFare already acts as the minimum fare for short trips
+  const transportFare = rate.baseFareVnd + distanceFare + stopFare;
 
   const loadingFee = input.hasLoadingSupport ? rate.loadingFeeVnd : 0;
   const subtotal = transportFare + loadingFee;

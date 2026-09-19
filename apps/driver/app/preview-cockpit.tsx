@@ -6,31 +6,56 @@ import { DriverOrderDetailScreen } from '../src/features/orders/DriverOrderDetai
 import { createDriverDetailFixture } from '../src/features/orders/fixtures';
 import type { DriverDetailScenarioId } from '../src/features/orders/fixtures';
 
-const SCENARIOS: readonly { id: DriverDetailScenarioId; label: string }[] = [
+const SCENARIOS: readonly { id: DriverDetailScenarioId | 'D-DETAIL-CASH-COLLECT'; label: string }[] = [
   { id: 'D-DETAIL-ACCEPTED', label: '1. Nhận đơn (ACCEPTED)' },
   { id: 'D-DETAIL-PICKING-UP', label: '2. Lấy hàng (PICKING_UP)' },
   { id: 'D-DETAIL-IN-TRANSIT', label: '3. Vận chuyển (IN_TRANSIT)' },
   { id: 'D-DETAIL-PROOF-REQUIRED', label: '4. Cần ảnh e-POD (DELIVERING)' },
   { id: 'D-DETAIL-READY-DELIVER', label: '5. Đã đủ ảnh/ký (READY TO COMPLETE)' },
+  { id: 'D-DETAIL-CASH-COLLECT', label: '5.1. Thu tiền mặt COD (GRAB CASH FLOW)' },
   { id: 'D-DETAIL-TERMINAL-DELIVERED', label: '6. Đã giao hàng (DELIVERED)' },
 ];
 
 export default function DriverPreviewCockpitPage() {
   const params = useLocalSearchParams<{ scenario?: string }>();
-  const [selectedScenario, setSelectedScenario] = useState<DriverDetailScenarioId>(
-    (params.scenario as DriverDetailScenarioId) || 'D-DETAIL-ACCEPTED',
+  const [selectedScenario, setSelectedScenario] = useState<DriverDetailScenarioId | 'D-DETAIL-CASH-COLLECT'>(
+    (params.scenario as any) || 'D-DETAIL-CASH-COLLECT',
   );
   const [showPicker, setShowPicker] = useState(false);
+  const [isCashPaid, setIsCashPaid] = useState(false);
 
-  const fixtureView = createDriverDetailFixture(selectedScenario);
+  let fixtureView = createDriverDetailFixture(
+    selectedScenario === 'D-DETAIL-CASH-COLLECT'
+      ? 'D-DETAIL-TERMINAL-DELIVERED'
+      : selectedScenario,
+  ) as any;
+
+  if (selectedScenario === 'D-DETAIL-CASH-COLLECT') {
+    fixtureView = {
+      ...fixtureView,
+      order: {
+        ...fixtureView.order,
+        reference: 'LP-15908976',
+        paymentMethod: 'CASH',
+        paymentStatus: isCashPaid ? 'PAID_MANUAL' : 'PENDING',
+        isCashConfirmed: isCashPaid,
+        priceLabel: '183.312 ₫',
+        priceVnd: 183312,
+      },
+    };
+  }
 
   return (
     <View style={styles.root}>
       {/* Khung xem chi tiết đơn Cockpit */}
       <View style={styles.cockpitContainer}>
         <DriverOrderDetailScreen
-          onBack={() => {}}
-          onConfirmCashPayment={() => {}}
+          onBack={() => {
+            setIsCashPaid(false);
+          }}
+          onConfirmCashPayment={() => {
+            setIsCashPaid(true);
+          }}
           onExecuteTask={(cmd) => {}}
           onOpenLocationSettings={() => {}}
           onRetryProof={() => {}}

@@ -196,67 +196,74 @@ export async function fetchStreetRoute(
     }
   }
 
-  // 2. Try OSRM Driving engine
-  const coordsStr = waypoints.map((w) => `${w.lng},${w.lat}`).join(';');
-  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson&steps=true`;
+  // 2. Try OSRM Driving engine (if configured or in non-production fallback)
+  const configuredOsrm = (process.env.EXPO_PUBLIC_OSRM_URL || '').trim();
+  const isProduction = process.env.NODE_ENV === 'production';
+  const shouldAttemptOsrm = Boolean(configuredOsrm) || !isProduction;
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(osrmUrl, {
-      signal: options?.signal || controller.signal,
-    });
-    clearTimeout(timeoutId);
+  if (shouldAttemptOsrm) {
+    const osrmBase = (configuredOsrm || 'https://router.project-osrm.org').replace(/\/$/, '');
+    const coordsStr = waypoints.map((w) => `${w.lng},${w.lat}`).join(';');
+    const osrmUrl = `${osrmBase}/route/v1/driving/${coordsStr}?overview=full&geometries=geojson&steps=true`;
 
-    if (res.ok) {
-      const data = await res.json();
-      const primaryRoute = data?.routes?.[0];
-      if (primaryRoute?.geometry?.coordinates?.length >= 2) {
-        const coords: MapCoordinate[] = primaryRoute.geometry.coordinates.map(
-          (c: [number, number]) => ({
-            lat: c[1],
-            lng: c[0],
-          }),
-        );
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(osrmUrl, {
+        signal: options?.signal || controller.signal,
+      });
+      clearTimeout(timeoutId);
 
-        const steps: ManeuverStep[] = [];
-        if (Array.isArray(primaryRoute.legs)) {
-          for (const leg of primaryRoute.legs) {
-            if (Array.isArray(leg.steps)) {
-              for (const step of leg.steps) {
-                const loc = step.maneuver?.location;
-                const stepCoord = loc ? { lat: loc[1], lng: loc[0] } : coords[0];
-                steps.push({
-                  instruction: buildVietnameseInstruction(step),
-                  maneuverType: parseManeuverType(step.maneuver?.type, step.maneuver?.modifier),
-                  distanceMeters: Math.round(step.distance || 0),
-                  durationSeconds: Math.round(step.duration || 0),
-                  streetName: step.name || '',
-                  location: stepCoord,
-                });
+      if (res.ok) {
+        const data = await res.json();
+        const primaryRoute = data?.routes?.[0];
+        if (primaryRoute?.geometry?.coordinates?.length >= 2) {
+          const coords: MapCoordinate[] = primaryRoute.geometry.coordinates.map(
+            (c: [number, number]) => ({
+              lat: c[1],
+              lng: c[0],
+            }),
+          );
+
+          const steps: ManeuverStep[] = [];
+          if (Array.isArray(primaryRoute.legs)) {
+            for (const leg of primaryRoute.legs) {
+              if (Array.isArray(leg.steps)) {
+                for (const step of leg.steps) {
+                  const loc = step.maneuver?.location;
+                  const stepCoord = loc ? { lat: loc[1], lng: loc[0] } : coords[0];
+                  steps.push({
+                    instruction: buildVietnameseInstruction(step),
+                    maneuverType: parseManeuverType(step.maneuver?.type, step.maneuver?.modifier),
+                    distanceMeters: Math.round(step.distance || 0),
+                    durationSeconds: Math.round(step.duration || 0),
+                    streetName: step.name || '',
+                    location: stepCoord,
+                  });
+                }
               }
             }
           }
-        }
 
-        const result: StreetRouteResult = {
-          coordinates: coords,
-          distanceMeters: Math.round(primaryRoute.distance || haversineDistanceMeters(origin, destination)),
-          durationSeconds: Math.round(primaryRoute.duration || 300),
-          steps,
-          source: 'OSRM',
-        };
+          const result: StreetRouteResult = {
+            coordinates: coords,
+            distanceMeters: Math.round(primaryRoute.distance || haversineDistanceMeters(origin, destination)),
+            durationSeconds: Math.round(primaryRoute.duration || 300),
+            steps,
+            source: 'OSRM',
+          };
 
-        if (routeCache.size > 50) {
-          const firstKey = routeCache.keys().next().value;
-          if (firstKey) routeCache.delete(firstKey);
+          if (routeCache.size > 50) {
+            const firstKey = routeCache.keys().next().value;
+            if (firstKey) routeCache.delete(firstKey);
+          }
+          routeCache.set(cacheKey, result);
+          return result;
         }
-        routeCache.set(cacheKey, result);
-        return result;
       }
+    } catch {
+      // Network or OSRM error -> fallback gracefully
     }
-  } catch {
-    // Network or OSRM error -> fallback gracefully
   }
 
   // Fallback: Smart road interpolation with road curve factor

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
+  Alert,
   Animated,
   Keyboard,
   KeyboardAvoidingView,
@@ -63,6 +64,20 @@ export interface BookingScreenProps {
     paymentMethod?: PaymentMethod,
     vehicleType?: string,
     vehicleName?: string,
+    routeDetails?: {
+      pickup?: string;
+      pickupCoords?: { lat: number; lng: number };
+      dropoff?: string;
+      dropoffCoords?: { lat: number; lng: number };
+    },
+    loadingFee?: number,
+    breakdown?: {
+      distanceKm: number;
+      baseFare: number;
+      distanceFare: number;
+      stopFare: number;
+      vatFee: number;
+    },
   ) => void;
 }
 
@@ -99,19 +114,40 @@ export function BookingScreen({
 }: BookingScreenProps) {
   const insets = useSafeInsets();
 
+  const [isLocatingPickup, setIsLocatingPickup] = useState<boolean>(() => {
+    if (initialPickupLat !== undefined) return false;
+    const defaultAddr = addressStore.getDefaultAddress();
+    return !(defaultAddr?.latitude && defaultAddr?.longitude);
+  });
+
   // Initialize store draft synchronously on mount
   useMemo(() => {
     const defaultAddr = addressStore.getDefaultAddress();
-    const resolvedPickup = initialPickup || defaultAddr?.address || '';
-    const resolvedPickupLat =
-      initialPickupLat ?? (defaultAddr?.latitude ? defaultAddr.latitude : undefined);
-    const resolvedPickupLng =
-      initialPickupLng ?? (defaultAddr?.longitude ? defaultAddr.longitude : undefined);
+    const hasInitialCoords = initialPickupLat !== undefined && initialPickupLng !== undefined;
+    const hasDefaultCoords =
+      typeof defaultAddr?.latitude === 'number' && typeof defaultAddr?.longitude === 'number';
+
+    let resolvedPickup = '';
+    let resolvedPickupLat: number | undefined;
+    let resolvedPickupLng: number | undefined;
+
+    if (hasInitialCoords) {
+      resolvedPickup = initialPickup || defaultAddr?.address || '';
+      resolvedPickupLat = initialPickupLat;
+      resolvedPickupLng = initialPickupLng;
+    } else if (hasDefaultCoords) {
+      resolvedPickup = defaultAddr!.address;
+      resolvedPickupLat = defaultAddr!.latitude;
+      resolvedPickupLng = defaultAddr!.longitude;
+    } else if (initialPickup && initialPickup !== 'Vị trí hiện tại') {
+      resolvedPickup = initialPickup;
+    }
+
     const resolvedDropoff = initialDropoff ?? '';
     bookingDraftStore.initDraft({
       pickupAddress: resolvedPickup,
-      ...(resolvedPickupLat !== undefined ? { pickupLat: resolvedPickupLat } : { pickupLat: undefined }),
-      ...(resolvedPickupLng !== undefined ? { pickupLng: resolvedPickupLng } : { pickupLng: undefined }),
+      pickupLat: resolvedPickupLat,
+      pickupLng: resolvedPickupLng,
       dropoffAddress: resolvedDropoff,
       ...(initialDropoffLat !== undefined ? { dropoffLat: initialDropoffLat } : { dropoffLat: undefined }),
       ...(initialDropoffLng !== undefined ? { dropoffLng: initialDropoffLng } : { dropoffLng: undefined }),
@@ -119,40 +155,91 @@ export function BookingScreen({
     });
   }, []);
 
-  // If pickup was not provided or has no coordinates, query GPS
+  // Query GPS if pickup coordinates were not provided
   useEffect(() => {
-    if (initialPickup && initialPickupLat !== undefined) return;
+    if (initialPickupLat !== undefined) {
+      setIsLocatingPickup(false);
+      return;
+    }
+    const defaultAddr = addressStore.getDefaultAddress();
+    if (defaultAddr?.latitude && defaultAddr?.longitude) {
+      bookingDraftStore.updateDraft({
+        pickupAddress: defaultAddr.address,
+        pickupLat: defaultAddr.latitude,
+        pickupLng: defaultAddr.longitude,
+      });
+      setIsLocatingPickup(false);
+      return;
+    }
+
     let isCancelled = false;
+    setIsLocatingPickup(true);
+
     (async () => {
       try {
         const perm = await Location.requestForegroundPermissionsAsync();
         if (perm.status === 'granted') {
-          const pos = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          } as any);
+          let lat: number;
+          let lng: number;
+          try {
+            const pos = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.High,
+              maximumAge: 5000,
+              timeout: 10000,
+            } as any);
+            lat = pos.coords.latitude;
+            lng = pos.coords.longitude;
+          } catch (gpsErr) {
+            if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.geolocation) {
+              const webPos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                  enableHighAccuracy: true,
+                  timeout: 10000,
+                  maximumAge: 5000,
+                });
+              });
+              lat = webPos.coords.latitude;
+              lng = webPos.coords.longitude;
+            } else {
+              throw gpsErr;
+            }
+          }
           if (isCancelled) return;
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
           const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
           const rev = await reverseGeocodeCoords({ lat, lng }, apiKey);
           if (isCancelled) return;
+          const chosenAddress =
+            rev && rev.trim().length > 0
+              ? rev.trim()
+              : `Vị trí hiện tại (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+          bookingDraftStore.updateDraft({
+            pickupAddress: chosenAddress,
+            pickupLat: lat,
+            pickupLng: lng,
+          });
+        } else {
           const currentDraft = bookingDraftStore.getDraft();
-          if (!currentDraft.pickupAddress || currentDraft.pickupLat === undefined) {
-            bookingDraftStore.updateDraft({
-              pickupAddress: rev || 'Vị trí hiện tại',
-              pickupLat: lat,
-              pickupLng: lng,
-            });
+          if (currentDraft.pickupLat === undefined && currentDraft.pickupAddress === 'Vị trí hiện tại') {
+            bookingDraftStore.updateDraft({ pickupAddress: '' });
           }
         }
       } catch {
-        // Fallback gracefully
+        const currentDraft = bookingDraftStore.getDraft();
+        if (currentDraft.pickupLat === undefined && currentDraft.pickupAddress === 'Vị trí hiện tại') {
+          bookingDraftStore.updateDraft({ pickupAddress: '' });
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLocatingPickup(false);
+        }
       }
     })();
+
     return () => {
       isCancelled = true;
     };
-  }, [initialPickup, initialPickupLat]);
+  }, [initialPickupLat]);
 
   const draft = useSyncExternalStore(
     bookingDraftStore.subscribe,
@@ -162,6 +249,7 @@ export function BookingScreen({
   const [showPriceDetail, setShowPriceDetail] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [liveRouteCoords, setLiveRouteCoords] = useState<readonly { lat: number; lng: number }[] | undefined>(undefined);
   /**
@@ -449,24 +537,26 @@ export function BookingScreen({
   const handleCreateOrder = async () => {
     if (!validation.isValid) return;
     setIsSubmitting(true);
+    setSubmissionError(null);
 
-    let orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+    let orderId: string | null = null;
     let finalAmount = pricingBreakdown.totalFare;
 
     const { vehicleType, cargoWeight } = resolveVehicleOrderType(draft.vehicleId);
 
+    // Only real, customer-chosen coordinates are submitted. Falling back to a
+    // dictionary guess would place the order at a location nobody selected.
+    const pickupCoords =
+      draft.pickupLat !== undefined && draft.pickupLng !== undefined
+        ? { lat: draft.pickupLat, lng: draft.pickupLng }
+        : undefined;
+    const dropoffCoords =
+      draft.dropoffLat !== undefined && draft.dropoffLng !== undefined
+        ? { lat: draft.dropoffLat, lng: draft.dropoffLng }
+        : undefined;
+
     try {
       const port = createCustomerHttpAdapter();
-      // Only real, customer-chosen coordinates are submitted. Falling back to a
-      // dictionary guess would place the order at a location nobody selected.
-      const pickupCoords =
-        draft.pickupLat !== undefined && draft.pickupLng !== undefined
-          ? { lat: draft.pickupLat, lng: draft.pickupLng }
-          : undefined;
-      const dropoffCoords =
-        draft.dropoffLat !== undefined && draft.dropoffLng !== undefined
-          ? { lat: draft.dropoffLat, lng: draft.dropoffLng }
-          : undefined;
 
       const formPayload = {
         pickup: draft.pickupAddress,
@@ -520,49 +610,79 @@ export function BookingScreen({
         }
       }
 
-      // 2. Call real createOrder
-      if (estimateToken) {
-        const created = await port.createOrder(formPayload, estimateToken);
-        if (created.kind === 'content') {
-          orderId = created.order.id;
-          if (created.order.priceLabel) {
-            const rawDigits = created.order.priceLabel.replace(/[^0-9]/g, '');
-            const parsed = Number(rawDigits);
-            if (Number.isFinite(parsed) && parsed > 0) {
-              finalAmount = parsed;
-            }
-          }
+      if (!estimateToken) {
+        throw new Error('Chưa thể lấy báo giá chính xác từ hệ thống. Vui lòng thử lại trong giây lát.');
+      }
 
-          // 3. Upload cargo photo if selected
-          if (draft.cargoImages.length > 0) {
-            try {
-              const form = new FormData();
-              await appendFileToFormData(form, 'file', {
-                uri: draft.cargoImages[0],
-                name: 'cargo.jpg',
-                mimeType: 'image/jpeg',
-              });
-              form.append('clientRequestId', `req-${Date.now()}`);
-              await httpClient.postForm(`/orders/${orderId}/media/cargo`, form);
-            } catch {
-              // Non-blocking upload fallback
-            }
+      // 2. Call real createOrder
+      const created = await port.createOrder(formPayload, estimateToken);
+      if (created.kind === 'content') {
+        orderId = created.order.id;
+        if (created.order.priceLabel) {
+          const rawDigits = created.order.priceLabel.replace(/[^0-9]/g, '');
+          const parsed = Number(rawDigits);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            finalAmount = parsed;
           }
         }
+
+        // 3. Upload cargo photo if selected
+        if (draft.cargoImages.length > 0) {
+          try {
+            const form = new FormData();
+            await appendFileToFormData(form, 'file', {
+              uri: draft.cargoImages[0],
+              name: 'cargo.jpg',
+              mimeType: 'image/jpeg',
+            });
+            form.append('clientRequestId', `req-${Date.now()}`);
+            await httpClient.postForm(`/orders/${orderId}/media/cargo`, form);
+          } catch {
+            // Non-blocking upload fallback
+          }
+        }
+      } else {
+        const errDetail =
+          created.kind === 'error'
+            ? created.message
+            : 'Hệ thống không thể tạo đơn lúc này.';
+        throw new Error(errDetail || 'Không thể tạo đơn hàng.');
       }
-    } catch (err) {
-      console.warn('[CustomerBooking] Backend API call error, using local transaction fallback:', err);
+    } catch (err: any) {
+      console.error('[CustomerBooking] Backend createOrder error:', err);
+      const errorMsg =
+        err?.message ||
+        'Không thể khởi tạo đơn hàng. Vui lòng kiểm tra kết nối mạng và thử lại.';
+      setSubmissionError(errorMsg);
+      if (Platform.OS !== 'web') {
+        Alert.alert('Không thể tạo đơn', errorMsg);
+      }
+      return;
     } finally {
       setIsSubmitting(false);
     }
 
-    if (onOrderCreated) {
+    if (orderId && onOrderCreated) {
       onOrderCreated(
         orderId,
         finalAmount,
         draft.paymentMethod,
         vehicleType,
         pricingBreakdown.vehicleName,
+        {
+          pickup: draft.pickupAddress,
+          pickupCoords,
+          dropoff: draft.dropoffAddress,
+          dropoffCoords,
+        },
+        pricingBreakdown.loadingFee,
+        {
+          distanceKm: estimatedDistanceKm ?? 0,
+          baseFare: pricingBreakdown.baseFare,
+          distanceFare: pricingBreakdown.distanceFare,
+          stopFare: pricingBreakdown.stopFare,
+          vatFee: pricingBreakdown.vatFee,
+        },
       );
     }
   };
@@ -628,7 +748,10 @@ export function BookingScreen({
             distanceKm={estimatedDistanceKm}
             dropoffAddress={draft.dropoffAddress}
             etaMinutes={routeEstimate?.etaMinutes}
+            hasPickupCoords={typeof draft.pickupLat === 'number' && typeof draft.pickupLng === 'number'}
+            initialActiveTarget={initialFocusTarget}
             isEstimating={isEstimatingRoute}
+            isLocatingPickup={isLocatingPickup}
             onAddStop={handleAddStop}
             onRemoveStop={handleRemoveStop}
             onSearchStateChange={(isSearching) => {
@@ -664,8 +787,11 @@ export function BookingScreen({
           {/* Section 2: Loại xe */}
           <BookingVehicleSection
             distanceKm={estimatedDistanceKm}
+            hasLoadingSupport={draft.hasLoadingSupport}
+            hasVatInvoice={draft.hasVatInvoice}
             onSelectVehicle={(vehicleId) => bookingDraftStore.updateDraft({ vehicleId })}
             selectedVehicleId={draft.vehicleId}
+            stopCount={draft.stops.length}
           />
 
           {/* Section 3: Người nhận */}
@@ -739,6 +865,24 @@ export function BookingScreen({
           </View>
         )}
 
+        {/* Submission Error Banner */}
+        {submissionError && !isKeyboardVisible && (
+          <View style={styles.submissionErrorBanner} testID="booking-submission-error">
+            <Text numberOfLines={2} style={styles.submissionErrorText}>
+              {submissionError}
+            </Text>
+            <Pressable
+              accessibilityLabel="Đóng thông báo lỗi"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setSubmissionError(null)}
+              style={styles.submissionErrorCloseBtn}
+            >
+              <Text style={styles.submissionErrorCloseText}>✕</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Section 7: Sticky Bottom Dock (Hidden when keyboard or address search is open) */}
         {!isKeyboardVisible && !isSearchingAddress && (
           <BookingFixedBottomBar
@@ -787,5 +931,32 @@ const styles = StyleSheet.create({
   keyboardDoneText: {
     ...typeScale.headline,
     color: customerPalette.primary,
+  },
+  submissionErrorBanner: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+    borderWidth: 1,
+    borderRadius: 12,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  submissionErrorText: {
+    ...typeScale.footnote,
+    color: '#DC2626',
+    flex: 1,
+    marginRight: spacing.xs,
+  },
+  submissionErrorCloseBtn: {
+    padding: spacing.xxs,
+  },
+  submissionErrorCloseText: {
+    ...typeScale.subheadline,
+    color: '#991B1B',
+    fontWeight: '700',
   },
 });

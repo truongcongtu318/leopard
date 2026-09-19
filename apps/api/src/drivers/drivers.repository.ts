@@ -52,21 +52,36 @@ export class DriversRepository {
 
     const rows = await this.prisma.$queryRaw<Array<{ orderId: string } & Record<string, unknown>>>`
       SELECT
-        id,
-        "orderId",
-        type,
-        sequence,
-        address,
-        "contactName",
-        "contactPhone",
-        note,
-        ST_Y(location::geometry) as lat,
-        ST_X(location::geometry) as lng,
-        "createdAt",
-        "updatedAt"
-      FROM "OrderStop"
-      WHERE "orderId" = ANY(${orderIds}::uuid[])
-      ORDER BY sequence ASC
+        s.id,
+        s."orderId",
+        s.type,
+        s.sequence,
+        s.address,
+        s."contactName",
+        s."contactPhone",
+        s.note,
+        ST_Y(s.location::geometry) as lat,
+        ST_X(s.location::geometry) as lng,
+        s."createdAt",
+        s."updatedAt",
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_COMPLETED'
+          ) THEN 'COMPLETED'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_STARTED'
+          ) THEN 'IN_SERVICE'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'ARRIVED'
+          ) THEN 'ARRIVED'
+          ELSE 'PENDING'
+        END as progress
+      FROM "OrderStop" s
+      WHERE s."orderId" = ANY(${orderIds}::uuid[])
+      ORDER BY s.sequence ASC
     `;
 
     const byOrderId = new Map<string, unknown[]>();
@@ -268,20 +283,35 @@ export class DriversRepository {
 
     const stops = await this.prisma.$queryRaw<Array<any>>`
       SELECT
-        id,
-        "orderId",
-        type,
-        sequence,
-        address,
-        "contactName",
-        "contactPhone",
-        note,
-        ST_Y(location::geometry) as lat,
-        ST_X(location::geometry) as lng,
-        "createdAt",
-        "updatedAt"
-      FROM "OrderStop"
-      WHERE "orderId" = ${first.id}::uuid
+        s.id,
+        s."orderId",
+        s.type,
+        s.sequence,
+        s.address,
+        s."contactName",
+        s."contactPhone",
+        s.note,
+        ST_Y(s.location::geometry) as lat,
+        ST_X(s.location::geometry) as lng,
+        s."createdAt",
+        s."updatedAt",
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_COMPLETED'
+          ) THEN 'COMPLETED'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_STARTED'
+          ) THEN 'IN_SERVICE'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'ARRIVED'
+          ) THEN 'ARRIVED'
+          ELSE 'PENDING'
+        END as progress
+      FROM "OrderStop" s
+      WHERE s."orderId" = ${first.id}::uuid
       ORDER BY sequence ASC
     `;
 

@@ -282,16 +282,81 @@ export class PaymentsService {
       throw new DomainError('FORBIDDEN', 403, 'Không có quyền xem thanh toán');
     }
 
-    return this.paymentsRepo.findByOrderId(orderId);
+    const intents = await this.paymentsRepo.findByOrderId(orderId);
+
+    // Active reconciliation: if any intent is pending and has payosOrderCode, check status with provider
+    if (this.paymentProvider && typeof (this.paymentProvider as any).checkPaymentStatus === 'function') {
+      for (const intent of intents) {
+        if ((intent.status === 'QR_CREATED' || intent.status === 'UNPAID') && intent.payosOrderCode) {
+          try {
+            const info = await (this.paymentProvider as any).checkPaymentStatus(intent.payosOrderCode);
+            if (info && info.status === 'PAID') {
+              const paidAt = info.transactions?.[0]?.transactionDateTime
+                ? new Date(info.transactions[0].transactionDateTime.replace(' ', 'T'))
+                : new Date();
+              await this.prisma.$transaction(async (tx) => {
+                await this.paymentsRepo.updateStatus(
+                  intent.id,
+                  {
+                    status: 'PAID_MANUAL',
+                    providerReference: info.transactions?.[0]?.reference ?? intent.providerReference,
+                    confirmedAt: Number.isNaN(paidAt.getTime()) ? new Date() : paidAt,
+                    confirmationNote: 'Xác nhận tự động qua đối soát payOS',
+                  },
+                  tx,
+                );
+              });
+              await this.dispatchPaidOrderIfPending(orderId);
+              intent.status = 'PAID_MANUAL';
+            }
+          } catch {
+            // Ignore polling errors
+          }
+        }
+      }
+    }
+
+    return intents;
   }
 
   async dispatchPaidOrderIfPending(orderId: string): Promise<void> {
     if (!this.eventsPublisher) return;
     try {
       const order = await this.ordersRepo.findById(orderId);
-      if (!order || order.status !== 'REQUESTED' || order.driverId) {
+      if (!order || order.driverId) {
         return;
       }
+
+      // Accept both PENDING_PAYMENT (VIETQR orders waiting for payment)
+      // and REQUESTED (already transitioned, idempotent re-dispatch attempt)
+      const isDispatchable =
+        order.status === 'PENDING_PAYMENT' || order.status === 'REQUESTED';
+      if (!isDispatchable) {
+        return;
+      }
+
+      // If the order is still PENDING_PAYMENT, transition it to REQUESTED
+      // now that payment has been confirmed. This must happen inside a
+      // transaction so there is no window where the order is paid but not
+      // yet REQUESTED in the database.
+      if (order.status === 'PENDING_PAYMENT') {
+        await this.prisma.$transaction(async (tx) => {
+          await tx.order.update({
+            where: { id: orderId },
+            data: {
+              status: 'REQUESTED',
+              statusHistory: {
+                create: {
+                  fromStatus: 'PENDING_PAYMENT',
+                  toStatus: 'REQUESTED',
+                  actorId: null,
+                },
+              },
+            },
+          });
+        });
+      }
+
       const stops = order.stops ?? [];
       const pickup = stops.find((s) => s.type === 'PICKUP') ?? stops[0];
       const dropoff = stops.find((s) => s.type === 'DROPOFF') ?? stops[stops.length - 1];

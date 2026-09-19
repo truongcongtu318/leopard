@@ -14,7 +14,17 @@ describe('resolveDriverLogin', () => {
     expect(resolveDriverLogin({ isAuthenticated: true, role: 'ADMIN' })).toEqual({ kind: 'not-a-driver' });
   });
 
+  it('chuyển sang pending-approval khi status là PENDING_APPROVAL', () => {
+    expect(
+      resolveDriverLogin({ isAuthenticated: true, role: 'DRIVER', status: 'PENDING_APPROVAL' }),
+    ).toEqual({ kind: 'pending-approval' });
+    expect(
+      resolveDriverLogin({ isAuthenticated: true, role: 'CUSTOMER', status: 'PENDING_APPROVAL' }),
+    ).toEqual({ kind: 'pending-approval' });
+  });
+
   it('coi là chưa đăng nhập khi không có session', () => {
     expect(resolveDriverLogin({ isAuthenticated: false, role: null })).toEqual({ kind: 'unauthenticated' });
   });
 });
+

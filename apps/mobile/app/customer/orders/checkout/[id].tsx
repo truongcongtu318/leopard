@@ -19,11 +19,8 @@ import {
   haptic,
   IconBank,
   IconCopy,
-  IconPaymentConvenient,
-  IconQrPayment,
   IconReceipt,
   IconSecurityShield,
-  IconWallet,
   iosContinuousCurve,
   leopardPalette,
   radius,
@@ -66,7 +63,6 @@ interface PaymentApiResponse {
   referenceLabel?: string;
 }
 
-type PaymentMethodType = 'vietqr' | 'wallet' | 'cash';
 
 function formatVnd(val: number): string {
   return new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
@@ -114,15 +110,30 @@ export default function OrderCheckoutScreen({
     amount?: string;
     origin?: string;
     destination?: string;
+    pickup?: string;
+    dropoff?: string;
+    pickupLat?: string;
+    pickupLng?: string;
+    dropoffLat?: string;
+    dropoffLng?: string;
+    originLat?: string;
+    originLng?: string;
+    destinationLat?: string;
+    destinationLng?: string;
     vehicleType?: string;
     vehicleName?: string;
+    loadingFee?: string;
+    baseFare?: string;
+    distanceFare?: string;
+    distanceKm?: string;
+    stopFare?: string;
+    vatFee?: string;
   }>();
 
-  const id = propOrderId || params.id || '11111111-1111-4111-8111-111111111001';
+  const id = propOrderId || (typeof params.id === 'string' ? params.id : '');
   const initialRawAmount = propAmount ?? (params.amount ? Number(params.amount) : 280000);
   const initialAmount = Number.isFinite(initialRawAmount) ? initialRawAmount : 280000;
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('vietqr');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isReconciling, setIsReconciling] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(PAYMENT_EXPIRY_SECONDS);
@@ -135,7 +146,7 @@ export default function OrderCheckoutScreen({
   const [bankTitle, setBankTitle] = useState<string>('VIETQR');
   const [accountNumber, setAccountNumber] = useState<string>('');
   const [accountName, setAccountName] = useState<string>('CONG TY CO PHAN LEOPARD LOGISTICS');
-  const [orderReference, setOrderReference] = useState<string>(formatOrderRef(id));
+  const [orderReference, setOrderReference] = useState<string>(id ? formatOrderRef(id) : '');
   const [amount, setAmount] = useState<number>(initialAmount);
   const [isLoadingPayment, setIsLoadingPayment] = useState<boolean>(true);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -145,6 +156,10 @@ export default function OrderCheckoutScreen({
 
   // Step 1: Create or fetch payment intent
   const fetchPayment = useCallback(async () => {
+    if (!id) {
+      setIsLoadingPayment(false);
+      return;
+    }
     try {
       setIsLoadingPayment(true);
       setPaymentError(null);
@@ -255,6 +270,10 @@ export default function OrderCheckoutScreen({
             const hasExtraParams =
               params.origin ||
               params.destination ||
+              params.pickup ||
+              params.dropoff ||
+              params.pickupLat ||
+              params.dropoffLat ||
               params.vehicleType ||
               params.vehicleName;
 
@@ -263,8 +282,18 @@ export default function OrderCheckoutScreen({
                 pathname: `/customer/orders/searching/${id}`,
                 params: {
                   amount: params.amount,
-                  origin: params.origin,
-                  destination: params.destination,
+                  origin: params.origin || params.pickup,
+                  destination: params.destination || params.dropoff,
+                  pickup: params.pickup || params.origin,
+                  dropoff: params.dropoff || params.destination,
+                  pickupLat: params.pickupLat || params.originLat,
+                  pickupLng: params.pickupLng || params.originLng,
+                  dropoffLat: params.dropoffLat || params.destinationLat,
+                  dropoffLng: params.dropoffLng || params.destinationLng,
+                  originLat: params.originLat || params.pickupLat,
+                  originLng: params.originLng || params.pickupLng,
+                  destinationLat: params.destinationLat || params.dropoffLat,
+                  destinationLng: params.destinationLng || params.dropoffLng,
                   vehicleType: params.vehicleType,
                   vehicleName: params.vehicleName,
                 },
@@ -357,58 +386,61 @@ export default function OrderCheckoutScreen({
     setIsReconciling(true);
   };
 
-  // Calculated breakdown amounts
-  const baseShippingFee = Math.round(amount * 0.85);
-  const handlingFee = Math.max(0, amount - baseShippingFee);
+  // Use the exact loading fee passed from booking; fall back to 0 if not available
+  // so users who did NOT select loading support don't see a phantom surcharge.
+  const paramLoadingFee = params.loadingFee !== undefined ? Number(params.loadingFee) : undefined;
+  const handlingFee = Number.isFinite(paramLoadingFee) ? Math.max(0, paramLoadingFee!) : 0;
 
-  const paymentMethods: Array<{
-    id: PaymentMethodType;
-    title: string;
-    subtitle: string;
-    badge?: string;
-    icon: (selected: boolean) => React.ReactNode;
-  }> = [
-    {
-      id: 'vietqr',
-      title: 'Chuyển khoản VietQR',
-      subtitle: 'Napas 24/7 · Xác thực tự động tức thì',
-      badge: 'Khuyên dùng',
-      icon: (selected) => (
-        <IconQrPayment
-          color={selected ? customerPalette.primary : customerPalette.textSlateDark}
-          size={22}
-        />
-      ),
-    },
-    {
-      id: 'wallet',
-      title: 'Ví LEOPARD Escrow',
-      subtitle: 'Khả dụng: 1.250.000 ₫ · Trừ trực tiếp',
-      badge: 'Bảo chứng',
-      icon: (selected) => (
-        <IconWallet
-          color={selected ? customerPalette.primary : customerPalette.textSlateDark}
-          size={22}
-        />
-      ),
-    },
-    {
-      id: 'cash',
-      title: 'Tiền mặt khi nhận hàng',
-      subtitle: 'Thanh toán trực tiếp cho tài xế COD',
-      icon: (selected) => (
-        <IconPaymentConvenient
-          color={selected ? customerPalette.primary : customerPalette.textSlateDark}
-          size={22}
-        />
-      ),
-    },
-  ];
+  // Breakdown line items from booking (preferred). Fall back to splitting from total.
+  const paramBaseFare = params.baseFare !== undefined ? Number(params.baseFare) : undefined;
+  const paramDistanceFare = params.distanceFare !== undefined ? Number(params.distanceFare) : undefined;
+  const paramDistanceKm = params.distanceKm !== undefined ? Number(params.distanceKm) : undefined;
+  const paramStopFare = params.stopFare !== undefined ? Number(params.stopFare) : undefined;
+  const paramVatFee = params.vatFee !== undefined ? Number(params.vatFee) : undefined;
+
+  const hasDetailedBreakdown =
+    Number.isFinite(paramBaseFare) &&
+    paramBaseFare! > 0 &&
+    Number.isFinite(paramDistanceFare);
+
+  // Derived values: if we have detailed breakdown use them; otherwise fall back
+  const displayBaseFare = hasDetailedBreakdown ? paramBaseFare! : 0;
+  const displayDistanceFare = hasDetailedBreakdown ? paramDistanceFare! : 0;
+  const displayDistanceKm = Number.isFinite(paramDistanceKm) ? paramDistanceKm! : 0;
+  const displayStopFare = Number.isFinite(paramStopFare) && paramStopFare! > 0 ? paramStopFare! : 0;
+  const displayVatFee = Number.isFinite(paramVatFee) && paramVatFee! > 0 ? paramVatFee! : 0;
+  // Transport fare = base + distance + stop (shown as one line when no detail)
+  const displayTransportFare = hasDetailedBreakdown
+    ? displayBaseFare + displayDistanceFare + displayStopFare
+    : Math.max(0, amount - handlingFee - displayVatFee);
+  const baseShippingFee = Math.max(0, amount - handlingFee);
+
+
+  if (!id) {
+    return (
+      <ScreenScaffold onBack={handleBack} title="Thanh toán đơn hàng">
+        <View style={{ flex: 1, padding: spacing.lg, alignItems: 'center', justifyContent: 'center' }}>
+          <AppText tone="primary" variant="headline" style={{ marginBottom: spacing.sm }}>
+            Không tìm thấy mã đơn hàng
+          </AppText>
+          <AppText tone="subtle" variant="body" style={{ textAlign: 'center', marginBottom: spacing.lg }}>
+            Mã đơn hàng không hợp lệ hoặc đã hết hạn thanh toán.
+          </AppText>
+          <Button
+            label="Về danh sách đơn"
+            onPress={() => (router.canGoBack?.() ? router.back() : router.replace('/customer/orders'))}
+            size="large"
+            variant="primary"
+          />
+        </View>
+      </ScreenScaffold>
+    );
+  }
 
   return (
     <ScreenScaffold
       onBack={handleBack}
-      subtitle="Ký quỹ bảo vệ chuyến đi LEOPARD Escrow"
+      subtitle="Quét mã VietQR để hoàn tất đặt đơn"
       title="Xác nhận & Thanh toán"
       stickyFooter={
         <View style={styles.stickyFooterContainer}>
@@ -471,7 +503,7 @@ export default function OrderCheckoutScreen({
         {/* Price Hero Section */}
         <View style={styles.priceCard}>
           <AppText style={styles.priceLabel} variant="footnote">
-            TỔNG TIỀN KÝ QUỸ (ESCROW)
+            TỔNG TIỀN THANH TOÁN
           </AppText>
           <AppText style={styles.priceAmount} variant="largeTitle">
             {formatVnd(amount)}
@@ -506,95 +538,9 @@ export default function OrderCheckoutScreen({
           <View style={styles.escrowNoticeRow}>
             <IconSecurityShield color={colors.success.text} size={16} />
             <AppText style={styles.escrowNoticeText} variant="caption1">
-              Bảo chứng 100% · Hoàn cọc tức thì nếu tài xế không nhận cuốc
+              Bảo chứng 100% · Tự động điều phối tài xế ngay sau khi thanh toán
             </AppText>
           </View>
-        </View>
-
-        {/* Payment Methods Selector */}
-        <View style={styles.sectionHeader}>
-          <AppText style={styles.sectionTitle} variant="subheadline">
-            PHƯƠNG THỨC THANH TOÁN
-          </AppText>
-        </View>
-
-        <View style={styles.methodsCard}>
-          {paymentMethods.map((method, index) => {
-            const isSelected = paymentMethod === method.id;
-            const isLast = index === paymentMethods.length - 1;
-
-            return (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-                key={method.id}
-                onPress={() => {
-                  haptic.selection();
-                  setPaymentMethod(method.id);
-                }}
-                style={({ pressed }) => [
-                  styles.methodRow,
-                  isSelected && styles.methodRowSelected,
-                  !isLast && styles.methodRowDivider,
-                  pressed && styles.methodRowPressed,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.methodIconBox,
-                    isSelected && styles.methodIconBoxSelected,
-                  ]}
-                >
-                  {method.icon(isSelected)}
-                </View>
-
-                <View style={styles.methodInfo}>
-                  <View style={styles.methodTitleRow}>
-                    <AppText
-                      style={[
-                        styles.methodTitle,
-                        isSelected && styles.methodTitleSelected,
-                      ]}
-                      variant="subheadline"
-                    >
-                      {method.title}
-                    </AppText>
-                    {method.badge ? (
-                      <View
-                        style={[
-                          styles.methodBadge,
-                          isSelected && styles.methodBadgeSelected,
-                        ]}
-                      >
-                        <AppText
-                          style={[
-                            styles.methodBadgeText,
-                            isSelected && styles.methodBadgeTextSelected,
-                          ]}
-                          variant="caption2"
-                        >
-                          {method.badge}
-                        </AppText>
-                      </View>
-                    ) : null}
-                  </View>
-                  <AppText style={styles.methodSubtitle} variant="caption1">
-                    {method.subtitle}
-                  </AppText>
-                </View>
-
-                {/* Radio Indicator */}
-                <View
-                  style={[
-                    styles.radioCircle,
-                    isSelected && styles.radioCircleSelected,
-                  ]}
-                >
-                  {isSelected && <View style={styles.radioDot} />}
-                </View>
-              </Pressable>
-            );
-          })}
         </View>
 
         {/* VietQR Dynamic Code & Bank Details Table */}
@@ -757,7 +703,7 @@ export default function OrderCheckoutScreen({
         {/* Fare Breakdown Card */}
         <View style={styles.sectionHeader}>
           <AppText style={styles.sectionTitle} variant="subheadline">
-            CHI TIẾT CƯỚC & KÝ QUỸ
+            CHI TIẾT CƯỚC PHÍ
           </AppText>
         </View>
 
@@ -769,27 +715,91 @@ export default function OrderCheckoutScreen({
             </AppText>
           </View>
 
-          <View style={styles.breakdownItemRow}>
-            <AppText style={styles.breakdownItemLabel} variant="footnote">
-              Cước vận chuyển cơ bản
-            </AppText>
-            <AppText style={styles.breakdownItemValue} variant="footnote">
-              {formatVnd(baseShippingFee)}
-            </AppText>
-          </View>
+          {/* Cước cơ bản (base fare) */}
+          {hasDetailedBreakdown ? (
+            <>
+              <View style={styles.breakdownItemRow}>
+                <View style={styles.breakdownItemLabelCol}>
+                  <AppText style={styles.breakdownItemLabel} variant="footnote">
+                    Cước cơ bản (xuất phát)
+                  </AppText>
+                </View>
+                <AppText style={styles.breakdownItemValue} variant="footnote">
+                  {formatVnd(displayBaseFare)}
+                </AppText>
+              </View>
 
-          <View style={styles.breakdownItemRow}>
-            <AppText style={styles.breakdownItemLabel} variant="footnote">
-              Phụ phí bốc dỡ & xếp hàng
-            </AppText>
-            <AppText style={styles.breakdownItemValue} variant="footnote">
-              {formatVnd(handlingFee)}
-            </AppText>
-          </View>
+              <View style={styles.breakdownItemRow}>
+                <View style={styles.breakdownItemLabelCol}>
+                  <AppText style={styles.breakdownItemLabel} variant="footnote">
+                    Cước quãng đường
+                  </AppText>
+                  {displayDistanceKm > 0 && (
+                    <AppText style={styles.breakdownItemSub} variant="caption2">
+                      {displayDistanceKm.toFixed(1)} km
+                    </AppText>
+                  )}
+                </View>
+                <AppText style={styles.breakdownItemValue} variant="footnote">
+                  {formatVnd(displayDistanceFare)}
+                </AppText>
+              </View>
 
+              {displayStopFare > 0 && (
+                <View style={styles.breakdownItemRow}>
+                  <AppText style={styles.breakdownItemLabel} variant="footnote">
+                    Điểm dừng trung gian
+                  </AppText>
+                  <AppText style={styles.breakdownItemValue} variant="footnote">
+                    {formatVnd(displayStopFare)}
+                  </AppText>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.breakdownItemRow}>
+              <AppText style={styles.breakdownItemLabel} variant="footnote">
+                Cước vận chuyển
+              </AppText>
+              <AppText style={styles.breakdownItemValue} variant="footnote">
+                {formatVnd(displayTransportFare)}
+              </AppText>
+            </View>
+          )}
+
+          {/* Phụ phí bốc dỡ (chỉ khi đã tick) */}
+          {handlingFee > 0 && (
+            <View style={styles.breakdownItemRow}>
+              <AppText style={styles.breakdownItemLabel} variant="footnote">
+                Phụ phí bốc dỡ & xếp hàng
+              </AppText>
+              <AppText style={styles.breakdownItemValue} variant="footnote">
+                {formatVnd(handlingFee)}
+              </AppText>
+            </View>
+          )}
+
+          {/* VAT (chỉ khi đã tick xuất hóa đơn) */}
+          {displayVatFee > 0 && (
+            <View style={styles.breakdownItemRow}>
+              <View style={styles.breakdownItemLabelCol}>
+                <AppText style={styles.breakdownItemLabel} variant="footnote">
+                  Thuế GTGT (VAT)
+                </AppText>
+                <AppText style={styles.breakdownItemSub} variant="caption2">
+                  8% · Xuất hóa đơn GTGT
+                </AppText>
+              </View>
+              <AppText style={styles.breakdownItemValue} variant="footnote">
+                {formatVnd(displayVatFee)}
+              </AppText>
+            </View>
+          )}
+
+          {/* Bảo hiểm chuyến đi miễn phí */}
           <View style={styles.breakdownItemRow}>
             <AppText style={styles.breakdownItemLabel} variant="footnote">
-              Bảo hiểm ký quỹ Escrow
+              Bảo hiểm chuyến đi
             </AppText>
             <AppText style={styles.breakdownFreeTag} variant="footnote">
               Miễn phí
@@ -895,102 +905,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: customerPalette.textSubtle,
     letterSpacing: 0.4,
-  },
-  // Methods selection
-  methodsCard: {
-    backgroundColor: customerPalette.surfaceWhite,
-    borderRadius: radius.cardLg,
-    ...iosContinuousCurve,
-    borderWidth: 1,
-    borderColor: 'rgba(11, 30, 66, 0.08)',
-    marginBottom: spacing.md,
-    overflow: 'hidden',
-  },
-  methodRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  methodRowDivider: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: customerPalette.cardBorder,
-  },
-  methodRowSelected: {
-    backgroundColor: 'rgba(11, 37, 69, 0.03)',
-  },
-  methodRowPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.985 }],
-  },
-  methodIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.cardSm,
-    ...iosContinuousCurve,
-    backgroundColor: customerPalette.canvas,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.sm,
-  },
-  methodIconBoxSelected: {
-    backgroundColor: 'rgba(11, 37, 69, 0.08)',
-  },
-  methodInfo: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  methodTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  methodTitle: {
-    fontWeight: '600',
-    color: customerPalette.textSlateDark,
-  },
-  methodTitleSelected: {
-    color: customerPalette.primary,
-    fontWeight: '700',
-  },
-  methodSubtitle: {
-    color: customerPalette.textSubtle,
-    marginTop: 2,
-  },
-  methodBadge: {
-    backgroundColor: customerPalette.canvas,
-    borderRadius: radius.cardSm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  methodBadgeSelected: {
-    backgroundColor: customerPalette.accent,
-  },
-  methodBadgeText: {
-    fontWeight: '600',
-    color: customerPalette.textSubtle,
-  },
-  methodBadgeTextSelected: {
-    color: customerPalette.surfaceWhite,
-    fontWeight: '700',
-  },
-  radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: customerPalette.cardBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioCircleSelected: {
-    borderColor: customerPalette.primary,
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: customerPalette.primary,
   },
   // Double Bezel VietQR
   qrDoubleBezelOuter: {
@@ -1176,8 +1090,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xxs,
   },
+  breakdownItemLabelCol: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 1,
+    marginRight: spacing.xs,
+  },
   breakdownItemLabel: {
     color: customerPalette.textSubtle,
+  },
+  breakdownItemSub: {
+    color: customerPalette.textSlateDark,
+    opacity: 0.5,
+    marginTop: 1,
   },
   breakdownItemValue: {
     color: customerPalette.textSlateDark,

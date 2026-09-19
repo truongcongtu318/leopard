@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   StyleSheet,
@@ -45,6 +46,8 @@ export interface BookingRouteSectionProps {
   /** Real routed duration; undefined until the estimate resolves. */
   etaMinutes?: number;
   isEstimating?: boolean;
+  isLocatingPickup?: boolean;
+  hasPickupCoords?: boolean;
   onPressPickup?: () => void;
   onPressDropoff?: () => void;
   onUpdatePickup?: (address: string, coords?: { lat: number; lng: number }) => void;
@@ -103,6 +106,8 @@ export function BookingRouteSection({
   distanceKm,
   etaMinutes,
   isEstimating,
+  isLocatingPickup = false,
+  hasPickupCoords = false,
   onPressPickup,
   onPressDropoff,
   onUpdatePickup,
@@ -179,7 +184,11 @@ export function BookingRouteSection({
       >
         {/* Điểm lấy hàng */}
         <Pressable
-          accessibilityLabel={`Điểm lấy hàng: ${pickupAddress || 'Chưa chọn'}`}
+          accessibilityLabel={
+            isLocatingPickup
+              ? 'Đang định vị điểm lấy hàng theo GPS thiết bị'
+              : `Điểm lấy hàng: ${pickupAddress || 'Chưa chọn'}`
+          }
           accessibilityRole="button"
           onPress={() => handleOpenSearch('pickup')}
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
@@ -195,14 +204,43 @@ export function BookingRouteSection({
             <View style={styles.connectorLine} />
           </View>
           <View style={styles.addressTextCol}>
-            <Text numberOfLines={1} style={styles.addressLine1}>
-              {pickupParsed.title || 'Chọn điểm lấy hàng'}
-            </Text>
-            {pickupParsed.subtitle ? (
-              <Text numberOfLines={1} style={styles.addressLine2}>
-                {pickupParsed.subtitle}
-              </Text>
-            ) : null}
+            {isLocatingPickup ? (
+              <>
+                <View style={styles.locatingRow}>
+                  <ActivityIndicator
+                    color={customerPalette.primary}
+                    size="small"
+                    style={styles.locatingSpinner}
+                  />
+                  <Text numberOfLines={1} style={styles.addressLine1}>
+                    Đang định vị GPS…
+                  </Text>
+                </View>
+                <Text numberOfLines={1} style={styles.addressLine2}>
+                  Đang xác định vị trí hiện tại của bạn
+                </Text>
+              </>
+            ) : !hasPickupCoords && (!pickupAddress || pickupAddress === 'Vị trí hiện tại') ? (
+              <>
+                <Text numberOfLines={1} style={styles.addressLine1}>
+                  Chọn điểm lấy hàng
+                </Text>
+                <Text numberOfLines={1} style={styles.addressLine2}>
+                  Nhấn để chọn vị trí hiện tại hoặc tìm kiếm
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text numberOfLines={1} style={styles.addressLine1}>
+                  {pickupParsed.title || 'Chọn điểm lấy hàng'}
+                </Text>
+                {pickupParsed.subtitle ? (
+                  <Text numberOfLines={1} style={styles.addressLine2}>
+                    {pickupParsed.subtitle}
+                  </Text>
+                ) : null}
+              </>
+            )}
           </View>
           <IconChevronRight color={customerPalette.offlineGray} size={13} />
         </Pressable>
@@ -452,6 +490,13 @@ const styles = StyleSheet.create({
     ...typeScale.caption1,
     color: customerPalette.textSubtle,
     marginTop: 1,
+  },
+  locatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locatingSpinner: {
+    marginRight: spacing.xxs,
   },
   separator: {
     height: 0.5,

@@ -170,7 +170,14 @@ export function useVietmapRoute({
     const osrmPoints = rawWaypoints.map((p) => `${p.lng},${p.lat}`).join(';');
 
     const fetchOSRM = async () => {
-      const url = `https://router.project-osrm.org/route/v1/driving/${osrmPoints}?overview=full&geometries=geojson&steps=true`;
+      const configuredOsrm = (process.env.EXPO_PUBLIC_OSRM_URL || '').trim();
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction && !configuredOsrm) {
+        throw new Error('OSRM public server fallback is disabled in production without configured EXPO_PUBLIC_OSRM_URL');
+      }
+
+      const osrmBase = (configuredOsrm || 'https://router.project-osrm.org').replace(/\/$/, '');
+      const url = `${osrmBase}/route/v1/driving/${osrmPoints}?overview=full&geometries=geojson&steps=true`;
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error(`OSRM HTTP error: ${res.status}`);
       const data = await res.json();

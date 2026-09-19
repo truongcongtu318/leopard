@@ -92,15 +92,36 @@ export default function OrderSearchingScreen({
     id?: string;
     origin?: string;
     destination?: string;
+    pickup?: string;
+    dropoff?: string;
+    pickupLat?: string;
+    pickupLng?: string;
+    dropoffLat?: string;
+    dropoffLng?: string;
+    originLat?: string;
+    originLng?: string;
+    destinationLat?: string;
+    destinationLng?: string;
     vehicleType?: string;
     vehicleName?: string;
   }>();
 
   const id = propOrderId || params.id || '';
   const [fetchedVehicleLabel, setFetchedVehicleLabel] = useState<string | null>(null);
+  const [fetchedReference, setFetchedReference] = useState<string | null>(null);
+  const [fetchedRoute, setFetchedRoute] = useState<{
+    originLabel?: string;
+    originCoords?: { lat: number; lng: number };
+    destinationLabel?: string;
+    destinationCoords?: { lat: number; lng: number };
+    routeCoords?: readonly { lat: number; lng: number }[];
+  } | null>(null);
 
-  const origin = params.origin || 'Kho Tân Bình, TP.HCM';
-  const destination = params.destination || 'KCN Vĩnh Lộc, Bình Chánh';
+  const rawOrigin = params.origin || params.pickup;
+  const rawDestination = params.destination || params.dropoff;
+
+  const origin = fetchedRoute?.originLabel || rawOrigin || 'Kho Tân Bình, TP.HCM';
+  const destination = fetchedRoute?.destinationLabel || rawDestination || 'KCN Vĩnh Lộc, Bình Chánh';
   const vehicleLabel = params.vehicleName || fetchedVehicleLabel || formatVehicleLabel(params.vehicleType);
 
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
@@ -111,23 +132,42 @@ export default function OrderSearchingScreen({
     initialCancelledReason ? { reason: initialCancelledReason } : null,
   );
 
-  // Geographic coordinates resolution for Lalamove-style interactive map
-  const pickupCoords = useMemo(() => resolveLocationCoords(origin), [origin]);
-  const dropoffCoords = useMemo(
-    () => resolveLocationCoords(destination, pickupCoords),
-    [destination, pickupCoords],
-  );
+  const paramPickupCoords = useMemo(() => {
+    const latStr = params.pickupLat || params.originLat;
+    const lngStr = params.pickupLng || params.originLng;
+    if (latStr && lngStr) {
+      const lat = parseFloat(latStr);
+      const lng = parseFloat(lngStr);
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) return { lat, lng };
+    }
+    return undefined;
+  }, [params.pickupLat, params.pickupLng, params.originLat, params.originLng]);
 
-  // Simulated nearby driver coordinates radiating around pickup point (Lalamove standard)
-  const nearbyDrivers = useMemo(() => {
-    if (!pickupCoords) return [];
-    return [
-      { id: 'drv-1', lat: pickupCoords.lat + 0.0032, lng: pickupCoords.lng + 0.0036, vehicleType: 'VAN' },
-      { id: 'drv-2', lat: pickupCoords.lat - 0.0038, lng: pickupCoords.lng + 0.0028, vehicleType: 'VAN' },
-      { id: 'drv-3', lat: pickupCoords.lat + 0.0025, lng: pickupCoords.lng - 0.0034, vehicleType: 'TRUCK' },
-      { id: 'drv-4', lat: pickupCoords.lat - 0.0021, lng: pickupCoords.lng - 0.0029, vehicleType: 'VAN' },
-    ];
-  }, [pickupCoords]);
+  const paramDropoffCoords = useMemo(() => {
+    const latStr = params.dropoffLat || params.destinationLat;
+    const lngStr = params.dropoffLng || params.destinationLng;
+    if (latStr && lngStr) {
+      const lat = parseFloat(latStr);
+      const lng = parseFloat(lngStr);
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) return { lat, lng };
+    }
+    return undefined;
+  }, [params.dropoffLat, params.dropoffLng, params.destinationLat, params.destinationLng]);
+
+  // Geographic coordinates resolution for Lalamove-style interactive map
+  const pickupCoords = useMemo(() => {
+    if (fetchedRoute?.originCoords) return fetchedRoute.originCoords;
+    if (paramPickupCoords) return paramPickupCoords;
+    return origin ? resolveLocationCoords(origin) : undefined;
+  }, [fetchedRoute?.originCoords, paramPickupCoords, origin]);
+
+  const dropoffCoords = useMemo(() => {
+    if (fetchedRoute?.destinationCoords) return fetchedRoute.destinationCoords;
+    if (paramDropoffCoords) return paramDropoffCoords;
+    return destination ? resolveLocationCoords(destination, pickupCoords) : undefined;
+  }, [fetchedRoute?.destinationCoords, paramDropoffCoords, destination, pickupCoords]);
+
+  const routePolyline = fetchedRoute?.routeCoords;
 
   // Reanimated 60fps native UI thread pulse wave for radar visual (Emil Kowalski 3-wave staggered sonar)
   const pulse1 = useSharedValue(0);
@@ -227,17 +267,29 @@ export default function OrderSearchingScreen({
 
   // Listen to real order status if driver accepts or order gets cancelled
   useEffect(() => {
-    if (!id || id.startsWith('11111111-1111-4111-8111-')) return undefined;
+    if (!id) return undefined;
     if (process.env.NODE_ENV === 'test') return undefined;
     let mounted = true;
     const port = createCustomerHttpAdapter();
 
-    const interval = setInterval(async () => {
+    const fetchOrder = async () => {
       try {
         const detail = await port.getOrderDetailView(id);
         if (!mounted || detail.kind !== 'content') return;
         if (detail.order.requestedVehicleLabel) {
           setFetchedVehicleLabel(detail.order.requestedVehicleLabel);
+        }
+        if (detail.order.reference) {
+          setFetchedReference(detail.order.reference);
+        }
+        if (detail.order.route) {
+          setFetchedRoute({
+            originLabel: detail.order.route.origin.label,
+            originCoords: detail.order.route.origin.coords,
+            destinationLabel: detail.order.route.destination.label,
+            destinationCoords: detail.order.route.destination.coords,
+            routeCoords: detail.order.route.routeCoords,
+          });
         }
 
         // If order was cancelled (e.g. timeout / sweep: "Không tìm được tài xế phù hợp")
@@ -272,7 +324,10 @@ export default function OrderSearchingScreen({
       } catch {
         // Safe ignore
       }
-    }, 3000);
+    };
+
+    void fetchOrder();
+    const interval = setInterval(fetchOrder, 3000);
 
     return () => {
       mounted = false;
@@ -383,8 +438,8 @@ export default function OrderSearchingScreen({
           height="100%"
           interactive={false}
           mode="route"
-          nearbyDrivers={nearbyDrivers}
           origin={{ label: origin, coords: pickupCoords }}
+          routeCoords={routePolyline}
           testID="searching-route-map"
         />
 
@@ -483,7 +538,7 @@ export default function OrderSearchingScreen({
               ]}
             >
               <AppText numeric tone="secondary" variant="caption1" style={styles.orderCodeLabel}>
-                {formatOrderRef(id)}
+                {fetchedReference || formatOrderRef(id)}
               </AppText>
               {copiedOrderRef ? (
                 <IconCheck color={colors.success.text} size={13} />
@@ -583,7 +638,7 @@ export default function OrderSearchingScreen({
 
             <View style={styles.cancelledOrderBox}>
               <AppText numeric tone="primary" variant="subheadline" style={styles.matchedOrderRef}>
-                {formatOrderRef(id)}
+                {fetchedReference || formatOrderRef(id)}
               </AppText>
               <AppText numberOfLines={1} tone="secondary" variant="footnote" style={styles.matchedOrderRoute}>
                 {origin} → {destination}

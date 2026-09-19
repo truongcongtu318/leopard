@@ -137,6 +137,7 @@ export class OrdersService {
         vehicleType: dto.vehicleType,
         // exactOptionalPropertyTypes: omit rather than pass undefined.
         ...(dto.cargoWeightKg !== undefined ? { cargoWeightKg: dto.cargoWeightKg } : {}),
+        ...(dto.paymentMethod !== undefined ? { paymentMethod: dto.paymentMethod } : {}),
       routeSnapshot: {
         polyline: verifiedEstimate.polyline,
         source: verifiedEstimate.source,

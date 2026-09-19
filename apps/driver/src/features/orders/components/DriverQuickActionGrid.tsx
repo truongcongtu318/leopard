@@ -132,18 +132,18 @@ export function DriverQuickActionGrid({
 const styles = StyleSheet.create({
   grid: {
     backgroundColor: driverPrimitives.colors.white,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(226, 232, 240, 0.95)',
     borderRadius: radius.cardXl,
     ...iosContinuousCurve,
     borderWidth: 1,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.md,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: '#0B2545',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   innerRow: {
     alignItems: 'center',
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   pressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.85,
+    transform: [{ scale: 0.965 }],
   },
 });

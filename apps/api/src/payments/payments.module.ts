@@ -4,6 +4,8 @@ import { PaymentsWebhookController } from './payments-webhook.controller.js';
 import { PaymentsService } from './payments.service.js';
 import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentsRepository } from './payments.repository.js';
+import { CustomerWalletController } from './customer-wallet.controller.js';
+import { CustomerWalletService } from './customer-wallet.service.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { OrdersModule } from '../orders/orders.module.js';
@@ -24,11 +26,12 @@ function buildPayOsProvider(source: NodeJS.ProcessEnv): PayOsPaymentProvider {
 
 @Module({
   imports: [DatabaseModule, AuthModule, OrdersModule, AuditModule, NotificationsModule, InvoicesModule],
-  controllers: [PaymentsController, PaymentsWebhookController],
+  controllers: [PaymentsController, PaymentsWebhookController, CustomerWalletController],
   providers: [
     PaymentsRepository,
     PaymentsService,
     PaymentWebhookService,
+    CustomerWalletService,
     {
       provide: PayOsPaymentProvider,
       useFactory: (): PayOsPaymentProvider | null => {

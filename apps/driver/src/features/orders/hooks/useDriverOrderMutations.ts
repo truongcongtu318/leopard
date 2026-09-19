@@ -105,7 +105,7 @@ export function useDriverOrderMutations({
         setInFlightStopCommand(null);
       }
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       if (!result) return;
       const { response } = result;
       if (response.currentRouteEta) {
@@ -120,7 +120,7 @@ export function useDriverOrderMutations({
           },
         );
       }
-      void queryClient.invalidateQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey });
     },
     onError: (error) => {
       Alert.alert(

@@ -138,6 +138,7 @@ export const driverHapticMatrix = {
   swipeSuccess: () => haptic.success(),
   actionHeavy: () => haptic.heavy(),
   errorAlert: () => haptic.error(),
+  selectionChanged: () => haptic.selection(),
 };
 
 

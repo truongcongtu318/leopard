@@ -196,6 +196,13 @@ export type DriverPrimaryTaskView =
   | Readonly<{ kind: 'accept'; command: DriverCommandView }>
   | Readonly<{ kind: 'advance-lifecycle'; command: DriverCommandView }>
   | Readonly<{ kind: 'upload-proof'; command: DriverCommandView }>
+  | Readonly<{
+      kind: 'record-stop';
+      stopId: string;
+      step: 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED';
+      sequence: number;
+      command: DriverCommandView;
+    }>
   | null;
 
 type DriverPublicDetailOrder = DriverPublicOrderView;

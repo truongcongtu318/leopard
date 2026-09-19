@@ -22,14 +22,21 @@ export default function DriverLoginRoute() {
   const isExpired = searchParams.expired === 'true';
   const [notDriver, setNotDriver] = useState(false);
 
-  const handleLoginSuccess = (role: Role) => {
-    const outcome = resolveDriverLogin({ isAuthenticated: true, role });
-    if (outcome.kind === 'enter') {
-      router.replace('/orders');
+  const handleLoginSuccess = (role: Role, profileComplete?: boolean, status?: string) => {
+    const outcome = resolveDriverLogin({ isAuthenticated: true, role, status });
+    if (outcome.kind === 'pending-approval') {
+      router.replace('/(public)/kyc-pending');
+    } else if (outcome.kind === 'enter') {
+      if (profileComplete === false) {
+        router.replace('/(public)/driver-register');
+      } else {
+        router.replace('/orders');
+      }
     } else {
       setNotDriver(true);
     }
   };
+
 
   const handleLogout = async () => {
     await sessionStore.clearSession();

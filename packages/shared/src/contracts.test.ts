@@ -34,6 +34,7 @@ describe('shared domain contracts', () => {
       UserStatus: ['ACTIVE', 'DISABLED'],
       DriverAvailability: ['OFFLINE', 'AVAILABLE', 'BUSY'],
       OrderStatus: [
+        'PENDING_PAYMENT',
         'REQUESTED',
         'ACCEPTED',
         'PICKING_UP',

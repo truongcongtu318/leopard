@@ -688,6 +688,48 @@ function resolveDriverTask(
     };
   }
   if (status === 'IN_TRANSIT') {
+    const intermediateStops =
+      order.stops?.filter(
+        (s) => s.type === 'STOP' && s.sequence !== 0,
+      ) ?? [];
+    const sortedStops = [...intermediateStops].sort(
+      (a, b) => (a.sequence ?? 0) - (b.sequence ?? 0),
+    );
+    const pendingStop = sortedStops.find((s) => s.progress !== 'COMPLETED');
+
+    if (pendingStop) {
+      const step: 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED' =
+        pendingStop.progress === 'PENDING'
+          ? 'ARRIVED'
+          : pendingStop.progress === 'ARRIVED'
+            ? 'SERVICE_STARTED'
+            : 'SERVICE_COMPLETED';
+
+      const label =
+        step === 'ARRIVED'
+          ? `Đã đến điểm dừng ${pendingStop.sequence ?? 1}`
+          : step === 'SERVICE_STARTED'
+            ? `Bắt đầu bốc/dỡ tại điểm ${pendingStop.sequence ?? 1}`
+            : `Hoàn tất điểm dừng ${pendingStop.sequence ?? 1}`;
+
+      const stopCommand: DriverCommandView = {
+        id: `cmd-stop-progress-${pendingStop.id}`,
+        orderId: order.id,
+        label,
+      };
+
+      return {
+        primaryTask: {
+          kind: 'record-stop',
+          stopId: pendingStop.id,
+          step,
+          sequence: pendingStop.sequence ?? 1,
+          command: stopCommand,
+        },
+        offeredLifecycleCommand: null,
+      };
+    }
+
     if (proof.kind === 'persisted') {
       const offered: DriverCommandView = {
         id: `cmd-deliver-${order.id}`,
@@ -824,9 +866,15 @@ export function mapOrderToDriverDetailView(
     contactRoleLabel: resolveContactRoleLabel(order.currentContact),
     customerContact: formatCustomerContactValue(order.currentContact, order.customerContact),
     priceLabel: formatVndPrice(order.priceVnd),
-    priceVnd: order.priceVnd ?? null,
     paymentMethod,
-    isCashConfirmed: false,
+    paymentStatus: order.paymentStatus || (routeSnapshot as any)?.paymentStatus || (order as any).payment?.status,
+    isCashConfirmed: Boolean(
+      order.isCashConfirmed ||
+      order.paymentStatus === 'PAID_MANUAL' ||
+      order.paymentStatus === 'SUCCEEDED' ||
+      (order as any).payment?.status === 'PAID_MANUAL' ||
+      (routeSnapshot as any)?.paymentStatus === 'PAID_MANUAL',
+    ),
     driverPayoutVnd,
     updatedAtLabel: formatDateTime(order.updatedAt || order.createdAt),
     history,
@@ -1328,54 +1376,20 @@ export function createDriverHttpAdapter(
                 });
               }
             } catch {
-              // Fallback to minimal state preserving order ID if GET fails
+              // Return fail-closed error view if order cannot be fetched
+              return deepFreeze<DriverDetailView>({
+                scenarioId: 'D-DETAIL-ERROR',
+                kind: 'error',
+                title: 'Không thể tải thông tin đơn hàng',
+                message: 'Vui lòng kiểm tra kết nối mạng và thử lại.',
+              });
             }
 
             return deepFreeze<DriverDetailView>({
-              scenarioId: 'D-DETAIL-PROOF-REQUIRED',
-              kind: 'content',
-              accessScope: 'ASSIGNED_FULL',
-              order: {
-                id: orderId,
-                reference: lastActiveTripReference ?? `LP-${orderId.replace(/-/g, '').slice(0, 8).toUpperCase()}`,
-                status: 'IN_TRANSIT',
-                route: {
-                  origin: { id: 'driver-pickup', label: 'Điểm lấy hàng' },
-                  stops: [],
-                  destination: { id: 'driver-dropoff', label: 'Điểm giao hàng' },
-                  distanceLabel: '0,0 km',
-                  etaDurationSeconds: 0,
-                  etaSource: 'DEMO',
-                },
-                vehicleLabel: 'Xe van',
-                cargoSummary: 'Hàng hóa tiêu chuẩn',
-                contactRoleLabel: 'Liên hệ khách hàng',
-                customerContact: 'Thông tin liên hệ khách hàng · chỉ hiện sau phân công',
-                updatedAtLabel: formatDateTime(new Date()),
-                history: [],
-              },
-              tracking: {
-                kind: 'healthy',
-                label: 'Đang gửi vị trí',
-                lastUpdatedLabel: formatDateTime(new Date()),
-                queuedPointCount: null,
-              },
-              proof: {
-                kind: 'required',
-                label: 'Cần ảnh xác nhận trước khi hoàn tất',
-                message: 'Thêm một ảnh JPEG, PNG hoặc WebP tối đa 10 MB.',
-                fileLabel: null,
-              },
-              primaryTask: {
-                kind: 'upload-proof',
-                command: {
-                  id: `cmd-select-proof-${orderId}`,
-                  orderId,
-                  label: 'Thêm ảnh xác nhận giao hàng',
-                },
-              },
-              offeredLifecycleCommand: null,
-              notice: 'Cần tải ảnh xác nhận trước khi hoàn tất giao hàng.',
+              scenarioId: 'D-DETAIL-ERROR',
+              kind: 'error',
+              title: 'Không thể tải thông tin đơn hàng',
+              message: 'Vui lòng kiểm tra kết nối mạng và thử lại.',
             });
           }
         }

@@ -156,11 +156,32 @@ export function BookingLocationSearchOverlay({
         setIsLocatingCurrentPosition(false);
         return;
       }
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      } as any);
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
+      let lat: number;
+      let lng: number;
+      try {
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+          maximumAge: 5000,
+          timeout: 10000,
+        } as any);
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } catch (gpsErr) {
+        if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.geolocation) {
+          const webPos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 5000,
+            });
+          });
+          lat = webPos.coords.latitude;
+          lng = webPos.coords.longitude;
+        } else {
+          throw gpsErr;
+        }
+      }
+
       const apiKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || '';
       const resolved = await reverseGeocodeCoords({ lat, lng }, apiKey);
       const chosenAddress =
@@ -168,9 +189,11 @@ export function BookingLocationSearchOverlay({
           ? resolved.trim()
           : `Vị trí hiện tại (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
+      const streetName = chosenAddress.split(',')[0]?.trim() || 'Vị trí hiện tại';
+
       handleSelect({
         id: 'current-gps',
-        name: 'Vị trí hiện tại',
+        name: streetName,
         address: chosenAddress,
         coords: { lat, lng },
       });
@@ -187,9 +210,12 @@ export function BookingLocationSearchOverlay({
   const handleSelect = (item: LocationSearchResult) => {
     haptic.selection();
     Keyboard.dismiss();
-    const fullAddress = item.address.includes(item.name)
-      ? item.address
-      : `${item.name} - ${item.address}`;
+    const fullAddress =
+      item.id === 'current-gps'
+        ? item.address
+        : item.address.includes(item.name)
+          ? item.address
+          : `${item.name} - ${item.address}`;
     onSelectLocation(fullAddress, item.coords);
     onClose();
   };

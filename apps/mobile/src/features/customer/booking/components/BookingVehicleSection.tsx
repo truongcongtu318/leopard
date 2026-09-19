@@ -23,6 +23,9 @@ export interface BookingVehicleSectionProps {
   onSelectVehicle: (vehicleId: VehicleTypeId) => void;
   onViewDimensions?: () => void;
   distanceKm?: number;
+  stopCount?: number;
+  hasLoadingSupport?: boolean;
+  hasVatInvoice?: boolean;
 }
 
 const VEHICLE_ORDER: VehicleTypeId[] = ['BIKE_3W', 'VAN_500KG', 'TRUCK_125T', 'TRUCK_25T'];
@@ -32,6 +35,9 @@ export function BookingVehicleSection({
   onSelectVehicle,
   onViewDimensions,
   distanceKm,
+  stopCount,
+  hasLoadingSupport,
+  hasVatInvoice,
 }: BookingVehicleSectionProps) {
   const handleSelect = (id: VehicleTypeId) => {
     haptic.selection();
@@ -71,7 +77,7 @@ export function BookingVehicleSection({
           // fare quoted a price the trip had never been measured for.
           const fare =
             typeof distanceKm === 'number' && distanceKm > 0
-              ? getVehicleFare(id, distanceKm)
+              ? getVehicleFare(id, distanceKm, { stopCount, hasLoadingSupport, hasVatInvoice })
               : null;
 
           return (

@@ -438,4 +438,75 @@ describe('DriverOrderDetailScreen', () => {
 
     await screen.unmount();
   });
+
+  it('renders dedicated CashCollectionReceiptView when order is DELIVERED with CASH and not confirmed', async () => {
+    const onConfirmCashPayment = jest.fn();
+    const baseFixture = createDriverDetailFixture('D-DETAIL-TERMINAL-DELIVERED') as any;
+    const deliveredCashView = {
+      ...baseFixture,
+      primaryTask: null,
+      order: {
+        ...baseFixture.order,
+        status: 'DELIVERED',
+        paymentMethod: 'CASH',
+        paymentStatus: 'PENDING',
+        isCashConfirmed: false,
+        priceLabel: '183.312 ₫',
+        priceVnd: 183312,
+      },
+    };
+
+    const screen = await render(
+      <DriverOrderDetailScreen
+        onConfirmCashPayment={onConfirmCashPayment}
+        view={deliveredCashView}
+      />,
+    );
+
+    // Màn hình thu tiền mặt chuyên biệt
+    expect(screen.getByTestId('cash-collection-container')).toBeTruthy();
+    expect(screen.getByTestId('cash-amount-to-collect')).toBeTruthy();
+    expect(screen.getAllByText('183.312 ₫').length).toBeGreaterThanOrEqual(1);
+
+    // Chưa xác nhận thì chưa xong: tuyệt đối KHÔNG hiển thị "Về trang chủ" hay "Giao hàng thành công!"
+    expect(screen.queryByTestId('btn-terminal-home')).toBeNull();
+    expect(screen.queryByText('Giao hàng thành công!')).toBeNull();
+
+    // Tài xế xác nhận thu tiền
+    const confirmBtn = screen.getByTestId('btn-confirm-cash');
+    expect(confirmBtn).toBeTruthy();
+    await fireEvent.press(confirmBtn);
+    expect(onConfirmCashPayment).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('transitions to CompletedOrderDetailView when cash payment is confirmed', async () => {
+    const baseFixture = createDriverDetailFixture('D-DETAIL-TERMINAL-DELIVERED') as any;
+    const cashConfirmedView = {
+      ...baseFixture,
+      primaryTask: null,
+      order: {
+        ...baseFixture.order,
+        status: 'DELIVERED',
+        paymentMethod: 'CASH',
+        paymentStatus: 'PAID_MANUAL',
+        isCashConfirmed: true,
+        priceLabel: '183.312 ₫',
+        priceVnd: 183312,
+      },
+    };
+
+    const screen = await render(
+      <DriverOrderDetailScreen view={cashConfirmedView} />,
+    );
+
+    // Đã xác nhận thu tiền: hiển thị màn hình hoàn tất
+    expect(screen.getByTestId('completed-order-detail-view')).toBeTruthy();
+    expect(screen.getByText('Giao hàng thành công!')).toBeTruthy();
+    expect(screen.getByText('TỔNG THU NHẬP CỦA BẠN')).toBeTruthy();
+    expect(screen.getByText('Về trang chủ, sẵn sàng nhận đơn')).toBeTruthy();
+
+    await screen.unmount();
+  });
 });

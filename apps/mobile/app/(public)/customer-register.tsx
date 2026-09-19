@@ -213,6 +213,21 @@ export default function CustomerRegisterScreen() {
     }
     setPhoneBusy(true);
     setErrorMsg(null);
+
+    const allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true';
+    if (allowDemo) {
+      try {
+        await httpClient.post('/auth/send-otp', { phone: toE164Vn(phoneInput.trim()) });
+      } catch {
+        // Ignored for demo
+      }
+      setOtpSent(true);
+      setResendSeconds(60);
+      setShowOtpModal(true);
+      setPhoneBusy(false);
+      return;
+    }
+
     try {
       const normalizedPhone = toE164Vn(phoneInput.trim());
       challengeRef.current = await sendPhoneOtp(normalizedPhone, RECAPTCHA_CONTAINER_ID);
@@ -229,39 +244,53 @@ export default function CustomerRegisterScreen() {
 
   const verifyOtp = async (explicitCode?: string) => {
     const codeToVerify = (typeof explicitCode === 'string' ? explicitCode : otpCode).trim();
+    const allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true';
     const challenge = challengeRef.current;
-    if (phoneBusy || !challenge || codeToVerify.length < 6) return;
+    if (phoneBusy || codeToVerify.length < 6) return;
+    if (!challenge && !allowDemo) return;
+
     setPhoneBusy(true);
     setErrorMsg(null);
     try {
-      const idToken = await challenge.confirm(codeToVerify);
-      const hasExistingSession = Boolean(sessionStore.getAccessToken());
+      let authRes: AuthResponse;
 
-      if (hasExistingSession) {
-        // Luồng 1: Người dùng đã có session (ví dụ từ Google Login qua) -> link số điện thoại
-        const linked = await httpClient.post<{ phone: string }>('/auth/phone/link', { idToken });
-        setPhone(linked.phone);
-        setPhoneVerified(true);
-        setShowOtpModal(false);
+      if (allowDemo || !challenge) {
+        authRes = await httpClient.post<AuthResponse>('/auth/verify-otp', {
+          phone: toE164Vn(phoneInput.trim()),
+          otp: codeToVerify,
+        });
       } else {
-        // Luồng 2: Người dùng xác thực trực tiếp tại trang Đăng ký -> exchange Firebase token lấy session
-        const authRes = await httpClient.post<AuthResponse>('/auth/firebase', { idToken });
-        const accessToken = authRes.session?.accessToken ?? '';
-        const refreshToken = authRes.session?.refreshToken ?? '';
-        const role = (authRes.user?.role as never) ?? 'CUSTOMER';
-        await sessionStore.setSession(accessToken, refreshToken, role);
+        const idToken = await challenge.confirm(codeToVerify);
+        const hasExistingSession = Boolean(sessionStore.getAccessToken());
 
-        const verifiedPhone = authRes.user?.phone ?? toE164Vn(phoneInput.trim());
-        setPhone(verifiedPhone);
-        setPhoneVerified(true);
-        setShowOtpModal(false);
-        if (authRes.user?.name && !name) setName(authRes.user.name);
-        if (authRes.user?.email && !email) setEmail(authRes.user.email);
-
-        if (authRes.user?.profileComplete) {
-          router.replace('/customer/home');
+        if (hasExistingSession) {
+          // Luồng 1: Người dùng đã có session (ví dụ từ Google Login qua) -> link số điện thoại
+          const linked = await httpClient.post<{ phone: string }>('/auth/phone/link', { idToken });
+          setPhone(linked.phone);
+          setPhoneVerified(true);
+          setShowOtpModal(false);
           return;
         }
+
+        // Luồng 2: Người dùng xác thực trực tiếp tại trang Đăng ký -> exchange Firebase token lấy session
+        authRes = await httpClient.post<AuthResponse>('/auth/firebase', { idToken });
+      }
+
+      const accessToken = authRes.session?.accessToken ?? '';
+      const refreshToken = authRes.session?.refreshToken ?? '';
+      const role = (authRes.user?.role as never) ?? 'CUSTOMER';
+      await sessionStore.setSession(accessToken, refreshToken, role);
+
+      const verifiedPhone = authRes.user?.phone ?? toE164Vn(phoneInput.trim());
+      setPhone(verifiedPhone);
+      setPhoneVerified(true);
+      setShowOtpModal(false);
+      if (authRes.user?.name && !name) setName(authRes.user.name);
+      if (authRes.user?.email && !email) setEmail(authRes.user.email);
+
+      if (authRes.user?.profileComplete) {
+        router.replace('/customer/home');
+        return;
       }
     } catch (err) {
       setErrorMsg(describeAuthError(err) || 'Xác minh số điện thoại thất bại');

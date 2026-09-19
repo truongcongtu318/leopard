@@ -1,6 +1,7 @@
 import { OrderStatus } from './order-status.js';
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
+  PENDING_PAYMENT: ['REQUESTED', 'CANCELLED'],
   REQUESTED: ['ACCEPTED', 'CANCELLED'],
   ACCEPTED: ['PICKING_UP', 'CANCELLED', 'INCIDENT_CANCELLED'],
   PICKING_UP: ['IN_TRANSIT', 'CANCELLED', 'INCIDENT_CANCELLED'],

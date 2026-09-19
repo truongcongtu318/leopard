@@ -1,5 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { DriverMapDispatchContext, useDriverMapDirector } from '../../navigation/DriverMapDirectorContext';
 
@@ -97,10 +98,14 @@ export function DriverOrdersScreen({
   const [simulatedOffer, setSimulatedOffer] = useState<IncomingDispatchOffer | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [radiusKm, setRadiusKm] = useState('5');
+  const insets = useContext(SafeAreaInsetsContext);
+  const bottomInset = insets?.bottom ?? 0;
+  const effectiveBottomPadding = Math.max(bottomInset, 16) + spacing.xs;
+
   const [locationRequestKey, setLocationRequestKey] = useState(0);
   const [driverLocation, setDriverLocation] = useState<DriverLocationState>({ kind: 'loading' });
-  /** Measured height of the fixed idle panel, so the duty capsule floats just above it. */
-  const [idlePanelHeight, setIdlePanelHeight] = useState(0);
+  /** Measured height of the fixed idle panel, initialized to standard height to eliminate layout flash. */
+  const [idlePanelHeight, setIdlePanelHeight] = useState(200);
   const idlePingHealth = useDriverIdlePingHealth();
 
   useEffect(() => {
@@ -284,8 +289,14 @@ export function DriverOrdersScreen({
         ) : null}
       </View>
 
-      {/* ── Layer 1: right-edge map control stack (Grab-style) ── */}
-      <View pointerEvents="box-none" style={styles.mapControlLayer}>
+      {/* ── Layer 1: right-edge map control stack (Grab-style, anchored in thumb zone) ── */}
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.mapControlLayer,
+          { bottom: isContent && !activeTrip ? idlePanelHeight + 72 : 140 },
+        ]}
+      >
         <Text style={styles.srOnly}>Trạng thái nhận đơn</Text>
         <DriverMapControlStack
           isLocating={driverLocation.kind === 'loading'}
@@ -341,18 +352,16 @@ export function DriverOrdersScreen({
            dragging, so this is a plain View: no ScrollView, no gesture handle. */
         <View
           onLayout={(event) => setIdlePanelHeight(event.nativeEvent.layout.height)}
-          style={styles.idlePanel}
+          style={[styles.idlePanel, { paddingBottom: effectiveBottomPadding }]}
           testID="driver-load-board-sheet"
         >
-          {/* Fade the backdrop in from the map (transparent) to solid canvas toward the
-              bottom, instead of a flat opacity — a hard-edged rectangle over the map reads
-              as a pasted-on panel. */}
+          {/* Subtle natural fade so map POIs remain crisp behind floating cards */}
           <Svg height="100%" style={[StyleSheet.absoluteFill, styles.idlePanelFadeSvg]} width="100%">
             <Defs>
               <LinearGradient id="idlePanelFade" x1="0" x2="0" y1="0" y2="1">
                 <Stop offset="0" stopColor={colors.neutral.canvas} stopOpacity={0} />
-                <Stop offset="0.35" stopColor={colors.neutral.canvas} stopOpacity={0.8} />
-                <Stop offset="1" stopColor={colors.neutral.canvas} stopOpacity={0.97} />
+                <Stop offset="0.5" stopColor={colors.neutral.canvas} stopOpacity={0.25} />
+                <Stop offset="1" stopColor={colors.neutral.canvas} stopOpacity={0.65} />
               </LinearGradient>
             </Defs>
             <Rect fill="url(#idlePanelFade)" height="100%" width="100%" />
@@ -470,7 +479,6 @@ const styles = StyleSheet.create({
   mapControlLayer: {
     position: 'absolute',
     right: spacing.md,
-    top: '34%',
     zIndex: 20,
   },
   idlePanelFadeSvg: {
@@ -479,7 +487,6 @@ const styles = StyleSheet.create({
   idlePanel: {
     bottom: 0,
     left: 0,
-    paddingBottom: spacing.lg,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     position: 'absolute',

@@ -84,7 +84,10 @@ export function BookingRouteMapHeader({
     : 0;
 
   const effectivePickupCoords =
-    pickupCoords || (pickupAddress ? resolveLocationCoords(pickupAddress) : undefined);
+    pickupCoords ||
+    (pickupAddress && pickupAddress !== 'Vị trí hiện tại'
+      ? resolveLocationCoords(pickupAddress)
+      : undefined);
   const effectiveDropoffCoords =
     dropoffCoords ||
     (dropoffAddress ? resolveLocationCoords(dropoffAddress, effectivePickupCoords) : undefined);

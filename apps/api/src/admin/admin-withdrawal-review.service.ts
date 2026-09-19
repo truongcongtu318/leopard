@@ -16,9 +16,16 @@ export interface WithdrawalSummary {
   readonly bankAccountNumber: string | null;
   readonly bankAccountName: string | null;
   readonly createdAt: string;
+  readonly userRole?: string | undefined;
+  readonly userName?: string | undefined;
+  readonly userPhone?: string | undefined;
 }
 
-function toSummary(r: WithdrawalRequest): WithdrawalSummary {
+type WithdrawalWithDriver = WithdrawalRequest & {
+  driver?: { name: string | null; phone: string | null; role: string } | null;
+};
+
+function toSummary(r: WithdrawalWithDriver): WithdrawalSummary {
   return {
     id: r.id,
     driverId: r.driverId,
@@ -28,6 +35,9 @@ function toSummary(r: WithdrawalRequest): WithdrawalSummary {
     bankAccountNumber: r.bankAccountNumber,
     bankAccountName: r.bankAccountName,
     createdAt: r.createdAt.toISOString(),
+    userRole: r.driver?.role ?? undefined,
+    userName: r.driver?.name ?? undefined,
+    userPhone: r.driver?.phone ?? undefined,
   };
 }
 
@@ -41,7 +51,10 @@ export class AdminWithdrawalReviewService {
   ) {}
 
   async listPending(): Promise<WithdrawalSummary[]> {
-    const requests = await this.prisma.withdrawalRequest.findMany({ where: { status: 'PENDING' } });
+    const requests = await this.prisma.withdrawalRequest.findMany({
+      where: { status: 'PENDING' },
+      include: { driver: { select: { name: true, phone: true, role: true } } },
+    });
     return requests.map(toSummary);
   }
 

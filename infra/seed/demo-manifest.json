@@ -5,7 +5,11 @@
       "phone": "+840000000001",
       "role": "CUSTOMER",
       "status": "ACTIVE",
-      "createdAt": "2026-08-01T07:00:00.000Z"
+      "createdAt": "2026-08-01T07:00:00.000Z",
+      "name": "Khách Hàng Demo",
+      "onboardedAt": "2026-08-01T07:00:00.000Z",
+      "consentTermsAt": "2026-08-01T07:00:00.000Z",
+      "consentServiceAt": "2026-08-01T07:00:00.000Z"
     },
     {
       "id": "22222222-2222-4222-8222-222222222222",

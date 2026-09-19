@@ -23,11 +23,13 @@ export default function CustomerBookingPage() {
       ? { lat: defaultAddr.latitude, lng: defaultAddr.longitude }
       : undefined;
 
-  const pickup = params.pickup || defaultAddr?.address || '';
-  const pickupCoords =
-    params.pickupLat && params.pickupLng
-      ? { lat: parseFloat(params.pickupLat), lng: parseFloat(params.pickupLng) }
-      : defaultCoords;
+  const rawPickup = params.pickup || defaultAddr?.address || '';
+  const hasParamCoords = Boolean(params.pickupLat && params.pickupLng);
+  const pickupCoords = hasParamCoords
+    ? { lat: parseFloat(params.pickupLat!), lng: parseFloat(params.pickupLng!) }
+    : defaultCoords;
+
+  const pickup = rawPickup === 'Vị trí hiện tại' && !pickupCoords ? '' : rawPickup;
 
   const dropoff = params.dropoff || '';
   const dropoffCoords =
@@ -50,15 +52,40 @@ export default function CustomerBookingPage() {
           router.replace('/customer/home');
         }
       }}
-      onOrderCreated={(orderId, totalFare, paymentMethod, vehicleType, vehicleName) => {
+      onOrderCreated={(orderId, totalFare, paymentMethod, vehicleType, vehicleName, routeDetails, loadingFee, breakdown) => {
+        const finalPickup = routeDetails?.pickup || pickup;
+        const finalDropoff = routeDetails?.dropoff || dropoff;
+        const pCoords = routeDetails?.pickupCoords || pickupCoords;
+        const dCoords = routeDetails?.dropoffCoords || dropoffCoords;
+
         const shared = {
           amount: String(totalFare),
-          pickup,
-          dropoff,
-          origin: pickup,
-          destination: dropoff,
+          pickup: finalPickup,
+          dropoff: finalDropoff,
+          origin: finalPickup,
+          destination: finalDropoff,
+          ...(pCoords ? {
+            pickupLat: String(pCoords.lat),
+            pickupLng: String(pCoords.lng),
+            originLat: String(pCoords.lat),
+            originLng: String(pCoords.lng),
+          } : {}),
+          ...(dCoords ? {
+            dropoffLat: String(dCoords.lat),
+            dropoffLng: String(dCoords.lng),
+            destinationLat: String(dCoords.lat),
+            destinationLng: String(dCoords.lng),
+          } : {}),
           ...(vehicleType ? { vehicleType } : {}),
           ...(vehicleName ? { vehicleName } : {}),
+          ...(typeof loadingFee === 'number' ? { loadingFee: String(loadingFee) } : {}),
+          ...(breakdown ? {
+            baseFare: String(breakdown.baseFare),
+            distanceFare: String(breakdown.distanceFare),
+            distanceKm: String(breakdown.distanceKm),
+            stopFare: String(breakdown.stopFare),
+            vatFee: String(breakdown.vatFee),
+          } : {}),
         };
         if (paymentMethod === 'CASH') {
           router.push({

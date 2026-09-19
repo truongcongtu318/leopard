@@ -18,6 +18,7 @@ import type {
 import { PublicDetailView } from './components/detail/PublicDetailView';
 import { AssignedDetailView } from './components/detail/AssignedDetailView';
 import { CompletedOrderDetailView } from './components/detail/CompletedOrderDetailView';
+import { CashCollectionReceiptView } from './components/detail/CashCollectionReceiptView';
 import { DriverIncidentModal } from './DriverIncidentModal';
 import { ProofCaptureSheet } from './components/detail/ProofCaptureSheet';
 import { ProofSourceSelectModal } from './components/detail/ProofSourceSelectModal';
@@ -125,6 +126,7 @@ function getLifecycleSlideConfig(command: DriverCommandView) {
 
 const TaskButton = memo(function TaskButton({
   onExecuteTask,
+  onRecordStopProgress,
   onRetryProof,
   onStartProofCapture,
   sliderResetKey,
@@ -136,7 +138,46 @@ const TaskButton = memo(function TaskButton({
   /** Opens the proof source selector modal (camera / library). */
   onStartProofCapture?: () => void;
   sliderResetKey?: number;
+  onRecordStopProgress?: (
+    stopId: string,
+    step: 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED',
+  ) => void | Promise<void>;
 }>) {
+  if (task.kind === 'record-stop') {
+    const disabled = task.command.disabled || task.command.isPending;
+    return (
+      <View style={styles.advanceLegContainer}>
+        <Pressable
+          accessibilityLabel={task.command.label}
+          accessibilityRole="button"
+          disabled={disabled}
+          onPress={() => {
+            if (onRecordStopProgress && !disabled) {
+              void onRecordStopProgress(task.stopId, task.step);
+            }
+          }}
+          style={styles.a11yHiddenButton}
+          testID={`btn-stop-${task.stopId}`}
+        >
+          <Text style={styles.a11yHiddenText}>{task.command.label}</Text>
+        </Pressable>
+        <SlideToAction
+          key={`${task.command.id}-${task.step}`}
+          resetKey={`${task.command.id}-${task.step}-${sliderResetKey ?? 0}`}
+          colorVariant="brand"
+          disabled={disabled}
+          label={task.command.label}
+          onActionComplete={() => {
+            if (onRecordStopProgress && !disabled) {
+              void onRecordStopProgress(task.stopId, task.step);
+            }
+          }}
+          testID="btn-advance-leg-slide"
+        />
+      </View>
+    );
+  }
+
   if (task.kind === 'upload-proof') {
     const disabled = task.command.disabled || task.command.isPending;
     // Retrying a failed upload re-uses the stored file; a fresh capture opens
@@ -219,6 +260,7 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
   const [localIncidentOpen, setLocalIncidentOpen] = useState(false);
   const [showProofSourceModal, setShowProofSourceModal] = useState(false);
   const [sliderResetKey, setSliderResetKey] = useState(0);
+  const [localCashConfirmed, setLocalCashConfirmed] = useState(false);
 
   /**
    * The proof flow: swipe -> choose source (camera / library) -> review sheet -> upload.
@@ -257,6 +299,19 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
     // Reset slider immediately so it never freezes on the right edge
     setSliderResetKey((prev) => prev + 1);
   }, []);
+
+  const handleRecordStopProgress = useCallback(
+    async (
+      stopId: string,
+      step: 'ARRIVED' | 'SERVICE_STARTED' | 'SERVICE_COMPLETED',
+    ) => {
+      setSliderResetKey((prev) => prev + 1);
+      if (props.onRecordStopProgress) {
+        await props.onRecordStopProgress(stopId, step);
+      }
+    },
+    [props.onRecordStopProgress],
+  );
 
   const handleCloseProofSourceModal = useCallback(() => {
     setShowProofSourceModal(false);
@@ -438,8 +493,18 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
 
   const isCashOrder = view.order.paymentMethod === 'CASH';
   const isCashConfirmed = Boolean(
-    view.order.isCashConfirmed || view.order.paymentStatus === 'PAID_MANUAL',
+    localCashConfirmed ||
+      view.order.isCashConfirmed ||
+      view.order.paymentStatus === 'PAID_MANUAL' ||
+      view.order.paymentStatus === 'SUCCEEDED',
   );
+
+  const handleConfirmCash = () => {
+    setLocalCashConfirmed(true);
+    if (props.onConfirmCashPayment) {
+      props.onConfirmCashPayment();
+    }
+  };
 
   // Terminal statuses without pending primary task (completed, returned, cancelled) show read-only receipt.
   // If there is still a pending action (e.g. advance to RETURNED), keep active view so driver can finish.
@@ -456,6 +521,27 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
     return <CompletedOrderDetailView onBack={onBack} view={view} />;
   }
 
+  // Luồng chuẩn Grab Driver: Khi đơn hàng tiền mặt đã giao (DELIVERED) nhưng chưa xác nhận thu tiền mặt,
+  // đơn hàng CHƯA XONG. Hiển thị trang thu tiền mặt chuyên biệt CashCollectionReceiptView.
+  // Khi tài xế vuốt xác nhận thu tiền thành công, isCashConfirmed = true và hệ thống tự động
+  // chuyển tiếp mượt mà sang CompletedOrderDetailView (Giao hàng thành công & Tổng thu nhập).
+  if (
+    view.order.status === 'DELIVERED' &&
+    isCashOrder &&
+    !isCashConfirmed &&
+    !view.primaryTask
+  ) {
+    return (
+      <CashCollectionReceiptView
+        isConfirmingCash={props.isConfirmingCash}
+        onBack={onBack}
+        onConfirmCashPayment={handleConfirmCash}
+        onOpenIncidentModal={handleOpenIncidentModal}
+        view={view}
+      />
+    );
+  }
+
   // ponytail: Modal presentation handles local fallback incident form; upgrade to modal route if incident flows require deep linking.
   const isPickupLeg =
     view.order.status === 'ACCEPTED' || view.order.status === 'PICKING_UP';
@@ -466,16 +552,17 @@ export function DriverOrderDetailScreen(props: DriverOrderDetailScreenProps) {
         inFlightStopCommand={props.inFlightStopCommand}
         isConfirmingCash={props.isConfirmingCash}
         onBack={onBack}
-        onConfirmCashPayment={props.onConfirmCashPayment}
+        onConfirmCashPayment={handleConfirmCash}
         onExecuteTask={props.onExecuteTask}
         onOpenIncidentModal={handleOpenIncidentModal}
         onOpenLocationSettings={props.onOpenLocationSettings}
-        onRecordStopProgress={props.onRecordStopProgress}
+        onRecordStopProgress={handleRecordStopProgress}
         onRetryProof={props.onRetryProof}
         taskButtonComponent={
           view.primaryTask ? (
             <TaskButton
               onExecuteTask={props.onExecuteTask}
+              onRecordStopProgress={handleRecordStopProgress}
               onRetryProof={props.onRetryProof}
               onStartProofCapture={() =>
                 handleStartProofFlow(isPickupLeg ? 'pickup' : 'delivery')

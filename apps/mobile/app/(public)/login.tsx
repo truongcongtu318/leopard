@@ -13,7 +13,8 @@ export default function LoginRoute() {
   // unconditionally, as this route used to, meant production would have kept
   // using the demo OTP screen even with Firebase fully configured.
   const allowDemo = process.env.EXPO_PUBLIC_ALLOW_DEMO_AUTH === 'true';
-  const showCards = allowDemo && process.env.EXPO_PUBLIC_SHOW_DEMO_CARDS !== 'false';
+  // Ẩn khối tài khoản demo trên ứng dụng Customer
+  const showCards = false;
 
   const handleLoginSuccess = (role: Role, profileComplete: boolean) => {
     if (role === 'CUSTOMER' && !profileComplete) {

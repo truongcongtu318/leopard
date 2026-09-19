@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { WebView } from 'react-native-webview';
 
 import {
   Badge,
-  Button,
   colors,
   customerPalette,
   haptic,
   HStack,
+  IconExternalLink,
   IconFileText,
   IconSecurityShield,
   iosContinuousCurve,
@@ -63,7 +63,7 @@ export function InvoicePreviewScreen({
   const qrLookupPayload = `https://hoadondientu.gdt.gov.vn/tra-cuu?id=${invoiceId}&tax=0383188888`;
 
   return (
-    <ScreenScaffold title="Xem hóa đơn">
+    <ScreenScaffold onBack={onBack} title="Xem hóa đơn">
       {/* ── Apple HIG E-Ticket Invoice Card ────────────────────────── */}
       <View style={styles.ticketCard}>
         {/* Ticket Header */}
@@ -107,7 +107,7 @@ export function InvoicePreviewScreen({
                 Bên phát hành: <Text style={styles.boldText}>CÔNG TY CP LEOPARD LOGISTICS</Text>
               </Text>
               <Text style={styles.ticketMetaText}>
-                MST: <Text style={styles.tabularBold}>0383188888</Text> · Số HĐ: <Text style={styles.tabularBold}>{invoiceId}</Text>
+                MST: <Text style={styles.tabularBold}>0383188888</Text> · Số HĐ: <Text ellipsizeMode="middle" numberOfLines={1} style={styles.tabularBold}>{invoiceId}</Text>
               </Text>
               <Text style={styles.ticketMetaText}>
                 MST KH: <Text style={styles.tabularBold}>{customerTaxId}</Text> · Tổng: <Text style={styles.tabularBoldPrimary}>{totalAmountVnd}</Text>
@@ -120,16 +120,8 @@ export function InvoicePreviewScreen({
         </View>
       </View>
 
-      {/* ── Action Toolbar (Touch targets >= 44x44pt) ───────────────── */}
+      {/* ── Action Toolbar (Spacious 2-CTA layout, no text truncation) ───────────────── */}
       <View style={styles.toolbar}>
-        <Button
-          label="Quay lại"
-          onPress={() => {
-            haptic.light();
-            onBack();
-          }}
-          variant="secondary"
-        />
         <Pressable
           accessibilityLabel="Tải hóa đơn VAT PDF"
           accessibilityRole="button"
@@ -137,24 +129,65 @@ export function InvoicePreviewScreen({
           style={({ pressed }) => [styles.downloadPdfBtn, pressed ? styles.btnPressed : null]}
         >
           <IconFileText color={colors.neutral.surface} size={18} strokeWidth={2} />
-          <Text style={styles.downloadPdfBtnText}>Tải hóa đơn VAT PDF</Text>
+          <Text numberOfLines={1} style={styles.downloadPdfBtnText}>Tải hóa đơn VAT PDF</Text>
         </Pressable>
-        <Button
-          label="Mở trong trình duyệt"
+        <Pressable
+          accessibilityLabel="Mở trong trình duyệt"
+          accessibilityRole="button"
           onPress={() => void handleOpenExternally()}
-          variant="secondary"
-        />
+          style={({ pressed }) => [styles.openExternalBtn, pressed ? styles.btnPressed : null]}
+        >
+          <IconExternalLink color={customerPalette.primary} size={16} strokeWidth={2} />
+          <Text numberOfLines={1} style={styles.openExternalBtnText}>Mở trong trình duyệt</Text>
+        </Pressable>
       </View>
       {openError ? <Text style={styles.errorText}>{openError}</Text> : null}
 
-      {/* ── Document Viewer ────────────────────────────────────────── */}
-      <WebView
-        source={{
-          uri: downloadPath,
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }}
-        style={styles.webview}
-      />
+      {/* ── Document Viewer (Cross-platform Web iframe & Native WebView) ──────────────── */}
+      {Platform.OS === 'web' && process.env.NODE_ENV !== 'test' ? (
+        <View style={styles.webViewerContainer}>
+          <View style={styles.webViewerHeader}>
+            <HStack style={styles.webViewerHeaderLeft}>
+              <IconFileText color={customerPalette.primary} size={15} strokeWidth={2} />
+              <Text style={styles.webViewerTitle}>Bản thể hiện hóa đơn điện tử (PDF)</Text>
+            </HStack>
+            <Pressable
+              accessibilityLabel="Mở tab mới"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => void handleOpenExternally()}
+              style={({ pressed }) => [styles.webViewerActionBtn, pressed ? styles.btnPressed : null]}
+            >
+              <IconExternalLink color={customerPalette.primary} size={14} strokeWidth={2} />
+              <Text style={styles.webViewerActionText}>Mở tab mới</Text>
+            </Pressable>
+          </View>
+          <View style={styles.webViewerFrameWrap}>
+            {React.createElement('iframe', {
+              src: downloadPath,
+              title: 'Bản thể hiện hóa đơn VAT PDF',
+              style: {
+                width: '100%',
+                height: '100%',
+                minHeight: 450,
+                border: 'none',
+                backgroundColor: '#FFFFFF',
+              },
+            })}
+          </View>
+        </View>
+      ) : (
+        <WebView
+          accessibilityLabel="Bản xem trước hóa đơn VAT PDF"
+          source={{
+            uri: downloadPath,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }}
+          startInLoadingState
+          style={styles.webview}
+          testID="invoice-webview"
+        />
+      )}
     </ScreenScaffold>
   );
 }
@@ -330,33 +363,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     gap: spacing.xs,
-    backgroundColor: colors.neutral.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.neutral.surfaceMuted,
+    backgroundColor: 'transparent',
   },
   downloadPdfBtn: {
+    flex: 1.2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
     backgroundColor: customerPalette.primary,
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
+    height: 48,
+    paddingHorizontal: spacing.sm,
     borderRadius: radius.control,
     ...iosContinuousCurve,
-    boxShadow: '0 2px 6px rgba(11, 37, 69, 0.2)',
+    boxShadow: '0 2px 8px rgba(11, 37, 69, 0.16)',
     elevation: 2,
   },
   downloadPdfBtnText: {
     color: colors.neutral.surface,
-    ...typeScale.caption1,
+    ...typeScale.subheadline,
+    fontWeight: '600',
+  },
+  openExternalBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.neutral.surface,
+    borderWidth: 1,
+    borderColor: colors.neutral.border,
+    height: 48,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.control,
+    ...iosContinuousCurve,
+    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
+  },
+  openExternalBtnText: {
+    color: customerPalette.primary,
+    ...typeScale.subheadline,
     fontWeight: '600',
   },
   btnPressed: {
     transform: [{ scale: 0.985 }],
-    opacity: 0.9,
+    opacity: 0.85,
   },
   errorText: {
     color: colors.danger.text,
@@ -366,5 +416,63 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+    marginTop: spacing.xs,
+  },
+
+  // ─── Cross-platform Web Viewer ─────────────────────
+  webViewerContainer: {
+    flex: 1,
+    minHeight: 450,
+    backgroundColor: colors.neutral.surface,
+    borderRadius: radius.card,
+    ...iosContinuousCurve,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.border,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+    boxShadow: '0 4px 16px rgba(11, 37, 69, 0.05)',
+  },
+  webViewerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 2,
+    backgroundColor: colors.neutral.canvas,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.neutral.border,
+  },
+  webViewerHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  webViewerTitle: {
+    color: colors.neutral.text,
+    ...typeScale.caption1,
+    fontWeight: '600',
+  },
+  webViewerActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.xs + 2,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.neutral.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.neutral.border,
+  },
+  webViewerActionText: {
+    color: customerPalette.primary,
+    ...typeScale.caption2,
+    fontWeight: '600',
+  },
+  webViewerFrameWrap: {
+    flex: 1,
+    minHeight: 400,
+    backgroundColor: '#FFFFFF',
   },
 });

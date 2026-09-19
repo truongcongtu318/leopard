@@ -35,7 +35,22 @@ export interface UseDriverRegisterOptions {
 
 export function useDriverRegister(options?: UseDriverRegisterOptions) {
   const router = useRouter();
-  const isAuthenticated = sessionStore.getAccessToken() != null;
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => sessionStore.getAccessToken() != null,
+  );
+
+  useEffect(() => {
+    if (typeof sessionStore.subscribe !== 'function') return;
+    const unsubscribe = sessionStore.subscribe((state) => {
+      setIsAuthenticated(state.authenticated);
+      if (state.authenticated) {
+        void refreshStatus();
+      }
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [phone, setPhone] = useState('');
@@ -366,10 +381,17 @@ export function useDriverRegister(options?: UseDriverRegisterOptions) {
         router.replace('/(public)/kyc-pending');
       }
     } catch (err) {
+      const statusCode = (err as { statusCode?: number })?.statusCode;
+      const code = (err as { code?: string })?.code;
+      if (statusCode === 409 || code === 'DRIVER_APPLICATION_PENDING') {
+        router.replace('/(public)/kyc-pending');
+        return;
+      }
       setErrorMsg(mapApplyError(err));
     } finally {
       setIsSubmitting(false);
     }
+
   };
 
   const handleSubmit = async () => {
@@ -398,7 +420,7 @@ export function useDriverRegister(options?: UseDriverRegisterOptions) {
 
     try {
       let authRes: {
-        user: { role: string };
+        user: { role: string; status?: string };
         session: { accessToken: string; refreshToken: string };
       };
       try {
@@ -428,7 +450,14 @@ export function useDriverRegister(options?: UseDriverRegisterOptions) {
         (authRes.user?.role as any) ?? 'DRIVER',
       );
       setShowOtpModal(false);
+
+      if (authRes.user?.status === 'PENDING_APPROVAL') {
+        router.replace('/(public)/kyc-pending');
+        return;
+      }
+
       await doCommitSubmit();
+
     } catch (err) {
       setOtpError(
         (err as { message?: string })?.message || 'Mã OTP không đúng hoặc đã hết hạn',

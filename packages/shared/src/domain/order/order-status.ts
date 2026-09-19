@@ -1,4 +1,5 @@
 export const OrderStatus = [
+  'PENDING_PAYMENT',
   'REQUESTED',
   'ACCEPTED',
   'PICKING_UP',

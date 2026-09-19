@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus, MediaObject, VehicleType } from '@prisma/client';
+import type { Order, OrderStop, OrderStatusHistory, Prisma, StopType, ProviderSource, OrderStatus, MediaObject, VehicleType, PaymentIntent } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
 
 type OrdersPrismaClient = PrismaService | Prisma.TransactionClient;
@@ -25,12 +25,17 @@ export interface CreateOrderParams {
     note?: string;
   }>;
   clientRequestId?: string;
+  /** When paymentMethod is 'VIETQR', the order starts as PENDING_PAYMENT and
+   *  is only transitioned to REQUESTED once payment is confirmed by webhook/admin.
+   *  CASH orders start as REQUESTED and are dispatched to drivers immediately. */
+  paymentMethod?: string;
 }
 
 export interface OrderWithRelations extends Order {
-  stops: Array<OrderStop & { lat: number; lng: number }>;
+  stops: Array<OrderStop & { lat: number; lng: number; progress?: string }>;
   statusHistory: OrderStatusHistory[];
   mediaObjects?: MediaObject[];
+  paymentIntents?: PaymentIntent[];
   driver?: {
     id: string;
     name: string | null;
@@ -48,11 +53,14 @@ export class OrdersRepository {
 
   async createOrder(params: CreateOrderParams): Promise<OrderWithRelations> {
     return this.prisma.$transaction(async (tx) => {
+      const isUpfrontPayment = params.paymentMethod === 'VIETQR';
+      const initialStatus = isUpfrontPayment ? 'PENDING_PAYMENT' : 'REQUESTED';
+
       const order = await tx.order.create({
         data: {
           customerId: params.customerId,
           clientRequestId: params.clientRequestId ?? null,
-          status: 'REQUESTED',
+          status: initialStatus,
           providerSource: params.providerSource,
           distanceMeters: params.distanceMeters,
           durationSeconds: params.durationSeconds,
@@ -64,7 +72,7 @@ export class OrdersRepository {
           statusHistory: {
             create: {
               fromStatus: null,
-              toStatus: 'REQUESTED',
+              toStatus: initialStatus,
               actorId: params.customerId,
             },
           },
@@ -78,7 +86,7 @@ export class OrdersRepository {
         },
       });
 
-      const stopsWithCoords: Array<OrderStop & { lat: number; lng: number }> = [];
+      const stopsWithCoords: Array<OrderStop & { lat: number; lng: number; progress?: string }> = [];
 
       for (const stop of params.stops) {
         const stopRows = await tx.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
@@ -125,7 +133,7 @@ export class OrdersRepository {
 
         const insertedStop = stopRows[0];
         if (insertedStop) {
-          stopsWithCoords.push(insertedStop);
+          stopsWithCoords.push({ ...insertedStop, progress: 'PENDING' });
         }
       }
 
@@ -169,23 +177,38 @@ export class OrdersRepository {
       return null;
     }
 
-    const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+    const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number; progress: string }>>`
       SELECT
-        id,
-        "orderId",
-        type,
-        sequence,
-        address,
-        "contactName",
-        "contactPhone",
-        note,
-        ST_Y(location::geometry) as lat,
-        ST_X(location::geometry) as lng,
-        "createdAt",
-        "updatedAt"
-      FROM "OrderStop"
-      WHERE "orderId" = ${order.id}::uuid
-      ORDER BY sequence ASC
+        s.id,
+        s."orderId",
+        s.type,
+        s.sequence,
+        s.address,
+        s."contactName",
+        s."contactPhone",
+        s.note,
+        ST_Y(s.location::geometry) as lat,
+        ST_X(s.location::geometry) as lng,
+        s."createdAt",
+        s."updatedAt",
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_COMPLETED'
+          ) THEN 'COMPLETED'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_STARTED'
+          ) THEN 'IN_SERVICE'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'ARRIVED'
+          ) THEN 'ARRIVED'
+          ELSE 'PENDING'
+        END as progress
+      FROM "OrderStop" s
+      WHERE s."orderId" = ${order.id}::uuid
+      ORDER BY s.sequence ASC
     `;
 
     return {
@@ -202,6 +225,7 @@ export class OrdersRepository {
       include: {
         statusHistory: { orderBy: { createdAt: 'desc' } },
         mediaObjects: true,
+        paymentIntents: { orderBy: { createdAt: 'desc' }, take: 1 },
         driver: {
           select: {
             id: true,
@@ -222,23 +246,38 @@ export class OrdersRepository {
       return null;
     }
 
-    const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+    const stops = await db.$queryRaw<Array<OrderStop & { lat: number; lng: number; progress: string }>>`
       SELECT
-        id,
-        "orderId",
-        type,
-        sequence,
-        address,
-        "contactName",
-        "contactPhone",
-        note,
-        ST_Y(location::geometry) as lat,
-        ST_X(location::geometry) as lng,
-        "createdAt",
-        "updatedAt"
-      FROM "OrderStop"
-      WHERE "orderId" = ${id}::uuid
-      ORDER BY sequence ASC
+        s.id,
+        s."orderId",
+        s.type,
+        s.sequence,
+        s.address,
+        s."contactName",
+        s."contactPhone",
+        s.note,
+        ST_Y(s.location::geometry) as lat,
+        ST_X(s.location::geometry) as lng,
+        s."createdAt",
+        s."updatedAt",
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_COMPLETED'
+          ) THEN 'COMPLETED'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_STARTED'
+          ) THEN 'IN_SERVICE'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'ARRIVED'
+          ) THEN 'ARRIVED'
+          ELSE 'PENDING'
+        END as progress
+      FROM "OrderStop" s
+      WHERE s."orderId" = ${id}::uuid
+      ORDER BY s.sequence ASC
     `;
 
     return {
@@ -246,6 +285,7 @@ export class OrdersRepository {
       stops,
       statusHistory: order.statusHistory,
       mediaObjects: order.mediaObjects,
+      paymentIntents: order.paymentIntents,
     };
   }
 
@@ -271,21 +311,36 @@ export class OrdersRepository {
 
     const items: OrderWithRelations[] = await Promise.all(
       orders.map(async (order) => {
-        const stops = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+        const stops = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number; progress: string }>>`
           SELECT
-            id,
-            "orderId",
-            type,
-            sequence,
-            address,
-            "contactName",
-            "contactPhone",
-            note,
-            ST_Y(location::geometry) as lat,
-            ST_X(location::geometry) as lng,
-            "createdAt",
-            "updatedAt"
-          FROM "OrderStop"
+            s.id,
+            s."orderId",
+            s.type,
+            s.sequence,
+            s.address,
+            s."contactName",
+            s."contactPhone",
+            s.note,
+            ST_Y(s.location::geometry) as lat,
+            ST_X(s.location::geometry) as lng,
+            s."createdAt",
+            s."updatedAt",
+            CASE
+              WHEN EXISTS (
+                SELECT 1 FROM "StopProgressState" sps
+                WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_COMPLETED'
+              ) THEN 'COMPLETED'
+              WHEN EXISTS (
+                SELECT 1 FROM "StopProgressState" sps
+                WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_STARTED'
+              ) THEN 'IN_SERVICE'
+              WHEN EXISTS (
+                SELECT 1 FROM "StopProgressState" sps
+                WHERE sps."stopId" = s.id AND sps.step::text = 'ARRIVED'
+              ) THEN 'ARRIVED'
+              ELSE 'PENDING'
+            END as progress
+          FROM "OrderStop" s
           WHERE "orderId" = ${order.id}::uuid
           ORDER BY sequence ASC
         `;
@@ -307,29 +362,44 @@ export class OrdersRepository {
     };
   }
 
-  private async findStopsForOrderIds(orderIds: string[]): Promise<Map<string, Array<OrderStop & { lat: number; lng: number }>>> {
+  private async findStopsForOrderIds(orderIds: string[]): Promise<Map<string, Array<OrderStop & { lat: number; lng: number; progress: string }>>> {
     if (orderIds.length === 0) return new Map();
 
-    const rows = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number }>>`
+    const rows = await this.prisma.$queryRaw<Array<OrderStop & { lat: number; lng: number; progress: string }>>`
       SELECT
-        id,
-        "orderId",
-        type,
-        sequence,
-        address,
-        "contactName",
-        "contactPhone",
-        note,
-        ST_Y(location::geometry) as lat,
-        ST_X(location::geometry) as lng,
-        "createdAt",
-        "updatedAt"
-      FROM "OrderStop"
-      WHERE "orderId" = ANY(${orderIds}::uuid[])
+        s.id,
+        s."orderId",
+        s.type,
+        s.sequence,
+        s.address,
+        s."contactName",
+        s."contactPhone",
+        s.note,
+        ST_Y(s.location::geometry) as lat,
+        ST_X(s.location::geometry) as lng,
+        s."createdAt",
+        s."updatedAt",
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_COMPLETED'
+          ) THEN 'COMPLETED'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'SERVICE_STARTED'
+          ) THEN 'IN_SERVICE'
+          WHEN EXISTS (
+            SELECT 1 FROM "StopProgressState" sps
+            WHERE sps."stopId" = s.id AND sps.step::text = 'ARRIVED'
+          ) THEN 'ARRIVED'
+          ELSE 'PENDING'
+        END as progress
+      FROM "OrderStop" s
+      WHERE s."orderId" = ANY(${orderIds}::uuid[])
       ORDER BY sequence ASC
     `;
 
-    const byOrderId = new Map<string, Array<OrderStop & { lat: number; lng: number }>>();
+    const byOrderId = new Map<string, Array<OrderStop & { lat: number; lng: number; progress: string }>>();
     for (const row of rows) {
       const list = byOrderId.get(row.orderId) ?? [];
       list.push(row);

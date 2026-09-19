@@ -1187,7 +1187,7 @@ export class InMemoryPrismaService {
       list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       return list[0] ?? null;
     }),
-    findMany: jest.fn(async ({ where, skip = 0, take }: { where?: any; skip?: number; take?: number } = {}) => {
+    findMany: jest.fn(async ({ where, include, skip = 0, take }: { where?: any; include?: any; skip?: number; take?: number } = {}) => {
       let list = Array.from(this.withdrawalRequests.values());
       if (where?.driverId) list = list.filter((r) => r.driverId === where.driverId);
       if (where?.status) {
@@ -1196,6 +1196,15 @@ export class InMemoryPrismaService {
       }
       list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       const sliced = take !== undefined ? list.slice(skip, skip + take) : list.slice(skip);
+      if (include?.driver) {
+        return sliced.map((r) => {
+          const user = this.users.get(r.driverId);
+          return {
+            ...r,
+            driver: user ? { id: user.id, fullName: user.fullName, phoneNumber: user.phoneNumber, role: user.role } : null,
+          };
+        });
+      }
       return sliced;
     }),
     update: jest.fn(async ({ where, data }: { where: { id: string }; data: Partial<WithdrawalRequest> }) => {

@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  QrCode,
   RefreshCw,
   User,
   Wallet,
@@ -27,6 +28,45 @@ export interface WithdrawalRequestItem {
   bankAccountNumber: string | null;
   bankAccountName: string | null;
   createdAt: string;
+  userRole?: string;
+  userName?: string;
+  userPhone?: string;
+}
+
+function getVietQrUrl(
+  bankName: string | null,
+  accountNo: string | null,
+  amount: number,
+  accountName: string | null,
+): string {
+  const rawBank = (bankName ?? '').toLowerCase().trim();
+  let bankCode = 'VCB';
+  if (rawBank.includes('techcom') || rawBank.includes('tcb')) bankCode = 'TCB';
+  else if (rawBank.includes('vietin') || rawBank.includes('icb') || rawBank.includes('ctg')) bankCode = 'ICB';
+  else if (rawBank.includes('mb') || rawBank.includes('quan doi')) bankCode = 'MB';
+  else if (rawBank.includes('bidv')) bankCode = 'BIDV';
+  else if (rawBank.includes('acb')) bankCode = 'ACB';
+  else if (rawBank.includes('vp') || rawBank.includes('vpb')) bankCode = 'VPB';
+  else if (rawBank.includes('tp') || rawBank.includes('tpb')) bankCode = 'TPB';
+  else if (rawBank.includes('agri') || rawBank.includes('vba')) bankCode = 'VBA';
+  else if (rawBank.includes('sacom') || rawBank.includes('stb')) bankCode = 'STB';
+  else if (rawBank.includes('hdb')) bankCode = 'HDB';
+  else if (rawBank.includes('vib')) bankCode = 'VIB';
+  else if (rawBank.includes('ocb')) bankCode = 'OCB';
+  else if (rawBank.includes('msb')) bankCode = 'MSB';
+  else if (rawBank.includes('shb')) bankCode = 'SHB';
+  else if (rawBank.includes('sea')) bankCode = 'SEAB';
+  else if (rawBank.includes('lpb') || rawBank.includes('lienviet')) bankCode = 'LPB';
+  else if (rawBank.includes('vietcom') || rawBank.includes('vcb')) bankCode = 'VCB';
+  else {
+    bankCode = rawBank.replace(/[^a-z0-9]/g, '').toUpperCase() || 'VCB';
+  }
+
+  const cleanAcc = (accountNo ?? '').replace(/\s+/g, '');
+  const cleanName = encodeURIComponent((accountName ?? '').trim().toUpperCase());
+  const memo = encodeURIComponent('LEOPARD HOAN TIEN');
+
+  return `https://img.vietqr.io/image/${bankCode}-${cleanAcc}-compact2.png?amount=${amount}&addInfo=${memo}&accountName=${cleanName}`;
 }
 
 function newRequestId(): string {
@@ -55,6 +95,7 @@ export function WithdrawalsScreen() {
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<'approve' | 'reject' | null>(null);
   const [note, setNote] = useState('');
+  const [qrModalRequest, setQrModalRequest] = useState<WithdrawalRequestItem | null>(null);
 
   const load = useCallback(async () => {
     setLoadState('loading');
@@ -115,7 +156,7 @@ export function WithdrawalsScreen() {
             Yêu cầu rút tiền
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            Duyệt sau khi đã chuyển khoản thủ công cho tài xế, hoặc từ chối kèm lý do.
+            Duyệt sau khi đã chuyển khoản thủ công cho tài xế hoặc khách hàng, hoặc từ chối kèm lý do.
           </p>
         </div>
         <button
@@ -246,7 +287,7 @@ export function WithdrawalsScreen() {
               <ArrowDownToLine className="h-6 w-6" />
             </div>
             <p className="text-sm font-semibold text-slate-700">Không có yêu cầu nào đang chờ</p>
-            <p className="text-xs text-slate-400 mt-1">Tất cả yêu cầu rút tiền của tài xế đã được giải quyết.</p>
+            <p className="text-xs text-slate-400 mt-1">Tất cả yêu cầu rút tiền của tài xế và khách hàng đã được giải quyết.</p>
           </div>
         ) : (
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,12 +302,23 @@ export function WithdrawalsScreen() {
                   className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:shadow-md flex flex-col justify-between"
                 >
                   <div>
-                    {/* Top Row: Driver & Status */}
+                    {/* Top Row: User & Role & Status */}
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 font-mono">
-                        <User className="h-3 w-3 text-slate-500" />
-                        {req.driverId}
-                      </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {req.userRole === 'CUSTOMER' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            Khách hàng (Hoàn cọc)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Tài xế (Thu nhập)
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                          <User className="h-3 w-3 text-slate-500" />
+                          {req.userName || req.userPhone || req.driverId}
+                        </span>
+                      </div>
                       {isPending ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">
                           Chờ duyệt
@@ -319,31 +371,42 @@ export function WithdrawalsScreen() {
 
                   {/* Actions Bar */}
                   {isPending ? (
-                    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                       <button
                         type="button"
-                        disabled={pendingId === req.id}
-                        onClick={() => {
-                          setActiveActionId(req.id);
-                          setActiveAction('reject');
-                          setNote('');
-                        }}
-                        className="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200/80 rounded-full hover:bg-rose-100 shadow-2xs transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
+                        onClick={() => setQrModalRequest(req)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 rounded-full hover:bg-blue-100 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                        title="Xem mã VietQR để quét chuyển khoản"
                       >
-                        Từ chối
+                        <QrCode className="h-3.5 w-3.5 text-blue-600" />
+                        <span>Mã VietQR</span>
                       </button>
-                      <button
-                        type="button"
-                        disabled={pendingId === req.id}
-                        onClick={() => {
-                          setActiveActionId(req.id);
-                          setActiveAction('approve');
-                          setNote('');
-                        }}
-                        className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 rounded-full hover:bg-emerald-700 shadow-xs transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
-                      >
-                        Duyệt
-                      </button>
+                      <div className="flex items-center gap-2 ml-auto">
+                        <button
+                          type="button"
+                          disabled={pendingId === req.id}
+                          onClick={() => {
+                            setActiveActionId(req.id);
+                            setActiveAction('reject');
+                            setNote('');
+                          }}
+                          className="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200/80 rounded-full hover:bg-rose-100 shadow-2xs transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
+                        >
+                          Từ chối
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pendingId === req.id}
+                          onClick={() => {
+                            setActiveActionId(req.id);
+                            setActiveAction('approve');
+                            setNote('');
+                          }}
+                          className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 rounded-full hover:bg-emerald-700 shadow-xs transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
+                        >
+                          Duyệt
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                 </li>
@@ -352,6 +415,100 @@ export function WithdrawalsScreen() {
           </ul>
         )}
       </section>
+
+      {/* VietQR Quick-Transfer Modal */}
+      {qrModalRequest ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vietqr-dialog-title"
+        >
+          <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <QrCode className="h-5 w-5 text-blue-600" />
+                <h3 id="vietqr-dialog-title" className="text-base font-bold text-slate-900">
+                  Mã VietQR chuyển khoản
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQrModalRequest(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                aria-label="Đóng cửa sổ"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Modal Body: QR image + info */}
+            <div className="p-6 flex flex-col items-center text-center space-y-4">
+              <p className="text-xs text-slate-500">
+                Mở app ngân hàng (VCB, MB, Techcom, BIDV...) quét mã để chuyển khoản chính xác cho {qrModalRequest.userRole === 'CUSTOMER' ? 'khách hàng' : 'tài xế'}:
+              </p>
+
+              <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-sm">
+                <img
+                  src={getVietQrUrl(
+                    qrModalRequest.bankName,
+                    qrModalRequest.bankAccountNumber,
+                    qrModalRequest.amountVnd,
+                    qrModalRequest.bankAccountName,
+                  )}
+                  alt="Mã VietQR chuyển khoản"
+                  className="w-56 h-auto object-contain rounded-lg"
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="w-full bg-slate-50 rounded-2xl p-3 border border-slate-100 text-xs space-y-1.5 text-left">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Số tiền:</span>
+                  <span className="font-bold text-slate-900 tabular-nums">{formatCurrency(qrModalRequest.amountVnd)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Ngân hàng:</span>
+                  <span className="font-semibold text-slate-800">{qrModalRequest.bankName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Số tài khoản:</span>
+                  <span className="font-mono font-bold text-slate-900">{qrModalRequest.bankAccountNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Chủ tài khoản:</span>
+                  <span className="font-semibold text-slate-800 uppercase">{qrModalRequest.bankAccountName}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button
+                type="button"
+                onClick={() => setQrModalRequest(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetReq = qrModalRequest;
+                  setQrModalRequest(null);
+                  setActiveActionId(targetReq.id);
+                  setActiveAction('approve');
+                  setNote('Đã quét VietQR chuyển khoản');
+                }}
+                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 rounded-full hover:bg-emerald-700 shadow-xs transition-all active:scale-95 cursor-pointer"
+              >
+                Đã chuyển, duyệt ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Modern Review Modal Dialog */}
       {activeActionId && activeRequest && activeAction ? (

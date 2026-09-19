@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { sessionStore, httpClient, appendFileToFormData, resolveLocationCoords } from '@leopard/mobile-core';
+import { sessionStore, httpClient, appendFileToFormData } from '@leopard/mobile-core';
 import { addressStore, type SavedAddress } from '../../../src/features/customer/addresses/address-store';
 import { createCustomerHttpAdapter } from '../../../src/features/customer/orders/adapter';
 import {
@@ -183,7 +184,7 @@ export default function CustomerHomePage() {
       userName={customerUser?.name}
       userPhone={customerUser?.phone}
       onConfirmBooking={async (booking) => {
-        let orderId = `11111111-1111-4111-8111-${Date.now().toString().slice(-12)}`;
+        let orderId: string | null = null;
         let finalAmount = booking.totalFare;
         const { vehicleType, cargoWeight } = resolveVehicleOrderType(
           booking.fleetVehicleId,
@@ -196,9 +197,8 @@ export default function CustomerHomePage() {
             booking.pickupCoords ||
             (defaultAddress?.latitude && defaultAddress?.longitude
               ? { lat: defaultAddress.latitude, lng: defaultAddress.longitude }
-              : resolveLocationCoords(booking.pickup));
-          const dropoffCoords =
-            booking.dropoffCoords || resolveLocationCoords(booking.dropoff, pickupCoords);
+              : undefined);
+          const dropoffCoords = booking.dropoffCoords || undefined;
 
           const formPayload = {
             pickup: booking.pickup,
@@ -208,7 +208,7 @@ export default function CustomerHomePage() {
               .map((s) => ({
                 id: s.id,
                 value: s.address,
-                coords: s.coords || resolveLocationCoords(s.address, pickupCoords),
+                coords: s.coords || undefined,
               })),
             dropoff: booking.dropoff,
             dropoffCoords,
@@ -245,36 +245,57 @@ export default function CustomerHomePage() {
             }
           }
 
-          if (estimateToken) {
-            const created = await port.createOrder(formPayload, estimateToken);
-            if (created.kind === 'content') {
-              orderId = created.order.id;
-              if (created.order.priceLabel) {
-                const rawDigits = created.order.priceLabel.replace(/[^0-9]/g, '');
-                const parsed = Number(rawDigits);
-                if (Number.isFinite(parsed) && parsed > 0) {
-                  finalAmount = parsed;
-                }
-              }
+          if (!estimateToken) {
+            throw new Error('Chưa thể lấy báo giá chính xác. Vui lòng kiểm tra lại địa chỉ giao nhận.');
+          }
 
-              if (booking.cargoImageUri) {
-                try {
-                  const form = new FormData();
-                  await appendFileToFormData(form, 'file', {
-                    uri: booking.cargoImageUri,
-                    name: 'cargo.jpg',
-                    mimeType: 'image/jpeg',
-                  });
-                  form.append('clientRequestId', `req-${Date.now()}`);
-                  await httpClient.postForm(`/orders/${orderId}/media/cargo`, form);
-                } catch {
-                  // Non-blocking upload fallback
-                }
+          const created = await port.createOrder(formPayload, estimateToken);
+          if (created.kind === 'content') {
+            orderId = created.order.id;
+            if (created.order.priceLabel) {
+              const rawDigits = created.order.priceLabel.replace(/[^0-9]/g, '');
+              const parsed = Number(rawDigits);
+              if (Number.isFinite(parsed) && parsed > 0) {
+                finalAmount = parsed;
               }
             }
+
+            if (booking.cargoImageUri) {
+              try {
+                const form = new FormData();
+                await appendFileToFormData(form, 'file', {
+                  uri: booking.cargoImageUri,
+                  name: 'cargo.jpg',
+                  mimeType: 'image/jpeg',
+                });
+                form.append('clientRequestId', `req-${Date.now()}`);
+                await httpClient.postForm(`/orders/${orderId}/media/cargo`, form);
+              } catch {
+                // Non-blocking upload fallback
+              }
+            }
+          } else {
+            const errDetail =
+              created.kind === 'error'
+                ? created.message
+                : 'Hệ thống không thể tạo đơn lúc này.';
+            throw new Error(errDetail || 'Không thể tạo đơn hàng.');
           }
-        } catch (err) {
-          console.warn('[CustomerBooking] Order creation failed, falling back to mock:', err);
+        } catch (err: any) {
+          console.error('[CustomerBooking] Order creation failed:', err);
+          const errorMsg =
+            err?.message ||
+            'Không thể tạo đơn hàng. Vui lòng kiểm tra lại kết nối mạng và thử lại.';
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            window.alert(errorMsg);
+          } else {
+            Alert.alert('Lỗi tạo đơn', errorMsg);
+          }
+          return;
+        }
+
+        if (!orderId) {
+          return;
         }
 
         if (booking.paymentMethod === 'CASH') {
@@ -311,7 +332,7 @@ export default function CustomerHomePage() {
         // Quick-create is intentionally disabled: all orders must go through
         // onConfirmBooking with a real estimateToken + createOrder API call.
         // Redirect user into the standard booking entry point.
-        router.push('/customer/orders/new');
+        router.push('/customer/booking');
       }}
       onNavigateTab={(tab) => {
         switch (tab) {
@@ -338,13 +359,16 @@ export default function CustomerHomePage() {
       onOpenOrder={(orderId) => router.push(`/customer/orders/${orderId}`)}
       onOpenProfile={() => router.push('/customer/profile')}
       onOpenQrScan={() => router.push('/customer/wallet')}
-      onOpenSavedAddresses={() => router.push('/(public)/customer-address')}
+      onOpenSavedAddresses={() => router.push('/customer/addresses')}
       onPressSearchAddress={(fleetVehicleId, pickup, pickupCoords) => {
+        const isMockPickup = !pickupCoords && (!defaultAddress || !defaultAddress.address);
+        const resolvedPickup = isMockPickup ? undefined : pickup;
         router.push({
           pathname: '/customer/booking',
           params: {
+            focus: 'dropoff',
             ...(fleetVehicleId ? { vehicleId: fleetVehicleId } : {}),
-            ...(pickup ? { pickup } : {}),
+            ...(resolvedPickup ? { pickup: resolvedPickup } : {}),
             ...(pickupCoords
               ? {
                   pickupLat: String(pickupCoords.lat),

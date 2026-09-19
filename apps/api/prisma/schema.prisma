@@ -33,6 +33,7 @@ enum VehicleType {
 }
 
 enum OrderStatus {
+  PENDING_PAYMENT
   REQUESTED
   ACCEPTED
   PICKING_UP

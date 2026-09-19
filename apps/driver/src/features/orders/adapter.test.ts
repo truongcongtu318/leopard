@@ -176,7 +176,7 @@ describe('Driver mappers', () => {
     updatedAt: '2026-08-15T14:32:00.000Z',
     stops: [
       { id: 'stop-0', type: 'PICKUP', sequence: 0, address: 'Kho Quận 7', lat: 10.73, lng: 106.71 },
-      { id: 'stop-1', type: 'STOP', sequence: 1, address: 'Quận 4', lat: 10.75, lng: 106.70 },
+      { id: 'stop-1', type: 'STOP', sequence: 1, address: 'Quận 4', lat: 10.75, lng: 106.70, progress: 'COMPLETED' },
       { id: 'stop-2', type: 'DROPOFF', sequence: 2, address: 'Thủ Đức', lat: 10.84, lng: 106.77 },
     ],
     statusHistory: [
@@ -336,6 +336,52 @@ describe('Driver mappers', () => {
     });
     expect(inTransitWithProofView.scenarioId).toBe('D-DETAIL-READY-DELIVER');
     expect(inTransitWithProofView.primaryTask?.command.targetStatus).toBe('DELIVERED');
+
+    const inTransitPendingStopView = mapOrderToDriverDetailView({
+      ...sampleOrder,
+      status: 'IN_TRANSIT',
+      stops: [
+        { id: 'stop-0', type: 'PICKUP', sequence: 0, address: 'Kho Quận 7', lat: 10.73, lng: 106.71 },
+        { id: 'stop-1', type: 'STOP', sequence: 1, address: 'Quận 4', progress: 'PENDING', lat: 10.75, lng: 106.70 },
+        { id: 'stop-2', type: 'DROPOFF', sequence: 2, address: 'Thủ Đức', lat: 10.84, lng: 106.77 },
+      ],
+    });
+    expect(inTransitPendingStopView.primaryTask?.kind).toBe('record-stop');
+    if (inTransitPendingStopView.primaryTask?.kind === 'record-stop') {
+      expect(inTransitPendingStopView.primaryTask.step).toBe('ARRIVED');
+      expect(inTransitPendingStopView.primaryTask.sequence).toBe(1);
+      expect(inTransitPendingStopView.primaryTask.command.label).toBe('Đã đến điểm dừng 1');
+    }
+
+    const inTransitArrivedStopView = mapOrderToDriverDetailView({
+      ...sampleOrder,
+      status: 'IN_TRANSIT',
+      stops: [
+        { id: 'stop-0', type: 'PICKUP', sequence: 0, address: 'Kho Quận 7', lat: 10.73, lng: 106.71 },
+        { id: 'stop-1', type: 'STOP', sequence: 1, address: 'Quận 4', progress: 'ARRIVED', lat: 10.75, lng: 106.70 },
+        { id: 'stop-2', type: 'DROPOFF', sequence: 2, address: 'Thủ Đức', lat: 10.84, lng: 106.77 },
+      ],
+    });
+    expect(inTransitArrivedStopView.primaryTask?.kind).toBe('record-stop');
+    if (inTransitArrivedStopView.primaryTask?.kind === 'record-stop') {
+      expect(inTransitArrivedStopView.primaryTask.step).toBe('SERVICE_STARTED');
+      expect(inTransitArrivedStopView.primaryTask.command.label).toBe('Bắt đầu bốc/dỡ tại điểm 1');
+    }
+
+    const inTransitInServiceStopView = mapOrderToDriverDetailView({
+      ...sampleOrder,
+      status: 'IN_TRANSIT',
+      stops: [
+        { id: 'stop-0', type: 'PICKUP', sequence: 0, address: 'Kho Quận 7', lat: 10.73, lng: 106.71 },
+        { id: 'stop-1', type: 'STOP', sequence: 1, address: 'Quận 4', progress: 'IN_SERVICE', lat: 10.75, lng: 106.70 },
+        { id: 'stop-2', type: 'DROPOFF', sequence: 2, address: 'Thủ Đức', lat: 10.84, lng: 106.77 },
+      ],
+    });
+    expect(inTransitInServiceStopView.primaryTask?.kind).toBe('record-stop');
+    if (inTransitInServiceStopView.primaryTask?.kind === 'record-stop') {
+      expect(inTransitInServiceStopView.primaryTask.step).toBe('SERVICE_COMPLETED');
+      expect(inTransitInServiceStopView.primaryTask.command.label).toBe('Hoàn tất điểm dừng 1');
+    }
 
     const deliveredView = mapOrderToDriverDetailView({ ...sampleOrder, status: 'DELIVERED' });
     expect(deliveredView.scenarioId).toBe('D-DETAIL-TERMINAL-DELIVERED');
@@ -841,6 +887,7 @@ describe('createDriverHttpAdapter', () => {
           'Delivery proof is required before marking order as delivered.',
         ),
       );
+      client.get.mockResolvedValueOnce(sampleOrder);
 
       const adapter = createDriverHttpAdapter(client);
       const view = await adapter.executeLifecycle(`cmd-deliver-${sampleOrder.id}`);
@@ -851,6 +898,27 @@ describe('createDriverHttpAdapter', () => {
         expect(view.proof.kind).toBe('required');
         expect(view.primaryTask?.kind).toBe('upload-proof');
         expect(view.primaryTask?.command.id).toBe(`cmd-select-proof-${sampleOrder.id}`);
+      }
+    });
+
+    it('returns fail-closed error view when fetching order details fails on PROOF_REQUIRED', async () => {
+      const client = createMockClient();
+      client.post.mockRejectedValueOnce(
+        new ApiError(
+          400,
+          'PROOF_REQUIRED',
+          'Delivery proof is required before marking order as delivered.',
+        ),
+      );
+      client.get.mockRejectedValueOnce(new Error('Network offline'));
+
+      const adapter = createDriverHttpAdapter(client);
+      const view = await adapter.executeLifecycle(`cmd-deliver-${sampleOrder.id}`);
+
+      expect(view.kind).toBe('error');
+      if (view.kind === 'error') {
+        expect(view.scenarioId).toBe('D-DETAIL-ERROR');
+        expect(view.title).toBe('Không thể tải thông tin đơn hàng');
       }
     });
 

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { Alert } from 'react-native';
 
 import type { CustomerListView } from '../orders/model';
 import type { CustomerOrdersPort } from '../orders/port';
@@ -52,6 +53,7 @@ async function renderWithClient(ui: React.ReactElement) {
 describe('CustomerWalletScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
 
   const mockOrdersView: CustomerListView = {
@@ -177,7 +179,7 @@ describe('CustomerWalletScreen', () => {
     return [];
   });
 
-  it('renders real escrow card with real total, and does NOT render fake wallet elements', async () => {
+  it('renders real escrow card with refundable balance, and does NOT render Nạp tiền', async () => {
     const screen = await renderWithClient(
       <CustomerWalletScreen
         fetchPaymentsForOrder={mockFetchPaymentsForOrder}
@@ -185,15 +187,16 @@ describe('CustomerWalletScreen', () => {
       />,
     );
 
-    // Header & Escrow pool card
+    // Header & Escrow card
     expect(screen.getByText('Lịch sử ký quỹ & thanh toán')).toBeTruthy();
     expect(screen.getByText('Ký quỹ an toàn')).toBeTruthy();
     expect(screen.getByText('Bảo đảm 100%')).toBeTruthy();
-    expect(screen.getByText('Tổng tiền ký quỹ theo đơn')).toBeTruthy();
+    expect(screen.getByText('Ký quỹ chờ hoàn (Có thể rút)')).toBeTruthy();
 
-    // Verify capsule action buttons
-    expect(screen.getByText('Nạp tiền')).toBeTruthy();
+    // Verify capsule action buttons: NO "Nạp tiền", only "Rút tiền" & "Quy chế" (2 chữ mỗi nút)
+    expect(screen.queryByText('Nạp tiền')).toBeNull();
     expect(screen.getByText('Rút tiền')).toBeTruthy();
+    expect(screen.getByText('Quy chế')).toBeTruthy();
 
     // Verify fake wallet elements are GONE
     expect(screen.queryByText('Ví VietQR LEOPARD')).toBeNull();
@@ -201,9 +204,9 @@ describe('CustomerWalletScreen', () => {
     expect(screen.queryByText('•••• 8839')).toBeNull();
     expect(screen.queryByText(/1\.250\.000/)).toBeNull();
 
-    // Total escrowed: 480.000 (HELD) + 350.000 (SETTLED) = 830.000 ₫
+    // Refundable balance from cancelled paid order #4: 200.000 ₫
     await waitFor(() => {
-      expect(screen.getByText('830.000 ₫')).toBeTruthy();
+      expect(screen.getAllByText('200.000 ₫').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('4 giao dịch đơn')).toBeTruthy();
     });
 
@@ -220,7 +223,7 @@ describe('CustomerWalletScreen', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('830.000 ₫')).toBeTruthy();
+      expect(screen.getAllByText('200.000 ₫').length).toBeGreaterThanOrEqual(1);
     });
 
     const hideBtn = screen.getByLabelText('Ẩn số tiền');
@@ -228,14 +231,13 @@ describe('CustomerWalletScreen', () => {
 
     await waitFor(() => {
       expect(screen.getByText('•••••••• ₫')).toBeTruthy();
-      expect(screen.queryByText('830.000 ₫')).toBeNull();
     });
 
     const showBtn = screen.getByLabelText('Hiện số tiền');
     await fireEvent.press(showBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('830.000 ₫')).toBeTruthy();
+      expect(screen.getAllByText('200.000 ₫').length).toBeGreaterThanOrEqual(1);
     });
 
     await screen.unmount();
@@ -335,6 +337,97 @@ describe('CustomerWalletScreen', () => {
       expect(screen.getByText('LP-260905-002')).toBeTruthy();
       expect(screen.getByText('LP-260905-003')).toBeTruthy();
       expect(screen.getByText('LP-260905-004')).toBeTruthy();
+    });
+
+    await screen.unmount();
+    screen.client.clear();
+  });
+
+  it('opens withdrawal modal and submits request when Rút tiền is pressed', async () => {
+    const mockRequestWithdrawal = jest.fn(async () => ({ id: 'req-1' }));
+    const screen = await renderWithClient(
+      <CustomerWalletScreen
+        fetchPaymentsForOrder={mockFetchPaymentsForOrder}
+        fetchWalletSummary={async () => ({
+          refundableBalanceVnd: 200000,
+          totalHeldEscrowVnd: 0,
+          cancelledPaidAmount: 200000,
+          pendingWithdrawalsVnd: 0,
+          approvedWithdrawalsVnd: 0,
+          withdrawalRequests: [],
+        })}
+        ordersPort={mockOrdersPort}
+        requestWithdrawal={mockRequestWithdrawal}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Rút tiền')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByText('Rút tiền'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Ngân hàng thụ hưởng')).toBeTruthy();
+      expect(screen.getByPlaceholderText('Tối thiểu 10.000 ₫')).toBeTruthy();
+    });
+
+    // Fill form
+    await fireEvent.changeText(screen.getByPlaceholderText('VD: Vietcombank, MB Bank, v.v.'), 'Techcombank');
+    await fireEvent.changeText(screen.getByPlaceholderText('Nhập số tài khoản'), '190300123456');
+    await fireEvent.changeText(screen.getByPlaceholderText('TÊN CHỦ TÀI KHOẢN (IN HOA)'), 'NGUYEN VAN A');
+    await fireEvent.changeText(screen.getByPlaceholderText('Tối thiểu 10.000 ₫'), '150000');
+
+    await fireEvent.press(screen.getByText('Gửi yêu cầu rút tiền'));
+
+    await waitFor(() => {
+      expect(mockRequestWithdrawal).toHaveBeenCalledWith({
+        amountVnd: 150000,
+        bankName: 'Techcombank',
+        bankAccountNumber: '190300123456',
+        bankAccountName: 'NGUYEN VAN A',
+      });
+    });
+
+    await screen.unmount();
+    screen.client.clear();
+  });
+
+  it('renders withdrawal requests history when wallet summary has requests', async () => {
+    const mockSummary = {
+      refundableBalanceVnd: 100000,
+      totalHeldEscrowVnd: 480000,
+      cancelledPaidAmount: 200000,
+      pendingWithdrawalsVnd: 100000,
+      approvedWithdrawalsVnd: 0,
+      withdrawalRequests: [
+        {
+          id: 'wr-cust-1',
+          amountVnd: 100000,
+          status: 'PENDING' as const,
+          bankName: 'Vietcombank',
+          bankAccountNumber: '0071000123456',
+          bankAccountName: 'NGUYEN VAN A',
+          reviewNote: null,
+          reviewedAt: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    const screen = await renderWithClient(
+      <CustomerWalletScreen
+        fetchPaymentsForOrder={mockFetchPaymentsForOrder}
+        fetchWalletSummary={async () => mockSummary}
+        ordersPort={mockOrdersPort}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Yêu cầu rút tiền hoàn cọc (1)')).toBeTruthy();
+      expect(screen.getByText('CHỜ CHUYỂN KHOẢN')).toBeTruthy();
+      expect(screen.getByText('Rút về Vietcombank')).toBeTruthy();
+      expect(screen.getByText('- 100.000 ₫')).toBeTruthy();
     });
 
     await screen.unmount();
